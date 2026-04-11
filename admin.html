@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ProPlan · 授权码管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(145deg, #f0f4fa 0%, #e9eef5 100%);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255,255,255,0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #4A90E2 0%, #F5A623 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 8px;
+        }
+        .login-box {
+            text-align: center;
+        }
+        .input {
+            width: 100%;
+            padding: 14px 18px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(203,213,225,0.5);
+            border-radius: 12px;
+            font-size: 1rem;
+            background: white;
+            outline: none;
+        }
+        .input:focus { border-color: #4A90E2; }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4A90E2 0%, #6ba6e8 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(74,144,226,0.3);
+        }
+        .btn-secondary {
+            background: linear-gradient(135deg, #F5A623 0%, #f7b955 100%);
+            margin-top: 12px;
+        }
+        .admin-panel { display: none; }
+        .admin-panel.active { display: block; }
+        .code-display {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .code-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 10px;
+        }
+        .code-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        .code-hint {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 16px;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 24px;
+        }
+        .stat-item {
+            background: rgba(255,255,255,0.5);
+            padding: 16px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4A90E2;
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin-top: 4px;
+        }
+        .error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            display: none;
+        }
+        .copy-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 16px;
+            font-size: 0.9rem;
+        }
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #22c55e;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">ProPlan 授权管理</div>
+            <div class="subtitle">生成授权码，管理客户访问</div>
+        </div>
+
+        <!-- 登录界面 -->
+        <div class="login-box" id="loginBox">
+            <input type="password" class="input" id="adminPassword" placeholder="输入管理员密码">
+            <div class="error" id="loginError">密码错误</div>
+            <button class="btn" onclick="login()">进入管理后台</button>
+        </div>
+
+        <!-- 管理面板 -->
+        <div class="admin-panel" id="adminPanel">
+            <div class="code-display" id="codeDisplay" style="display:none;">
+                <div class="code-label">新授权码</div>
+                <div class="code-value" id="codeValue">-</div>
+                <button class="copy-btn" onclick="copyCode()">📋 复制授权码</button>
+            </div>
+
+            <button class="btn btn-secondary" onclick="generateCode()">🎲 生成新授权码</button>
+
+            <div class="stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalCodes">0</div>
+                    <div class="stat-label">总授权码</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="usedCodes">0</div>
+                    <div class="stat-label">已使用</div>
+                </div>
+            </div>
+
+            <div class="code-hint">
+                💡 提示：将授权码发给客户，客户注册时需要输入<br>
+                每个授权码只能使用一次
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">已复制到剪贴板</div>
+
+    <script>
+        // 配置 - 使用相同的 Supabase 配置
+        const SUPABASE_URL = 'https://pqdehctacwdpqnptwsav.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZGVoY3RhY3dkcHFucHR3c2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTA5MjYsImV4cCI6MjA5MTEyNjkyNn0.794sLPLfu3msQFIwNM-MoK0YZeqhB1jZUuB2lECnJXk';
+        
+        // 管理员密码 - 你可以修改这个
+        const ADMIN_PASSWORD = 'proplan2024';
+        
+        let supabase;
+        let currentCode = '';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        });
+
+        function login() {
+            const pwd = document.getElementById('adminPassword').value;
+            if (pwd === ADMIN_PASSWORD) {
+                document.getElementById('loginBox').style.display = 'none';
+                document.getElementById('adminPanel').classList.add('active');
+                loadStats();
+            } else {
+                document.getElementById('loginError').style.display = 'block';
+            }
+        }
+
+        function generateCode() {
+            // 生成6位随机码
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 6; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            currentCode = code;
+            
+            // 显示
+            document.getElementById('codeValue').textContent = code;
+            document.getElementById('codeDisplay').style.display = 'block';
+            
+            // 保存到数据库
+            saveCode(code);
+        }
+
+        async function saveCode(code) {
+            const { error } = await supabase
+                .from('auth_codes')
+                .insert([{
+                    code: code,
+                    status: 'unused',
+                    created_at: new Date().toISOString()
+                }]);
+
+            if (error) {
+                console.error('Save code error:', error);
+                alert('保存授权码失败，请重试');
+            } else {
+                loadStats();
+            }
+        }
+
+        async function loadStats() {
+            const { data, error } = await supabase
+                .from('auth_codes')
+                .select('status');
+
+            if (error) {
+                console.error('Load stats error:', error);
+                return;
+            }
+
+            const total = data.length;
+            const used = data.filter(d => d.status === 'used').length;
+            
+            document.getElementById('totalCodes').textContent = total;
+            document.getElementById('usedCodes').textContent = used;
+        }
+
+        function copyCode() {
+            navigator.clipboard.writeText(currentCode).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 2000);
+            });
+        }
+
+        // 回车登录
+        document.getElementById('adminPassword')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    </script>
+</body>
+</html>
