@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MBTI 职业性格测试</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: #FDF8F3;
+      color: #3D3D3D;
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #C8954A, #D4A85C);
+      padding: 40px 20px;
+      text-align: center;
+      color: #fff;
+    }
+    .header h1 { font-size: 28px; margin-bottom: 8px; }
+    .header p { font-size: 14px; opacity: 0.9; }
+    .container { max-width: 700px; margin: 0 auto; padding: 30px 20px; }
+    .progress-bar {
+      background: #E8E0D5;
+      height: 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      background: linear-gradient(90deg, #C8954A, #D4A85C);
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+    .progress-text { text-align: center; font-size: 13px; color: #888; margin-bottom: 20px; }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+    .question-num { font-size: 12px; color: #C8954A; font-weight: 500; margin-bottom: 10px; }
+    .question-text { font-size: 18px; font-weight: 500; margin-bottom: 25px; line-height: 1.5; }
+    .option {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      border: 2px solid #E8E0D5;
+      border-radius: 12px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .option:hover { border-color: #D4A85C; background: #FDF9F3; }
+    .option.selected { border-color: #C8954A; background: #FDF4E7; }
+    .option-radio {
+      width: 20px; height: 20px;
+      border: 2px solid #E8E0D5;
+      border-radius: 50%;
+      margin-right: 15px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .option.selected .option-radio { border-color: #C8954A; background: #C8954A; }
+    .option.selected .option-radio::after {
+      content: ''; width: 8px; height: 8px; background: #fff; border-radius: 50%;
+    }
+    .btn-group { display: flex; gap: 12px; margin-top: 25px; }
+    .btn {
+      flex: 1; padding: 14px 24px; border-radius: 12px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+      border: none; font-family: inherit; transition: all 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, #C8954A, #D4A85C); color: #fff; }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(200,149,74,0.3); }
+    .btn-secondary { background: #fff; border: 2px solid #E8E0D5; color: #3D3D3D; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result { display: none; }
+    .result-type {
+      font-size: 64px; font-weight: 700;
+      background: linear-gradient(135deg, #C8954A, #A67B3D);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+    }
+    .result-title { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+    .result-subtitle { font-size: 14px; color: #888; margin-bottom: 30px; }
+    .result-img {
+      width: 200px; height: 200px; margin: 0 auto 30px;
+      border-radius: 20px; object-fit: cover;
+      box-shadow: 0 10px 40px rgba(200,149,74,0.2);
+    }
+    .result-desc { font-size: 15px; line-height: 1.8; text-align: left; margin-bottom: 20px; }
+    .traits { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 25px; }
+    .trait {
+      background: #FDF4E7; color: #C8954A;
+      padding: 6px 14px; border-radius: 20px;
+      font-size: 13px; font-weight: 500;
+    }
+    .careers { background: #F9F9F9; border-radius: 12px; padding: 20px; text-align: left; }
+    .careers h3 { font-size: 14px; color: #888; margin-bottom: 10px; }
+    .careers p { font-size: 14px; line-height: 1.6; }
+    .restart-btn {
+      margin-top: 25px; padding: 14px 40px;
+      background: linear-gradient(135deg, #C8954A, #D4A85C);
+      color: #fff; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 500; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>MBTI 职业性格测试</h1>
+    <p>20道题，发现真实的自己</p>
+  </div>
+
+  <div class="container">
+    <!-- 测试页面 -->
+    <div id="quiz-page">
+      <div class="progress-bar"><div class="progress-fill" id="progress" style="width: 5%"></div></div>
+      <div class="progress-text">第 <span id="current">1</span> / 20 题</div>
+      
+      <div class="card">
+        <div class="question-num">QUESTION <span id="q-num">01</span></div>
+        <div class="question-text" id="q-text">加载中...</div>
+        <div id="options"></div>
+        
+        <div class="btn-group">
+          <button class="btn btn-secondary" id="prev-btn" onclick="prevQuestion()" disabled>上一题</button>
+          <button class="btn btn-primary" id="next-btn" onclick="nextQuestion()" disabled>下一题</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 结果页面 -->
+    <div id="result-page" class="result">
+      <div class="card">
+        <div class="result-type" id="result-type">INTJ</div>
+        <div class="result-title" id="result-title">建筑师</div>
+        <div class="result-subtitle" id="result-subtitle">富有想象力的战略思想家</div>
+        
+        <img class="result-img" id="result-img" src="" alt="">
+        
+        <div class="result-desc" id="result-desc"></div>
+        
+        <div class="traits" id="traits"></div>
+        
+        <div class="careers">
+          <h3>适合的职业方向</h3>
+          <p id="careers"></p>
+        </div>
+        
+        <button class="restart-btn" onclick="restart()">重新测试</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 20道测试题
+    const questions = [
+      { text: "在社交场合中，你通常：", options: ["主动和陌生人聊天", "等别人来找你说话"], type: "EI" },
+      { text: "你更喜欢：", options: ["有很多朋友但关系不深", "有几个知心好友"], type: "EI" },
+      { text: "周末你更倾向于：", options: ["参加聚会或活动", "在家独处或和少数亲友相处"], type: "EI" },
+      { text: "你描述事情时更喜欢：", options: ["具体细节和实际例子", "抽象概念和整体框架"], type: "SN" },
+      { text: "你更相信：", options: ["亲身经历和事实", "直觉和灵感"], type: "SN" },
+      { text: "学习新东西时，你更喜欢：", options: ["按步骤实操练习", "先理解原理和理论"], type: "SN" },
+      { text: "做决定时，你更看重：", options: ["逻辑和客观分析", "感受和对他人的影响"], type: "TF" },
+      { text: "朋友向你倾诉烦恼，你会：", options: ["帮忙分析问题找解决方案", "先表示理解和安慰"], type: "TF" },
+      { text: "你更在意：", options: ["事情做得对不对", "大家和和气气"], type: "TF" },
+      { text: "你的生活方式更：", options: ["有计划有条理", "灵活随性"], type: "JP" },
+      { text: "截止日期前，你通常：", options: ["提前完成", "赶在最后时刻"], type: "JP" },
+      { text: "旅行时你更喜欢：", options: ["提前做好详细攻略", "到了再说，随机应变"], type: "JP" },
+      { text: "在团队中，你通常是：", options: ["主动发言推动讨论", "先倾听再发言"], type: "EI" },
+      { text: "你更关注：", options: ["当下的现实", "未来的可能性"], type: "SN" },
+      { text: "评价一件事，你更在意：", options: ["公平合理", "人情味"], type: "TF" },
+      { text: "你的桌面/房间通常：", options: ["整洁有序", "有点乱但你知道东西在哪"], type: "JP" },
+      { text: "认识新朋友让你感到：", options: ["兴奋 energized", "有点累 drained"], type: "EI" },
+      { text: "你更擅长：", options: ["记住具体事实", "看到事物之间的联系"], type: "SN" },
+      { text: "面对冲突，你倾向于：", options: ["直接指出问题", "避免伤害对方感情"], type: "TF" },
+      { text: "新项目开始时，你会：", options: ["制定清晰计划", "边做边调整"], type: "JP" }
+    ];
+
+    // 16种人格类型
+    const personalities = {
+      "INTJ": {
+        title: "建筑师",
+        subtitle: "富有想象力的战略思想家",
+        desc: "你是天生的战略家，善于看到事物的全局和长远影响。独立、果断、有主见，对自己和他人都有很高的标准。你喜欢复杂的挑战，擅长将理论转化为可行的计划。",
+        traits: ["独立", "有远见", "理性", "追求完美", "战略思维"],
+        careers: "战略规划师、系统架构师、投资分析师、科学家、律师、管理顾问",
+        img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
+      },
+      "INTP": {
+        title: "逻辑学家",
+        subtitle: "创新的发明家",
+        desc: "你有着活跃的内心世界，热爱探索理论和抽象概念。好奇心强，喜欢分析问题找到根本原因。你重视逻辑和一致性，常常是朋友圈里的\"智囊\"。",
+        traits: ["好奇", "分析能力强", "客观", "创新", "独立思考"],
+        careers: "软件工程师、数据科学家、研究员、经济学家、数学家、技术专家",
+        img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop"
+      },
+      "ENTJ": {
+        title: "指挥官",
+        subtitle: "大胆果断的领导者",
+        desc: "你天生具有领导才能，善于组织和规划。目标导向，执行力强，喜欢挑战和竞争。你能够快速做出决策，并带领团队达成目标。",
+        traits: ["领导力", "果断", "高效", "自信", "战略眼光"],
+        careers: "企业高管、创业者、管理顾问、律师、政治家、项目经理",
+        img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop"
+      },
+      "ENTP": {
+        title: "辩论家",
+        subtitle: "聪明好奇的思想者",
+        desc: "你机智、好奇、喜欢智力挑战。善于从不同角度看问题，喜欢辩论和探索新想法。你适应力强，能够快速切换思维模式。",
+        traits: ["机智", "创新", "适应力强", "直言不讳", "多才多艺"],
+        careers: "创业者、咨询顾问、律师、记者、创意总监、产品经理",
+        img: "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=400&h=400&fit=crop"
+      },
+      "INFJ": {
+        title: "提倡者",
+        subtitle: "安静而有理想主义者",
+        desc: "你富有同理心和洞察力，善于理解他人的感受。有强烈的价值观和使命感，渴望让世界变得更好。你深思熟虑，是值得信赖的顾问。",
+        traits: ["有同理心", "有洞察力", "理想主义", "坚定", "创造力"],
+        careers: "心理咨询师、作家、人力资源专家、社会工作者、教师、艺术家",
+        img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop"
+      },
+      "INFP": {
+        title: "调停者",
+        subtitle: "诗意的利他者",
+        desc: "你是真正的理想主义者，内心丰富而敏感。重视真实和意义，追求和谐与成长。你有独特的创造力，善于用文字或艺术表达自己。",
+        traits: ["理想主义", "有创造力", "善解人意", "忠诚", "适应力强"],
+        careers: "作家、设计师、心理咨询师、教师、音乐家、社会工作者",
+        img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop"
+      },
+      "ENFJ": {
+        title: "主人公",
+        subtitle: "魅力四射的激励者",
+        desc: "你热情、有魅力，善于激励和引导他人。天生的领导者，关心他人的成长和发展。你能够创造和谐的氛围，让每个人都感到被重视。",
+        traits: ["有魅力", "同理心强", "领导力", "可靠", "热情"],
+        careers: "培训师、人力资源总监、销售经理、公关专家、政治家、教练",
+        img: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&h=400&fit=crop"
+      },
+      "ENFP": {
+        title: "竞选者",
+        subtitle: "热情自由的灵魂",
+        desc: "你充满活力、热情洋溢，总是看到可能性。创意十足，善于建立联系，喜欢探索新事物。你感染力强，能为周围人带来正能量。",
+        traits: ["热情洋溢", "创意十足", "善于社交", "乐观", "适应力强"],
+        careers: "市场营销、记者、演员、顾问、创业者、活动策划",
+        img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
+      },
+      "ISTJ": {
+        title: "检查员",
+        subtitle: "务实可靠的组织者",
+        desc: "你务实、可靠、注重细节。重视传统和秩序，做事有条理、负责任。你是团队中值得信赖的基石，言出必行，说到做到。",
+        traits: ["可靠", "务实", "有条理", "负责任", "注重细节"],
+        careers: "会计师、审计师、项目经理、公务员、军官、质量控制专家",
+        img: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&h=400&fit=crop"
+      },
+      "ISFJ": {
+        title: "守护者",
+        subtitle: "温暖专注的保护者",
+        desc: "你安静、友善、有责任感。善于观察他人的需求，默默付出。你重视和谐与稳定，是值得信赖的朋友和伙伴。",
+        traits: ["温暖", "有责任感", "耐心", "细心", "忠诚"],
+        careers: "护士、教师、行政助理、社工、图书管理员、客户服务",
+        img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&h=400&fit=crop"
+      },
+      "ESTJ": {
+        title: "总经理",
+        subtitle: "高效务实的管理者",
+        desc: "你务实、果断、善于组织。重视效率、规则和结果，是天生的管理者。你能够快速做出决策，并确保事情按计划执行。",
+        traits: ["务实", "果断", "有组织能力", "直接", "负责"],
+        careers: "企业管理者、军官、法官、项目经理、财务总监、运营总监",
+        img: "https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=400&h=400&fit=crop"
+      },
+      "ESFJ": {
+        title: "执政官",
+        subtitle: "热心助人的合作者",
+        desc: "你友善、热心、善于合作。重视和谐与人际关系，乐于帮助他人。你有很强的责任感，是团队中不可或缺的协调者。",
+        traits: ["热心", "善于合作", "有责任感", "忠诚", "善于组织"],
+        careers: "人力资源、客户服务、销售、护士、教师、活动策划",
+        img: "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=400&h=400&fit=crop"
+      },
+      "ISTP": {
+        title: "鉴赏家",
+        subtitle: "冷静的实验者",
+        desc: "你理性、务实、善于分析问题。喜欢动手操作，对事物的工作原理充满好奇。你适应力强，能够在危机中保持冷静。",
+        traits: ["理性", "务实", "灵活", "善于分析", "独立"],
+        careers: "工程师、技术员、飞行员、法医、运动员、系统分析师",
+        img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop"
+      },
+      "ISFP": {
+        title: "探险家",
+        subtitle: "灵活的艺术家",
+        desc: "你温和、敏感、富有艺术气质。活在当下，享受生活中的美好。你有独特的审美，善于用创意表达自己。",
+        traits: ["温和", "有艺术气质", "灵活", "敏感", "谦逊"],
+        careers: "设计师、艺术家、音乐家、厨师、摄影师、兽医",
+        img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=400&h=400&fit=crop"
+      },
+      "ESTP": {
+        title: "企业家",
+        subtitle: "活力四射的实干家",
+        desc: "你精力充沛、务实、喜欢冒险。善于抓住机会，行动力强。你活在当下，享受刺激和挑战，是天生的问题解决者。",
+        traits: ["精力充沛", "务实", "敢于冒险", "观察力强", "直接"],
+        careers: "销售、创业者、急救人员、运动员、营销专家、交易员",
+        img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop"
+      },
+      "ESFP": {
+        title: "表演者",
+        subtitle: "自发热情的娱乐家",
+        desc: "你热情、友好、喜欢成为焦点。热爱生活，善于让周围的人开心。你灵活、务实，能够轻松适应不同的社交场合。",
+        traits: ["热情", "友好", "自发", "务实", "观察力强"],
+        careers: "演员、主持人、销售、公关、活动策划、旅游顾问",
+        img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop"
+      }
+    };
+
+    let currentQ = 0;
+    let answers = [];
+
+    function renderQuestion() {
+      const q = questions[currentQ];
+      document.getElementById('q-num').textContent = String(currentQ + 1).padStart(2, '0');
+      document.getElementById('q-text').textContent = q.text;
+      document.getElementById('current').textContent = currentQ + 1;
+      document.getElementById('progress').style.width = ((currentQ + 1) / 20 * 100) + '%';
+      
+      const optionsDiv = document.getElementById('options');
+      optionsDiv.innerHTML = q.options.map((opt, i) => `
+        <div class="option ${answers[currentQ] === i ? 'selected' : ''}" onclick="selectOption(${i})">
+          <div class="option-radio"></div>
+          <div class="option-text">${opt}</div>
+        </div>
+      `).join('');
+      
+      document.getElementById('prev-btn').disabled = currentQ === 0;
+      document.getElementById('next-btn').textContent = currentQ === 19 ? '查看结果' : '下一题';
+      document.getElementById('next-btn').disabled = answers[currentQ] === undefined;
+    }
+
+    function selectOption(idx) {
+      answers[currentQ] = idx;
+      renderQuestion();
+    }
+
+    function nextQuestion() {
+      if (currentQ < 19) {
+        currentQ++;
+        renderQuestion();
+      } else {
+        showResult();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentQ > 0) {
+        currentQ--;
+        renderQuestion();
+      }
+    }
+
+    function showResult() {
+      // 计算分数
+      let scores = { E: 0, I: 0, S: 0, N: 0, T: 0, F: 0, J: 0, P: 0 };
+      
+      questions.forEach((q, i) => {
+        const type = q.type;
+        const ans = answers[i];
+        if (type === 'EI') scores[ans === 0 ? 'E' : 'I']++;
+        if (type === 'SN') scores[ans === 0 ? 'S' : 'N']++;
+        if (type === 'TF') scores[ans === 0 ? 'T' : 'F']++;
+        if (type === 'JP') scores[ans === 0 ? 'J' : 'P']++;
+      });
+      
+      // 确定类型
+      const type = 
+        (scores.E > scores.I ? 'E' : 'I') +
+        (scores.S > scores.N ? 'S' : 'N') +
+        (scores.T > scores.F ? 'T' : 'F') +
+        (scores.J > scores.P ? 'J' : 'P');
+      
+      const p = personalities[type];
+      
+      document.getElementById('result-type').textContent = type;
+      document.getElementById('result-title').textContent = p.title;
+      document.getElementById('result-subtitle').textContent = p.subtitle;
+      document.getElementById('result-img').src = p.img;
+      document.getElementById('result-desc').textContent = p.desc;
+      document.getElementById('careers').textContent = p.careers;
+      
+      const traitsDiv = document.getElementById('traits');
+      traitsDiv.innerHTML = p.traits.map(t => `<span class="trait">${t}</span>`).join('');
+      
+      document.getElementById('quiz-page').style.display = 'none';
+      document.getElementById('result-page').style.display = 'block';
+      document.querySelector('.progress-bar').style.display = 'none';
+      document.querySelector('.progress-text').style.display = 'none';
+    }
+
+    function restart() {
+      currentQ = 0;
+      answers = [];
+      document.getElementById('quiz-page').style.display = 'block';
+      document.getElementById('result-page').style.display = 'none';
+      document.querySelector('.progress-bar').style.display = 'block';
+      document.querySelector('.progress-text').style.display = 'block';
+      renderQuestion();
+    }
+
+    // 初始化
+    renderQuestion();
+  </script>
+</body>
+</html>

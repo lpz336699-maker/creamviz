@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CreamData · HR人力看板</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<style>
+:root {
+  --bg-page: #ECEEF5;
+  --bg-main: #F2F4FA;
+  --bg:      #F2F4FA;
+  --sh-up: 6px 6px 16px #C5CAE0, -6px -6px 16px #FFFFFF;
+  --sh-sm: 3px 3px 8px  #C5CAE0, -3px -3px 8px  #FFFFFF;
+  --sh-in: inset 4px 4px 10px #C5CAE0, inset -4px -4px 10px #FFFFFF;
+  --white: #FFFFFF;
+  --shadow: #C5CAE0;
+  --t1: #0d1f3c;
+  --t2: #253657;
+  --tm: #6278A0;
+  --text-bold: #0d1f3c;
+  --text-main: #253657;
+  --text-sub:  #6278A0;
+  --accent:        #1a56db;
+  --accent-2:      #7c3aed;
+  --accent-light:  rgba(26,86,219,0.10);
+  --accent-2-light:rgba(124,58,237,0.10);
+  --orange:        #ea580c;
+  --orange-light:  rgba(234,88,12,0.10);
+  --green:         #2d7a24;
+  --green-light:   rgba(45,122,36,0.10);
+  --red:           #c0392b;
+  --red-light:     rgba(192,57,43,0.10);
+  --amber:         #b45309;
+  --amber-light:   rgba(180,83,9,0.10);
+  --gap-sm: 10px;
+  --gap-md: 12px;
+  --gap-lg: 20px;
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-body:    'Noto Sans SC', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html {
+  overflow-x: auto;
+}
+body {
+  font-family: var(--font-body);
+  background: var(--bg-page);
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100vh; padding: 28px 0 48px;
+  overflow-x: auto;
+  min-width: 1520px;
+}
+
+.wrap, .global-nav, .page-tab-nav, .page-canvas { width: 1520px; }
+.wrap { display: flex; flex-direction: column; gap: 14px; }
+
+.neu-flat {
+  background: var(--bg); position: relative;
+  box-shadow: var(--sh-up);
+  border-radius: var(--r-lg); padding: 14px 18px;
+}
+.neu-inset { background: var(--bg); box-shadow: var(--sh-in); border-radius: var(--r-md); }
+.neu-raised {
+  background: var(--bg); box-shadow: var(--sh-sm);
+  border-radius: var(--r-sm); padding: 3px 10px; font-weight: 900;
+  color: var(--accent); display: inline-block; font-size: 13px;
+}
+.badge { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 20px; display: inline-block; }
+.badge-accent { background: var(--accent-light); color: var(--accent); }
+.badge-purple { background: var(--accent-2-light); color: var(--accent-2); }
+.badge-green  { background: var(--green-light);   color: var(--green); }
+.badge-red    { background: var(--red-light);      color: var(--red); }
+.badge-amber  { background: var(--amber-light);    color: var(--amber); }
+.badge-orange { background: var(--orange-light);   color: var(--orange); }
+
+.rank-tag { width:22px; height:22px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; color:#fff; font-weight:900; margin-right:6px; }
+.rank-gold   { background: linear-gradient(135deg, #FFD700, #B8860B); }
+.rank-silver { background: linear-gradient(135deg, #C0C0C0, #909090); }
+.rank-bronze { background: linear-gradient(135deg, #CD7F32, #8B4513); }
+.rank-normal { background: var(--shadow); color: var(--tm); }
+
+[contenteditable="true"] { cursor: text; outline: none; border-radius: 4px; transition: background .2s; }
+[contenteditable="true"]:hover { background: rgba(26,86,219,0.05); }
+[contenteditable="true"]:focus { background: rgba(26,86,219,0.08); box-shadow: 0 0 0 2px rgba(26,86,219,0.2); padding: 2px 5px; }
+
+/* === 导航 === */
+.global-nav {
+  height: 62px; padding: 0 24px;
+  display: flex; justify-content: space-between; align-items: center;
+  position: sticky; top: 16px; z-index: 100;
+}
+.brand { font-family: var(--font-display); font-size: 20px; font-weight: 800; color: var(--t1); }
+.nav-right { display:flex; gap:8px; align-items:center; }
+.nav-btn { padding: 8px 18px; border: none; border-radius: var(--r-sm); font-weight: 800; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--tm); box-shadow: var(--sh-sm); transition: .2s; }
+.nav-btn.active { color: var(--accent); box-shadow: var(--sh-in); }
+.btn { padding: 8px 16px; border: none; border-radius: var(--r-sm); font-weight: 800; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--tm); box-shadow: var(--sh-sm); transition:.2s; font-family: var(--font-body); }
+.btn:hover { color: var(--accent); }
+.btn-primary { background: var(--accent); color: #fff !important; }
+
+/* === 页面 Tab 导航 === */
+.page-tab-nav {
+  display: flex; gap: 8px; align-items: center;
+  padding: 6px 10px;
+  background: var(--bg); border-radius: var(--r-lg);
+  box-shadow: var(--sh-up);
+  width: 1520px;
+}
+.page-tab { padding: 9px 26px; border: none; border-radius: var(--r-sm); font-weight: 800; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--tm); box-shadow: var(--sh-sm); transition: .2s; font-family: var(--font-body); }
+.page-tab.active { color: var(--accent); box-shadow: var(--sh-in); background: var(--accent-light); }
+
+/* === 视图切换 === */
+.view { display: none; }
+.view.active { display: block; }
+
+/* === 画布 === */
+.page-canvas {
+  min-height: 855px; height: auto;
+  padding: 14px 18px 20px;
+  display: flex; flex-direction: column;
+  gap: var(--gap-md);
+  overflow: visible;
+  position: relative;
+  background: var(--bg);
+  box-shadow: var(--sh-up);
+  border-radius: var(--r-xl);
+}
+.page-badge {
+  position: absolute; top: 14px; right: 20px;
+  font-size: 11px; font-weight: 700; color: var(--tm);
+  background: var(--bg); box-shadow: var(--sh-sm);
+  border-radius: 20px; padding: 3px 12px;
+}
+
+/* === 行布局 === */
+.row { display: flex; gap: var(--gap-md); align-items: stretch; }
+.col-1 { flex: 1; }
+.col-2 { flex: 2; }
+.col-3 { flex: 3; }
+
+/* === KPI卡片 === */
+.kpi-card {
+  flex: 1;
+  background: var(--bg); box-shadow: var(--sh-up);
+  border-radius: var(--r-lg); padding: 16px 20px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.kpi-label { font-size: 13px; font-weight: 900; color: var(--tm); }
+.kpi-num { font-family: var(--font-display); font-size: 2.8rem; font-weight: 700; line-height: 1; }
+.kpi-sub { font-size: 12px; font-weight: 700; color: var(--tm); margin-top: 4px; }
+.kpi-bar { height: 4px; border-radius: 2px; background: var(--shadow); margin-top: 6px; overflow: visible; }
+.kpi-bar-fill { height: 100%; border-radius: 2px; }
+
+/* === 内容卡片 === */
+.card {
+  background: var(--bg); box-shadow: var(--sh-up);
+  border-radius: var(--r-lg); padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 10px;
+  height: auto;
+}
+.card-title { font-size: 14px; font-weight: 900; color: var(--t1); display: flex; align-items: center; gap: 8px; }
+.card-title-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); display: inline-block; }
+
+/* === 图表容器 === */
+.chart-box { border-radius: var(--r-md); box-shadow: var(--sh-in); background: var(--bg); padding: 6px; overflow: visible; }
+
+/* === 进度条 === */
+.progress-row { display: flex; flex-direction: column; gap: 8px; }
+.progress-item { display: flex; flex-direction: column; gap: 4px; }
+.progress-meta { display: flex; justify-content: space-between; align-items: center; }
+.progress-label { font-size: 13px; font-weight: 700; color: var(--t2); }
+.progress-val { font-size: 13px; font-weight: 900; color: var(--t1); }
+.progress-track { height: 8px; border-radius: 4px; background: var(--shadow); overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+/* === 表格 === */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { font-size: 12px; font-weight: 900; color: var(--tm); text-align: left; padding: 7px 10px; border-bottom: 2px solid var(--shadow); }
+.data-table td { font-weight: 700; color: var(--t2); padding: 8px 10px; border-bottom: 1px solid rgba(197,202,224,0.4); }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(26,86,219,0.03); border-radius: 4px; }
+
+/* === 时间轴/漏斗 === */
+.funnel-row { display: flex; flex-direction: column; gap: 8px; }
+.funnel-item { display: flex; align-items: center; gap: 10px; }
+.funnel-bar-wrap { flex: 1; }
+
+/* === 数据中心 === */
+#view-data { padding: 20px; background: var(--bg); border-radius: var(--r-xl); box-shadow: var(--sh-up); }
+.data-section { margin-bottom: 32px; }
+.data-section-title { font-size: 16px; font-weight: 900; color: var(--t1); margin-bottom: 12px; }
+.data-input-row { display: flex; gap: 8px; margin-bottom: 10px; align-items: center; flex-wrap: wrap; }
+.data-input { padding: 7px 12px; border-radius: var(--r-sm); border: none; box-shadow: var(--sh-in); background: var(--bg); font-family: var(--font-body); font-size: 13px; font-weight: 700; color: var(--t1); outline: none; width: 140px; }
+.data-input:focus { box-shadow: var(--sh-in), 0 0 0 2px rgba(26,86,219,0.2); }
+.data-btn { padding: 7px 14px; border: none; border-radius: var(--r-sm); font-weight: 800; font-size: 13px; cursor: pointer; box-shadow: var(--sh-sm); background: var(--bg); color: var(--tm); font-family: var(--font-body); transition:.2s; }
+.data-btn:hover { color: var(--accent); }
+.data-btn.primary { background: var(--accent); color: #fff; }
+.full-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+.full-table th { font-size: 12px; font-weight: 900; color: var(--tm); text-align: left; padding: 8px 12px; background: rgba(26,86,219,0.05); border-radius: 4px; }
+.full-table td { font-weight: 700; color: var(--t2); padding: 9px 12px; border-bottom: 1px solid rgba(197,202,224,0.3); }
+.full-table tr:hover td { background: rgba(26,86,219,0.04); }
+.rc { cursor: pointer; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- 全局导航 -->
+<nav class="global-nav neu-flat">
+  <div class="brand">Cream<span style="color:var(--accent)">Data.</span> <span style="font-size:13px;font-weight:700;color:var(--tm);margin-left:8px;" contenteditable="true" id="meta-company">某科技有限公司</span> · <span style="font-size:13px;font-weight:700;color:var(--tm);" contenteditable="true" id="meta-period">2025年度 HR人力看板</span></div>
+  <div class="nav-right">
+    <button class="nav-btn active" id="b-dashboard" onclick="switchView('dashboard')">📊 可视化看板</button>
+    <button class="nav-btn" id="b-data" onclick="switchView('data')">📋 数据中心</button>
+    <button class="btn" onclick="exportPNG()">🖼️ 导出 PNG</button>
+    <button class="btn btn-primary" onclick="saveAll()">💾 存档</button>
+  </div>
+</nav>
+
+<!-- 页面 Tab 导航 -->
+<div class="page-tab-nav">
+  <button class="page-tab active" id="tab-p1" onclick="switchPage('p1')">👥 人员总览</button>
+  <button class="page-tab" id="tab-p2" onclick="switchPage('p2')">🎯 招聘分析</button>
+  <button class="page-tab" id="tab-p3" onclick="switchPage('p3')">⭐ 绩效分析</button>
+</div>
+
+<!-- 看板视图 -->
+<div class="view active" id="view-dashboard">
+
+<!-- P1 人员总览 -->
+<div class="page-canvas" id="page-p1" style="display:flex;">
+  <div class="page-badge">P1 · 人员总览</div>
+
+  <!-- KPI 行 -->
+  <div class="row">
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">在职总人数</div>
+      <div class="kpi-num" style="color:var(--accent)" id="kpi-total" contenteditable="true" spellcheck="false" onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v)){state.kpi.total=v;refreshDashboard();}})(this)">−</div>
+      <div class="kpi-sub">较去年同期 <span class="badge badge-green">+12%</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">本月入职</div>
+      <div class="kpi-num" style="color:var(--green)" id="kpi-join" contenteditable="true" spellcheck="false" onblur="(function(el){var t=el.innerText.replace(/[^0-9]/g,'');var v=parseInt(t);if(!isNaN(v)){state.kpi.join=v;refreshDashboard();}})(this)">−</div>
+      <div class="kpi-sub">本月离职 <span style="color:var(--red);font-weight:900;" id="kpi-leave-inline" contenteditable="true" spellcheck="false" onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v)){state.kpi.leave=v;refreshDashboard();}})(this)">−</span> 人</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">整体离职率</div>
+      <div class="kpi-num" style="color:var(--orange)" id="kpi-turnover" contenteditable="true" spellcheck="false" onblur="(function(el){state.kpi.turnoverPct=el.innerText.trim();refreshDashboard();})(this)">−</div>
+      <div class="kpi-sub">行业均值 <span class="badge badge-amber">8.5%</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">平均司龄（年）</div>
+      <div class="kpi-num" style="color:var(--accent-2)" id="kpi-tenure" contenteditable="true" spellcheck="false" onblur="(function(el){state.kpi.tenure=el.innerText.trim();refreshDashboard();})(this)">−</div>
+      <div class="kpi-sub">满意度指数 <span class="badge badge-accent" id="kpi-satisfaction-badge" contenteditable="true" spellcheck="false" onblur="(function(el){state.kpi.satisfaction=el.innerText.trim();refreshDashboard();})(this)">−</span></div>
+    </div>
+  </div>
+
+  <!-- 第二行：部门分布 + 性别 + 年龄 + 学历 各独立卡片 -->
+  <div class="row">
+    <!-- 部门人员分布 -->
+    <div class="card col-2">
+      <div class="card-title"><span class="card-title-dot"></span><span contenteditable="true">部门人员分布</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-dept" style="height:100%;"></div></div>
+    </div>
+    <!-- 性别结构 -->
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--accent-2)"></span><span contenteditable="true">性别结构</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-gender" style="height:100%;"></div></div>
+    </div>
+    <!-- 年龄分布 -->
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--orange)"></span><span contenteditable="true">年龄分布</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-age" style="height:100%;"></div></div>
+    </div>
+    <!-- 学历结构 -->
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--green)"></span><span contenteditable="true">学历结构</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-edu" style="height:100%;"></div></div>
+    </div>
+  </div>
+
+  <!-- 第三行 -->
+  <div class="row">
+    <!-- 人员增减趋势 -->
+    <div class="card col-2">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--green)"></span><span contenteditable="true">近12月人员增减趋势</span></div>
+      <div class="chart-box" style="height:200px;"><div id="chart-trend" style="height:100%;"></div></div>
+    </div>
+    <!-- 部门离职率 Top5 -->
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--red)"></span><span contenteditable="true">部门离职率 TOP5</span></div>
+      <div class="progress-row" id="dept-turnover-list" style="margin-top:4px;"></div>
+    </div>
+    <!-- 司龄分布 -->
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--accent-2)"></span><span contenteditable="true">司龄分布</span></div>
+      <div class="chart-box" style="height:200px;"><div id="chart-tenure-dist" style="height:100%;"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- P2 招聘漏斗 -->
+<div class="page-canvas" id="page-p2" style="display:none;">
+  <div class="page-badge">P2 · 招聘分析</div>
+
+  <!-- KPI -->
+  <div class="row">
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">本季度招聘需求</div>
+      <div class="kpi-num" style="color:var(--accent)" id="p2kpi-recruit" contenteditable="true" spellcheck="false" onblur="(function(el){state.p2kpi.recruit=el.innerText.trim();markDirty();})(this)">68人</div>
+      <div class="kpi-sub"><span class="badge badge-accent">已完成 79%</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">简历投递量</div>
+      <div class="kpi-num" style="color:var(--accent-2)" id="p2kpi-resume" contenteditable="true" spellcheck="false" onblur="(function(el){state.p2kpi.resume=el.innerText.trim();markDirty();})(this)">2,348</div>
+      <div class="kpi-sub">较上季度 <span class="badge badge-green">+18%</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">平均招聘周期</div>
+      <div class="kpi-num" style="color:var(--orange)" id="p2kpi-cycle" contenteditable="true" spellcheck="false" onblur="(function(el){state.p2kpi.cycle=el.innerText.trim();markDirty();})(this)">23天</div>
+      <div class="kpi-sub">目标 ≤ 20天 <span class="badge badge-amber">超期</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">Offer 接受率</div>
+      <div class="kpi-num" style="color:var(--green)" id="p2kpi-offer" contenteditable="true" spellcheck="false" onblur="(function(el){state.p2kpi.offerRate=el.innerText.trim();markDirty();})(this)">82%</div>
+      <div class="kpi-sub">较上季度 <span class="badge badge-green">+5pp</span></div>
+    </div>
+  </div>
+
+  <!-- 招聘漏斗 + 渠道分析 + 岗位类型 -->
+  <div class="row" style="flex:1;">
+    <div class="card col-2">
+      <div class="card-title"><span class="card-title-dot"></span><span contenteditable="true">招聘漏斗转化率</span></div>
+      <div class="chart-box" style="height:280px;"><div id="chart-funnel" style="height:100%;"></div></div>
+    </div>
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--accent-2)"></span><span contenteditable="true">招聘渠道来源</span></div>
+      <div class="chart-box" style="height:280px;"><div id="chart-channel" style="height:100%;"></div></div>
+    </div>
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--orange)"></span><span contenteditable="true">岗位类型分布</span></div>
+      <div class="chart-box" style="height:280px;"><div id="chart-jobtype" style="height:100%;"></div></div>
+    </div>
+  </div>
+
+  <!-- 招聘进度表 -->
+  <div class="card">
+    <div class="card-title"><span class="card-title-dot" style="background:var(--green)"></span><span contenteditable="true">各部门招聘进度</span></div>
+    <table class="data-table">
+      <thead><tr>
+        <th contenteditable="true">部门</th>
+        <th contenteditable="true">需求人数</th>
+        <th contenteditable="true">已录用</th>
+        <th contenteditable="true">进行中</th>
+        <th contenteditable="true">完成率</th>
+        <th contenteditable="true">状态</th>
+      </tr></thead>
+      <tbody id="recruit-table-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- P3 绩效分析 -->
+<div class="page-canvas" id="page-p3" style="display:none;">
+  <div class="page-badge">P3 · 绩效分析</div>
+
+  <!-- KPI -->
+  <div class="row">
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">参评覆盖率</div>
+      <div class="kpi-num" style="color:var(--accent)" id="p3kpi-coverage" contenteditable="true" spellcheck="false" onblur="(function(el){state.p3kpi.coverage=el.innerText.trim();markDirty();})(this)">96%</div>
+      <div class="kpi-sub"><span class="badge badge-green">优秀</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">A/S级占比</div>
+      <div class="kpi-num" style="color:var(--green)" id="p3kpi-high" contenteditable="true" spellcheck="false" onblur="(function(el){state.p3kpi.highPct=el.innerText.trim();markDirty();})(this)">28%</div>
+      <div class="kpi-sub">较上期 <span class="badge badge-green">+3pp</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">C/D级占比</div>
+      <div class="kpi-num" style="color:var(--red)" id="p3kpi-low" contenteditable="true" spellcheck="false" onblur="(function(el){state.p3kpi.lowPct=el.innerText.trim();markDirty();})(this)">8%</div>
+      <div class="kpi-sub">较上期 <span class="badge badge-amber">-1pp</span></div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label" contenteditable="true">培训完成率</div>
+      <div class="kpi-num" style="color:var(--accent-2)" id="p3kpi-train" contenteditable="true" spellcheck="false" onblur="(function(el){state.p3kpi.trainPct=el.innerText.trim();markDirty();})(this)">88%</div>
+      <div class="kpi-sub">人均培训 <span class="badge badge-purple">32学时</span></div>
+    </div>
+  </div>
+
+  <!-- 绩效分布 + 各部门均分 -->
+  <div class="row">
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot"></span><span contenteditable="true">绩效等级分布</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-perf-dist" style="height:100%;"></div></div>
+    </div>
+    <div class="card col-2">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--accent-2)"></span><span contenteditable="true">各部门绩效均分对比</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-perf-dept" style="height:100%;"></div></div>
+    </div>
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--orange)"></span><span contenteditable="true">绩效与薪资相关性</span></div>
+      <div class="chart-box" style="height:260px;"><div id="chart-perf-salary" style="height:100%;"></div></div>
+    </div>
+  </div>
+
+  <!-- 绩效趋势 + 晋升情况 -->
+  <div class="row">
+    <div class="card col-2">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--green)"></span><span contenteditable="true">近4季度绩效趋势</span></div>
+      <div class="chart-box" style="height:200px;"><div id="chart-perf-trend" style="height:100%;"></div></div>
+    </div>
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--red)"></span><span contenteditable="true">晋升与调薪情况</span></div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-sm);">
+          <span style="font-size:13px;font-weight:700;color:var(--t2);">晋升人数</span>
+          <span style="font-family:var(--font-display);font-size:1.8rem;color:var(--green);font-weight:700;">34</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-sm);">
+          <span style="font-size:13px;font-weight:700;color:var(--t2);">平均涨薪幅度</span>
+          <span style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent);font-weight:700;">12.3%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-sm);">
+          <span style="font-size:13px;font-weight:700;color:var(--t2);">调薪覆盖率</span>
+          <span style="font-family:var(--font-display);font-size:1.8rem;color:var(--accent-2);font-weight:700;">41%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-sm);">
+          <span style="font-size:13px;font-weight:700;color:var(--t2);">高潜人才占比</span>
+          <span style="font-family:var(--font-display);font-size:1.8rem;color:var(--orange);font-weight:700;">15%</span>
+        </div>
+      </div>
+    </div>
+    <div class="card col-1">
+      <div class="card-title"><span class="card-title-dot" style="background:var(--accent)"></span><span contenteditable="true">培训完成率 · 部门</span></div>
+      <div class="progress-row" id="training-progress" style="margin-top:4px;"></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /view-dashboard -->
+
+<!-- 数据中心 -->
+<div class="view" id="view-data">
+  <div style="font-size:18px;font-weight:900;color:var(--t1);margin-bottom:20px;">📋 数据中心</div>
+
+  <!-- 刷新提示 -->
+  <div id="refresh-tip" style="display:none;padding:10px 18px;background:var(--amber-light);border-radius:var(--r-md);color:var(--amber);font-weight:700;font-size:13px;margin-bottom:16px;">
+    ⚠️ 数据已修改，点击 <button class="data-btn primary" onclick="refreshDashboard()" style="margin:0 6px;">🔄 刷新看板</button> 使图表更新生效
+  </div>
+
+  <!-- KPI 数据 -->
+  <div class="data-section">
+    <div class="data-section-title">📊 KPI 核心指标</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+      <div><label style="font-size:12px;font-weight:700;color:var(--tm);">在职总人数</label><input class="data-input" id="kpi-inp-total" style="width:100%;margin-top:4px;" onchange="markDirty()"></div>
+      <div><label style="font-size:12px;font-weight:700;color:var(--tm);">本月入职</label><input class="data-input" id="kpi-inp-join" style="width:100%;margin-top:4px;" onchange="markDirty()"></div>
+      <div><label style="font-size:12px;font-weight:700;color:var(--tm);">本月离职</label><input class="data-input" id="kpi-inp-leave" style="width:100%;margin-top:4px;" onchange="markDirty()"></div>
+      <div><label style="font-size:12px;font-weight:700;color:var(--tm);">整体离职率</label><input class="data-input" id="kpi-inp-turnover" style="width:100%;margin-top:4px;" onchange="markDirty()"></div>
+      <div><label style="font-size:12px;font-weight:700;color:var(--tm);">平均司龄（年）</label><input class="data-input" id="kpi-inp-tenure" style="width:100%;margin-top:4px;" onchange="markDirty()"></div>
+      <div><label style="font-size:12px;font-weight:700;color:var(--tm);">满意度</label><input class="data-input" id="kpi-inp-satisfaction" style="width:100%;margin-top:4px;" onchange="markDirty()"></div>
+    </div>
+  </div>
+
+  <!-- 部门人员数据 -->
+  <div class="data-section">
+    <div class="data-section-title">🏢 部门人员数据</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-dept-name" placeholder="部门名称" style="width:120px;">
+      <input class="data-input" id="inp-dept-count" placeholder="人数" type="number" style="width:90px;">
+      <input class="data-input" id="inp-dept-tr" placeholder="离职率%" type="number" step="0.1" style="width:100px;">
+      <button class="data-btn primary" onclick="addDept()">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('dept')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('dept',['部门名称','人数','离职率%'])">📥 导出</button>
+      <input type="file" id="csv-dept" accept=".csv" style="display:none" onchange="importCSV(this,'dept',["name", "count", "tr"])"><button class="data-btn" onclick="document.getElementById('csv-dept').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">部门名称</th><th contenteditable="true">人数</th><th contenteditable="true">离职率%</th></tr></thead><tbody id="full-dept-table"></tbody></table>
+  </div>
+
+  <!-- 性别结构 -->
+  <div class="data-section">
+    <div class="data-section-title">⚧ 性别结构</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-gender-name" placeholder="性别" style="width:100px;">
+      <input class="data-input" id="inp-gender-value" placeholder="人数" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('gender')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('gender')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('gender',['性别','人数'])">📥 导出</button>
+      <input type="file" id="csv-gender" accept=".csv" style="display:none" onchange="importCSV(this,'gender',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-gender').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">性别</th><th contenteditable="true">人数</th></tr></thead><tbody id="full-gender-table"></tbody></table>
+  </div>
+
+  <!-- 年龄分布 -->
+  <div class="data-section">
+    <div class="data-section-title">🎂 年龄分布</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-age-name" placeholder="年龄段" style="width:110px;">
+      <input class="data-input" id="inp-age-value" placeholder="人数" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('age')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('age')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('age',['年龄段','人数'])">📥 导出</button>
+      <input type="file" id="csv-age" accept=".csv" style="display:none" onchange="importCSV(this,'age',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-age').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">年龄段</th><th contenteditable="true">人数</th></tr></thead><tbody id="full-age-table"></tbody></table>
+  </div>
+
+  <!-- 学历结构 -->
+  <div class="data-section">
+    <div class="data-section-title">🎓 学历结构</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-edu-name" placeholder="学历" style="width:100px;">
+      <input class="data-input" id="inp-edu-value" placeholder="人数" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('edu')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('edu')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('edu',['学历','人数'])">📥 导出</button>
+      <input type="file" id="csv-edu" accept=".csv" style="display:none" onchange="importCSV(this,'edu',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-edu').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">学历</th><th contenteditable="true">人数</th></tr></thead><tbody id="full-edu-table"></tbody></table>
+  </div>
+
+  <!-- 司龄分布 -->
+  <div class="data-section">
+    <div class="data-section-title">📅 司龄分布</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-tenure-name" placeholder="司龄段" style="width:110px;">
+      <input class="data-input" id="inp-tenure-value" placeholder="人数" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('tenureDist')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('tenureDist')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('tenureDist',['司龄段','人数'])">📥 导出</button>
+      <input type="file" id="csv-tenure" accept=".csv" style="display:none" onchange="importCSV(this,'tenureDist',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-tenure').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">司龄段</th><th contenteditable="true">人数</th></tr></thead><tbody id="full-tenureDist-table"></tbody></table>
+  </div>
+
+  <!-- 月度入离职趋势 -->
+  <div class="data-section">
+    <div class="data-section-title">📈 月度入离职趋势</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-trend-month" placeholder="月份" style="width:80px;">
+      <input class="data-input" id="inp-trend-join" placeholder="入职" type="number" style="width:80px;">
+      <input class="data-input" id="inp-trend-leave" placeholder="离职" type="number" style="width:80px;">
+      <button class="data-btn primary" onclick="addTrendRow()">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('trend_flat')">🗑 删除选中</button>
+      <button class="data-btn" onclick="exportTrendCSV()">📥 导出</button>
+      <input type="file" id="csv-trend" accept=".csv" style="display:none" onchange="importCSV(this,'trend_flat',["month", "join", "leave"])"><button class="data-btn" onclick="document.getElementById('csv-trend').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">月份</th><th contenteditable="true">入职</th><th contenteditable="true">离职</th></tr></thead><tbody id="full-trend-table"></tbody></table>
+  </div>
+
+  <!-- 招聘渠道来源 -->
+  <div class="data-section">
+    <div class="data-section-title">📡 招聘渠道来源</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-channel-name" placeholder="渠道名称" style="width:120px;">
+      <input class="data-input" id="inp-channel-value" placeholder="简历量" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('channel')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('channel')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('channel',['渠道名称','简历量'])">📥 导出</button>
+      <input type="file" id="csv-channel" accept=".csv" style="display:none" onchange="importCSV(this,'channel',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-channel').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">渠道名称</th><th contenteditable="true">简历量</th></tr></thead><tbody id="full-channel-table"></tbody></table>
+  </div>
+
+  <!-- 招聘漏斗 -->
+  <div class="data-section">
+    <div class="data-section-title">🔽 招聘漏斗</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-funnel-name" placeholder="阶段名称" style="width:120px;">
+      <input class="data-input" id="inp-funnel-value" placeholder="人数" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('funnel')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('funnel')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('funnel',['阶段名称','人数'])">📥 导出</button>
+      <input type="file" id="csv-funnel" accept=".csv" style="display:none" onchange="importCSV(this,'funnel',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-funnel').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">阶段名称</th><th contenteditable="true">人数</th></tr></thead><tbody id="full-funnel-table"></tbody></table>
+  </div>
+
+  <!-- 岗位类型 -->
+  <div class="data-section">
+    <div class="data-section-title">💼 岗位类型分布</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-jobtype-name" placeholder="岗位类型" style="width:120px;">
+      <input class="data-input" id="inp-jobtype-value" placeholder="占比%" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('jobtype')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('jobtype')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('jobtype',['岗位类型','占比%'])">📥 导出</button>
+      <input type="file" id="csv-jobtype" accept=".csv" style="display:none" onchange="importCSV(this,'jobtype',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-jobtype').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">岗位类型</th><th contenteditable="true">占比%</th></tr></thead><tbody id="full-jobtype-table"></tbody></table>
+  </div>
+
+  <!-- 招聘进度 -->
+  <div class="data-section">
+    <div class="data-section-title">🎯 各部门招聘进度</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-recruit-dept" placeholder="部门" style="width:110px;">
+      <input class="data-input" id="inp-recruit-need" placeholder="需求数" type="number" style="width:80px;">
+      <input class="data-input" id="inp-recruit-hired" placeholder="已录用" type="number" style="width:80px;">
+      <input class="data-input" id="inp-recruit-ongoing" placeholder="进行中" type="number" style="width:80px;">
+      <button class="data-btn primary" onclick="addRecruitRow()">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('recruitProgress')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('recruitProgress',['部门','需求数','已录用','进行中'])">📥 导出</button>
+      <input type="file" id="csv-recruit" accept=".csv" style="display:none" onchange="importCSV(this,'recruitProgress',["dept", "need", "hired", "ongoing"])"><button class="data-btn" onclick="document.getElementById('csv-recruit').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">部门</th><th contenteditable="true">需求数</th><th contenteditable="true">已录用</th><th contenteditable="true">进行中</th></tr></thead><tbody id="full-recruitProgress-table"></tbody></table>
+  </div>
+
+  <!-- 绩效等级分布 -->
+  <div class="data-section">
+    <div class="data-section-title">⭐ 绩效等级分布</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-perf-name" placeholder="等级" style="width:80px;">
+      <input class="data-input" id="inp-perf-value" placeholder="占比%" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('perfDist')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('perfDist')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('perfDist',['等级','占比%'])">📥 导出</button>
+      <input type="file" id="csv-perf" accept=".csv" style="display:none" onchange="importCSV(this,'perfDist',["name", "value"])"><button class="data-btn" onclick="document.getElementById('csv-perf').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">等级</th><th contenteditable="true">占比%</th></tr></thead><tbody id="full-perfDist-table"></tbody></table>
+  </div>
+
+  <!-- 部门绩效均分 -->
+  <div class="data-section">
+    <div class="data-section-title">🏆 部门绩效均分</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-perfdept-name" placeholder="部门" style="width:110px;">
+      <input class="data-input" id="inp-perfdept-score" placeholder="均分" type="number" step="0.1" style="width:90px;">
+      <button class="data-btn primary" onclick="addPerfDeptRow()">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('perfDept_flat')">🗑 删除选中</button>
+      <button class="data-btn" onclick="exportPerfDeptCSV()">📥 导出</button>
+      <input type="file" id="csv-perfdept" accept=".csv" style="display:none" onchange="importCSV(this,'perfDept_flat',["name", "score"])"><button class="data-btn" onclick="document.getElementById('csv-perfdept').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">部门</th><th contenteditable="true">绩效均分</th></tr></thead><tbody id="full-perfDept-table"></tbody></table>
+  </div>
+
+  <!-- 培训完成率 -->
+  <div class="data-section">
+    <div class="data-section-title">📚 培训完成率</div>
+    <div class="data-input-row">
+      <input class="data-input" id="inp-train-dept" placeholder="部门" style="width:110px;">
+      <input class="data-input" id="inp-train-pct" placeholder="完成率%" type="number" style="width:90px;">
+      <button class="data-btn primary" onclick="addRow('training')">+ 添加</button>
+      <button class="data-btn" onclick="deleteRows('training')">🗑 删除选中</button>
+      <button class="data-btn" onclick="doExportCSV('training',['部门','完成率%'])">📥 导出</button>
+      <input type="file" id="csv-training" accept=".csv" style="display:none" onchange="importCSV(this,'training',["dept", "pct"])"><button class="data-btn" onclick="document.getElementById('csv-training').click()">📤 导入</button>
+    </div>
+    <table class="full-table"><thead><tr><th></th><th contenteditable="true">部门</th><th contenteditable="true">完成率%</th></tr></thead><tbody id="full-training-table"></tbody></table>
+  </div>
+
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// =========================================================
+//  APP STATE
+// =========================================================
+const APP_STATE = {
+  meta: { company: "某科技有限公司", period: "2025年度 HR人力看板" },
+  kpi: { total: 1286, join: 48, leave: 22, turnoverPct: "6.8%", tenure: "3.2", satisfaction: "4.1/5" },
+  p2kpi: { recruit: "68人", resume: "2,348", cycle: "23天", offerRate: "82%" },
+  p3kpi: { coverage: "96%", highPct: "28%", lowPct: "8%", trainPct: "88%" },
+  dept: [
+    { name:"技术研发", count:380, tr:5.2 },
+    { name:"产品设计", count:120, tr:7.8 },
+    { name:"销售市场", count:310, tr:12.4 },
+    { name:"运营客服", count:180, tr:9.6 },
+    { name:"财务法务", count:90,  tr:3.1 },
+    { name:"人力行政", count:76,  tr:4.5 },
+    { name:"数据智能", count:130, tr:6.3 },
+  ],
+  gender: [{ name:"男性", value:748 }, { name:"女性", value:538 }],
+  age: [
+    { name:"≤25岁", value:182 },
+    { name:"26-30岁", value:394 },
+    { name:"31-35岁", value:368 },
+    { name:"36-40岁", value:218 },
+    { name:">40岁", value:124 },
+  ],
+  edu: [
+    { name:"博士", value:38 },
+    { name:"硕士", value:276 },
+    { name:"本科", value:712 },
+    { name:"专科", value:198 },
+    { name:"其他", value:62 },
+  ],
+  trend: {
+    months: ["2月","3月","4月","5月","6月","7月","8月","9月","10月","11月","12月","1月"],
+    join:   [32,45,58,40,36,52,48,61,55,44,48,42],
+    leave:  [18,22,30,25,19,27,22,31,28,20,22,19],
+  },
+  tenureDist: [
+    { name:"<1年", value:198 },
+    { name:"1-2年", value:312 },
+    { name:"2-3年", value:286 },
+    { name:"3-5年", value:304 },
+    { name:">5年", value:186 },
+  ],
+  recruitProgress: [
+    { dept:"技术研发", need:24, hired:20, ongoing:4 },
+    { dept:"产品设计", need:8,  hired:8,  ongoing:0 },
+    { dept:"销售市场", need:18, hired:12, ongoing:5 },
+    { dept:"运营客服", need:10, hired:7,  ongoing:3 },
+    { dept:"数据智能", need:8,  hired:7,  ongoing:1 },
+  ],
+  channel: [
+    { name:"Boss直聘", value:832 },
+    { name:"内部推荐", value:448 },
+    { name:"智联招聘", value:380 },
+    { name:"校园招聘", value:426 },
+    { name:"猎头渠道", value:262 },
+  ],
+  jobtype: [
+    { name:"技术类", value:38 },
+    { name:"业务类", value:28 },
+    { name:"管理类", value:10 },
+    { name:"职能类", value:16 },
+    { name:"实习生", value:8 },
+  ],
+  perfDist: [
+    { name:"S级", value:8 },
+    { name:"A级", value:20 },
+    { name:"B级", value:54 },
+    { name:"C级", value:14 },
+    { name:"D级", value:4 },
+  ],
+  perfDept: {
+    depts: ["技术研发","产品设计","销售市场","运营客服","财务法务","数据智能"],
+    scores: [3.8, 3.6, 3.4, 3.7, 3.9, 4.1],
+  },
+  perfTrend: {
+    quarters: ["Q1","Q2","Q3","Q4"],
+    lines: [
+      { name:"技术研发", data:[3.6,3.7,3.8,3.8] },
+      { name:"销售市场", data:[3.2,3.3,3.4,3.4] },
+      { name:"数据智能", data:[3.8,3.9,4.0,4.1] },
+    ]
+  },
+  training: [
+    { dept:"技术研发", pct:92 },
+    { dept:"产品设计", pct:88 },
+    { dept:"销售市场", pct:82 },
+    { dept:"运营客服", pct:95 },
+    { dept:"数据智能", pct:90 },
+  ],
+  funnel: [
+    { name:"简历投递", value:2348 },
+    { name:"简历筛选", value:820  },
+    { name:"初面邀约", value:420  },
+    { name:"终面通过", value:156  },
+    { name:"发放Offer", value:96  },
+    { name:"已入职",   value:79   },
+  ],
+};
+
+let state = JSON.parse(JSON.stringify(APP_STATE));
+
+// =========================================================
+//  COLORS
+// =========================================================
+const COLORS = ['#1a56db','#7c3aed','#c0392b','#ea580c','#0369a1','#be185d','#2d7a24','#b45309'];
+const TT = {
+  backgroundColor:'rgba(10,29,55,0.92)', borderColor:'transparent',
+  textStyle:{ color:'#fff', fontSize:13, fontWeight:700 }, padding:[8,14]
+};
+
+// =========================================================
+//  CHART POOLS
+// =========================================================
+const pools = { dashboard: {}, data: {} };
+let curPool = 'dashboard';
+
+function getChart(id) {
+  if (!pools[curPool][id]) {
+    const el = document.getElementById(id);
+    if (!el) return null;
+    pools[curPool][id] = echarts.init(el);
+  }
+  return pools[curPool][id];
+}
+function destroyPool(p) {
+  Object.values(pools[p] || {}).forEach(c => { try { c.dispose(); } catch(e){} });
+  pools[p] = {};
+}
+
+// =========================================================
+//  VIEW SWITCH
+// =========================================================
+let curPage = 'p1';
+
+function switchView(v) {
+  ['dashboard','data'].forEach(k => {
+    document.getElementById('view-' + k).classList.remove('active');
+    document.getElementById('b-' + k).classList.remove('active');
+  });
+  document.getElementById('view-' + v).classList.add('active');
+  document.getElementById('b-' + v).classList.add('active');
+  curPool = v;
+  setTimeout(() => {
+    if (v === 'dashboard') initPageCharts(curPage);
+    if (v === 'data') renderDataTables();
+  }, 100);
+}
+
+function switchPage(pid) {
+  // 隐藏当前页
+  document.getElementById('page-' + curPage).style.display = 'none';
+  document.getElementById('tab-' + curPage).classList.remove('active');
+  // 显示新页
+  curPage = pid;
+  document.getElementById('page-' + pid).style.display = 'flex';
+  document.getElementById('tab-' + pid).classList.add('active');
+  // 延迟初始化该页图表
+  setTimeout(() => initPageCharts(pid), 100);
+}
+
+// =========================================================
+//  KPI RENDER
+// =========================================================
+function renderKPI() {
+  const k = state.kpi;
+  function safeSet(id, content, isText) {
+    const e = document.getElementById(id);
+    if (!e || document.activeElement === e) return;
+    if (isText) e.textContent = content; else e.innerHTML = content;
+  }
+  safeSet('kpi-total',              k.total.toLocaleString() + '<span style="font-size:1.2rem;font-weight:700"> 人</span>', false);
+  safeSet('kpi-join',               k.join  + '<span style="font-size:1.2rem;font-weight:700"> 人</span>', false);
+  safeSet('kpi-leave-inline',       k.leave, true);
+  safeSet('kpi-turnover',           k.turnoverPct, true);
+  safeSet('kpi-tenure',             k.tenure, true);
+  safeSet('kpi-satisfaction-badge', k.satisfaction, true);
+  // P2 KPI
+  const p2 = state.p2kpi || {};
+  safeSet('p2kpi-recruit', p2.recruit  || '', true);
+  safeSet('p2kpi-resume',  p2.resume   || '', true);
+  safeSet('p2kpi-cycle',   p2.cycle    || '', true);
+  safeSet('p2kpi-offer',   p2.offerRate|| '', true);
+  // P3 KPI
+  const p3 = state.p3kpi || {};
+  safeSet('p3kpi-coverage', p3.coverage || '', true);
+  safeSet('p3kpi-high',     p3.highPct  || '', true);
+  safeSet('p3kpi-low',      p3.lowPct   || '', true);
+  safeSet('p3kpi-train',    p3.trainPct || '', true);
+}
+
+// =========================================================
+//  CHARTS - 按页按需初始化
+// =========================================================
+const _inited = { p1: false, p2: false, p3: false };
+
+function initPageCharts(pid) {
+  if (pid === 'p1') initP1();
+  if (pid === 'p2') initP2();
+  if (pid === 'p3') initP3();
+}
+
+function initP1() {
+  if (_inited.p1) { Object.values(pools[curPool]).forEach(c=>{try{c.resize();}catch(e){}}); return; }
+  _inited.p1 = true;
+  renderKPI();
+  renderDeptTurnoverList();
+
+  // 部门分布
+  const c1 = getChart('chart-dept');
+  if (c1) c1.setOption({
+    tooltip: { trigger:'axis', ...TT },
+    grid:{ left:'2%', right:'14%', top:'4%', bottom:'4%', containLabel:true },
+    xAxis:{ type:'value', axisLine:{show:false}, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    yAxis:{ type:'category', data: state.dept.map(d=>d.name), axisLabel:{ fontWeight:700, fontSize:13, color:'#253657' }, axisTick:{show:false}, axisLine:{show:false} },
+    series:[{ type:'bar', barMaxWidth:22,
+      data: state.dept.map((d,i)=>({ value:d.count, itemStyle:{ color:COLORS[i%COLORS.length], borderRadius:[0,8,8,0] } })),
+      label:{ show:true, position:'right', formatter:p=>`${p.value}人`, fontSize:13, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff' }
+    }]
+  });
+
+  // 性别饼图
+  const c2 = getChart('chart-gender');
+  if (c2) c2.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}人 ({d}%)', ...TT },
+    series:[{ type:'pie', radius:['32%','58%'], center:['50%','50%'],
+      data: state.gender.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[i], borderRadius:6, borderColor:'#F2F4FA', borderWidth:2 } })),
+      label:{ show:true, position:'outside', formatter:'{b}\n{c}人\n{d}%', fontSize:13, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff', alignTo:'labelLine', bleedMargin:5 },
+      labelLine:{ show:true, length:16, length2:12, smooth:true, minTurnAngle:90 },
+      emphasis:{ scale:true, scaleSize:6 }
+    }]
+  });
+
+  // 年龄分布
+  const c3 = getChart('chart-age');
+  if (c3) c3.setOption({
+    tooltip:{ trigger:'axis', ...TT },
+    grid:{ left:'2%', right:'2%', top:'14%', bottom:'6%', containLabel:true },
+    xAxis:{ type:'category', data:state.age.map(d=>d.name), axisLabel:{ fontSize:13, fontWeight:700, color:'#253657' }, axisTick:{show:false}, axisLine:{ lineStyle:{ color:'#D1D9E6' } } },
+    yAxis:{ type:'value', axisLine:{show:false}, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    series:[{ type:'bar', barMaxWidth:40,
+      data:state.age.map((d,i)=>({ value:d.value, itemStyle:{ color:COLORS[(i+2)%COLORS.length], borderRadius:[6,6,0,0] } })),
+      label:{ show:true, position:'top', formatter:p=>`${p.value}人`, fontSize:13, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff' }
+    }]
+  });
+
+  // 学历饼图
+  const c4 = getChart('chart-edu');
+  if (c4) c4.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}人 ({d}%)', ...TT },
+    series:[{ type:'pie', radius:['32%','58%'], center:['50%','52%'],
+      data:state.edu.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[i%COLORS.length], borderRadius:6, borderColor:'#F2F4FA', borderWidth:2 } })),
+      label:{ show:true, position:'outside', formatter:'{b}\n{d}%', fontSize:12, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff', alignTo:'labelLine', bleedMargin:5 },
+      labelLine:{ show:true, length:12, length2:8, smooth:true, minTurnAngle:90 },
+      emphasis:{ scale:true, scaleSize:5 }
+    }]
+  });
+
+  // 趋势折线图
+  const c5 = getChart('chart-trend');
+  if (c5) c5.setOption({
+    tooltip:{ trigger:'axis', ...TT },
+    legend:{ top:'0%', right:'0%', textStyle:{ fontSize:12, fontWeight:700, color:'#253657' }, icon:'circle', itemWidth:8, itemHeight:8 },
+    grid:{ left:'1%', right:'2%', top:'28px', bottom:'4%', containLabel:true },
+    xAxis:{ type:'category', data:state.trend.months, axisLabel:{ fontWeight:700, fontSize:12, color:'#253657' }, axisLine:{ lineStyle:{ color:'#D1D9E6' } }, axisTick:{show:false} },
+    yAxis:{ type:'value', axisLine:{show:false}, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    series:[
+      { name:'入职', type:'line', data:state.trend.join, smooth:true, lineStyle:{ width:3, color:COLORS[0] }, itemStyle:{ color:COLORS[0] }, areaStyle:{ color:COLORS[0]+'14' },
+        label:{ show:true, position:'top', fontSize:11, fontWeight:900, color:COLORS[0], textBorderWidth:2, textBorderColor:'#fff' } },
+      { name:'离职', type:'line', data:state.trend.leave, smooth:true, lineStyle:{ width:3, color:COLORS[2] }, itemStyle:{ color:COLORS[2] }, areaStyle:{ color:COLORS[2]+'14' },
+        label:{ show:true, position:'bottom', fontSize:11, fontWeight:900, color:COLORS[2], textBorderWidth:2, textBorderColor:'#fff' } }
+    ]
+  });
+
+  // 司龄分布
+  const c6 = getChart('chart-tenure-dist');
+  if (c6) c6.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}人 ({d}%)', ...TT },
+    series:[{ type:'pie', radius:['30%','58%'], center:['50%','52%'],
+      data:state.tenureDist.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[i%COLORS.length], borderRadius:5, borderColor:'#F2F4FA', borderWidth:2 } })),
+      label:{ show:true, position:'outside', formatter:'{b}\n{d}%', fontSize:12, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff', alignTo:'labelLine', bleedMargin:5 },
+      labelLine:{ show:true, length:12, length2:8, smooth:true },
+      emphasis:{ scale:true, scaleSize:4 }
+    }]
+  });
+}
+
+function initP2() {
+  if (_inited.p2) { Object.values(pools[curPool]).forEach(c=>{try{c.resize();}catch(e){}}); return; }
+  _inited.p2 = true;
+  renderRecruitTable();
+
+  // 招聘漏斗
+  const c7 = getChart('chart-funnel');
+  if (c7) c7.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}', ...TT },
+    series:[{ type:'funnel', left:'10%', width:'80%', top:'5%', bottom:'5%',
+      data: state.funnel.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[i%COLORS.length] } })),
+      label:{ show:true, position:'inside', formatter:'{b}\n{c}人', fontSize:12, fontWeight:900, color:'#fff' },
+      emphasis:{ label:{ fontSize:14 } }
+    }]
+  });
+
+  // 渠道来源
+  const c8 = getChart('chart-channel');
+  if (c8) c8.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}人 ({d}%)', ...TT },
+    series:[{ type:'pie', radius:['32%','58%'], center:['50%','50%'],
+      data:state.channel.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[i%COLORS.length], borderRadius:6, borderColor:'#F2F4FA', borderWidth:2 } })),
+      label:{ show:true, position:'outside', formatter:'{b}\n{d}%', fontSize:12, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff', alignTo:'labelLine', bleedMargin:5 },
+      labelLine:{ show:true, length:12, length2:8, smooth:true },
+      emphasis:{ scale:true, scaleSize:4 }
+    }]
+  });
+
+  // 岗位类型
+  const c9 = getChart('chart-jobtype');
+  if (c9) c9.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}% ({d}%)', ...TT },
+    series:[{ type:'pie', radius:['32%','58%'], center:['50%','50%'],
+      data:state.jobtype.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[(i+2)%COLORS.length], borderRadius:6, borderColor:'#F2F4FA', borderWidth:2 } })),
+      label:{ show:true, position:'outside', formatter:'{b}\n{d}%', fontSize:12, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff', alignTo:'labelLine', bleedMargin:5 },
+      labelLine:{ show:true, length:12, length2:8, smooth:true },
+      emphasis:{ scale:true, scaleSize:4 }
+    }]
+  });
+}
+
+function initP3() {
+  if (_inited.p3) { Object.values(pools[curPool]).forEach(c=>{try{c.resize();}catch(e){}}); return; }
+  _inited.p3 = true;
+  renderTrainingProgress();
+
+  // 绩效等级分布
+  const c10 = getChart('chart-perf-dist');
+  if (c10) c10.setOption({
+    tooltip:{ trigger:'item', formatter:'{b}: {c}% ({d}%)', ...TT },
+    series:[{ type:'pie', radius:['32%','60%'], center:['50%','50%'],
+      data:state.perfDist.map((d,i)=>({ name:d.name, value:d.value, itemStyle:{ color:COLORS[i%COLORS.length], borderRadius:6, borderColor:'#F2F4FA', borderWidth:2 } })),
+      label:{ show:true, position:'outside', formatter:'{b}\n{d}%', fontSize:12, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff', alignTo:'labelLine', bleedMargin:5 },
+      labelLine:{ show:true, length:12, length2:8, smooth:true },
+      emphasis:{ scale:true, scaleSize:5 }
+    }]
+  });
+
+  // 部门绩效均分
+  const c11 = getChart('chart-perf-dept');
+  if (c11) c11.setOption({
+    tooltip:{ trigger:'axis', ...TT },
+    grid:{ left:'2%', right:'2%', top:'8%', bottom:'4%', containLabel:true },
+    xAxis:{ type:'category', data:state.perfDept.depts, axisLabel:{ fontWeight:700, fontSize:12, color:'#253657' }, axisTick:{show:false}, axisLine:{ lineStyle:{ color:'#D1D9E6' } } },
+    yAxis:{ type:'value', min:3, max:4.5, axisLine:{show:false}, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    series:[{ type:'bar', barMaxWidth:40,
+      data:state.perfDept.scores.map((v,i)=>({ value:v, itemStyle:{ color:COLORS[i%COLORS.length], borderRadius:[6,6,0,0] } })),
+      label:{ show:true, position:'top', formatter:p=>`${p.value}分`, fontSize:12, fontWeight:900, color:'#253657', textBorderWidth:2, textBorderColor:'#fff' }
+    }]
+  });
+
+  // 绩效与薪资
+  const c12 = getChart('chart-perf-salary');
+  const scatterData = [
+    [3.2,12000],[3.5,14500],[3.8,18000],[4.0,22000],[4.2,28000],[3.1,11000],
+    [3.6,16000],[3.9,20000],[4.1,25000],[3.4,13500],[3.7,17500],[4.3,32000],
+    [3.3,12500],[3.8,19000],[4.0,23000],[3.6,15500],[3.5,14000],[4.4,35000],
+  ];
+  if (c12) c12.setOption({
+    tooltip:{ trigger:'item', formatter:p=>`绩效: ${p.data[0]}分<br/>薪资: ${p.data[1].toLocaleString()}元`, ...TT },
+    grid:{ left:'2%', right:'4%', top:'6%', bottom:'6%', containLabel:true },
+    xAxis:{ type:'value', min:3, max:4.5, name:'绩效评分', nameTextStyle:{ fontWeight:700, fontSize:12, color:'#6278A0' }, axisLabel:{ fontWeight:700, fontSize:12, color:'#253657' }, axisLine:{ lineStyle:{ color:'#D1D9E6' } }, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    yAxis:{ type:'value', name:'薪资(元)', nameTextStyle:{ fontWeight:700, fontSize:12, color:'#6278A0' }, axisLine:{show:false}, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    series:[{ type:'scatter', symbolSize:10, data:scatterData, itemStyle:{ color:COLORS[0], opacity:0.7 } }]
+  });
+
+  // 绩效趋势
+  const c13 = getChart('chart-perf-trend');
+  if (c13) c13.setOption({
+    tooltip:{ trigger:'axis', ...TT },
+    legend:{ top:'0%', right:'0%', textStyle:{ fontSize:12, fontWeight:700, color:'#253657' }, icon:'circle', itemWidth:8, itemHeight:8 },
+    grid:{ left:'1%', right:'2%', top:'28px', bottom:'4%', containLabel:true },
+    xAxis:{ type:'category', data:state.perfTrend.quarters, axisLabel:{ fontWeight:700, fontSize:13, color:'#253657' }, axisLine:{ lineStyle:{ color:'#D1D9E6' } }, axisTick:{show:false} },
+    yAxis:{ type:'value', min:3, max:4.5, axisLine:{show:false}, splitLine:{ lineStyle:{ color:'rgba(197,202,224,0.4)', type:'dashed' } } },
+    series: state.perfTrend.lines.map((l,i)=>({
+      name:l.name, type:'line', data:l.data, smooth:true,
+      lineStyle:{ width:3, color:COLORS[i] }, itemStyle:{ color:COLORS[i] }, areaStyle:{ color:COLORS[i]+'14' },
+      label:{ show:true, position:'top', fontSize:11, fontWeight:900, color:COLORS[i], textBorderWidth:2, textBorderColor:'#fff', formatter:p=>`${p.value}分` }
+    }))
+  });
+}
+
+// =========================================================
+//  DEPT TURNOVER LIST
+// =========================================================
+function renderDeptTurnoverList() {
+  const sorted = [...state.dept].sort((a,b)=>b.tr-a.tr).slice(0,5);
+  const maxTr = Math.max(...sorted.map(d=>d.tr));
+  const colors = [COLORS[2], COLORS[3], COLORS[7], COLORS[4], COLORS[6]];
+  document.getElementById('dept-turnover-list').innerHTML = sorted.map((d,i)=>`
+    <div class="progress-item">
+      <div class="progress-meta">
+        <span class="progress-label">${d.name}</span>
+        <span class="progress-val" style="color:${colors[i]}">${d.tr}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${(d.tr/maxTr*100).toFixed(1)}%;background:${colors[i]};"></div>
+      </div>
+    </div>`).join('');
+}
+
+// =========================================================
+//  RECRUIT TABLE
+// =========================================================
+function renderRecruitTable() {
+  document.getElementById('recruit-table-body').innerHTML = state.recruitProgress.map(r => {
+    const pct = Math.round(r.hired / r.need * 100);
+    const badge = pct >= 100 ? '<span class="badge badge-green">完成</span>'
+                : pct >= 70 ? '<span class="badge badge-accent">进行中</span>'
+                : '<span class="badge badge-amber">待推进</span>';
+    return `<tr>
+      <td style="font-weight:900;color:var(--t1)">${r.dept}</td>
+      <td>${r.need}</td>
+      <td style="color:var(--green);font-weight:900">${r.hired}</td>
+      <td style="color:var(--accent)">${r.ongoing}</td>
+      <td><span class="neu-raised" style="color:${pct>=100?'var(--green)':pct>=70?'var(--accent)':'var(--amber)'}">${pct}%</span></td>
+      <td>${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+// =========================================================
+//  TRAINING PROGRESS
+// =========================================================
+function renderTrainingProgress() {
+  const colors = [COLORS[0], COLORS[1], COLORS[3], COLORS[6], COLORS[4]];
+  document.getElementById('training-progress').innerHTML = state.training.map((t,i)=>`
+    <div class="progress-item">
+      <div class="progress-meta">
+        <span class="progress-label">${t.dept}</span>
+        <span class="progress-val" style="color:${colors[i]}">${t.pct}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:${t.pct}%;background:${colors[i]};"></div>
+      </div>
+    </div>`).join('');
+}
+
+// =========================================================
+//  DATA CENTER
+// =========================================================
+let _dirty = false;
+
+function markDirty() {
+  _dirty = true;
+  document.getElementById('refresh-tip').style.display = 'block';
+}
+
+function refreshDashboard() {
+  // 同步KPI输入框→state（仅在值有效时更新）
+  const v = id => document.getElementById(id)?.value ?? '';
+  const ni = (id, fb) => { const n=parseInt(v(id)); return isNaN(n)?fb:n; };
+  state.kpi.total       = ni('kpi-inp-total', state.kpi.total);
+  state.kpi.join        = ni('kpi-inp-join',  state.kpi.join);
+  state.kpi.leave       = ni('kpi-inp-leave', state.kpi.leave);
+  state.kpi.turnoverPct = v('kpi-inp-turnover')  || state.kpi.turnoverPct;
+  state.kpi.tenure      = v('kpi-inp-tenure')    || state.kpi.tenure;
+  state.kpi.satisfaction= v('kpi-inp-satisfaction') || state.kpi.satisfaction;
+
+  // ★ 关键：强制销毁 dashboard pool，不管当前在哪个视图
+  _inited.p1 = false; _inited.p2 = false; _inited.p3 = false;
+  destroyPool('dashboard');
+  pools.dashboard = {};
+
+  // ★ 临时把 curPool 切到 dashboard 去渲染，渲完再切回
+  const savedPool = curPool;
+  curPool = 'dashboard';
+  initPageCharts(curPage);
+  curPool = savedPool;
+
+  const tip = document.getElementById('refresh-tip');
+  if (tip) tip.style.display = 'none';
+  _dirty = false;
+}
+
+function renderDataTables() {
+  // KPI
+  const k = state.kpi;
+  document.getElementById('kpi-inp-total').value       = k.total;
+  document.getElementById('kpi-inp-join').value        = k.join;
+  document.getElementById('kpi-inp-leave').value       = k.leave;
+  document.getElementById('kpi-inp-turnover').value    = k.turnoverPct;
+  document.getElementById('kpi-inp-tenure').value      = k.tenure;
+  document.getElementById('kpi-inp-satisfaction').value= k.satisfaction;
+
+  // ── 通用 {name, value} 表（单元格可直接编辑）──────────────
+  const nameValTables = {
+    gender:     'full-gender-table',
+    age:        'full-age-table',
+    edu:        'full-edu-table',
+    tenureDist: 'full-tenureDist-table',
+    channel:    'full-channel-table',
+    jobtype:    'full-jobtype-table',
+    funnel:     'full-funnel-table',
+    perfDist:   'full-perfDist-table',
+  };
+  Object.entries(nameValTables).forEach(([key, tbId])=>{
+    document.getElementById(tbId).innerHTML = state[key].map((d,i)=>`
+      <tr>
+        <td><input type="checkbox" class="rc" data-key="${key}" data-i="${i}"></td>
+        <td contenteditable="true" spellcheck="false"
+            onblur="(function(el){state['${key}'][${i}].name=el.innerText.trim();refreshDashboard();})(this)">${d.name}</td>
+        <td contenteditable="true" spellcheck="false"
+            onblur="(function(el){var v=parseFloat(el.innerText);if(!isNaN(v))state['${key}'][${i}].value=v;else el.innerText=state['${key}'][${i}].value;refreshDashboard();})(this)">${d.value}</td>
+      </tr>`).join('');
+  });
+
+  // ── 部门人员（3列可编辑）────────────────────────────────
+  document.getElementById('full-dept-table').innerHTML = state.dept.map((d,i)=>`
+    <tr>
+      <td><input type="checkbox" class="rc" data-key="dept" data-i="${i}"></td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){state.dept[${i}].name=el.innerText.trim();refreshDashboard();})(this)">${d.name}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v))state.dept[${i}].count=v;else el.innerText=state.dept[${i}].count;refreshDashboard();})(this)">${d.count}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseFloat(el.innerText);if(!isNaN(v))state.dept[${i}].tr=v;else el.innerText=state.dept[${i}].tr;refreshDashboard();})(this)">${d.tr}</td>
+    </tr>`).join('');
+
+  // ── 月度趋势（3列可编辑）────────────────────────────────
+  document.getElementById('full-trend-table').innerHTML = state.trend.months.map((m,i)=>`
+    <tr>
+      <td><input type="checkbox" class="rc" data-key="trend_flat" data-i="${i}"></td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){state.trend.months[${i}]=el.innerText.trim();refreshDashboard();})(this)">${m}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v))state.trend.join[${i}]=v;else el.innerText=state.trend.join[${i}];refreshDashboard();})(this)">${state.trend.join[i]}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v))state.trend.leave[${i}]=v;else el.innerText=state.trend.leave[${i}];refreshDashboard();})(this)">${state.trend.leave[i]}</td>
+    </tr>`).join('');
+
+  // ── 招聘进度（4列可编辑）────────────────────────────────
+  document.getElementById('full-recruitProgress-table').innerHTML = state.recruitProgress.map((r,i)=>`
+    <tr>
+      <td><input type="checkbox" class="rc" data-key="recruitProgress" data-i="${i}"></td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){state.recruitProgress[${i}].dept=el.innerText.trim();refreshDashboard();})(this)">${r.dept}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v))state.recruitProgress[${i}].need=v;else el.innerText=state.recruitProgress[${i}].need;refreshDashboard();})(this)">${r.need}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v))state.recruitProgress[${i}].hired=v;else el.innerText=state.recruitProgress[${i}].hired;refreshDashboard();})(this)">${r.hired}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseInt(el.innerText);if(!isNaN(v))state.recruitProgress[${i}].ongoing=v;else el.innerText=state.recruitProgress[${i}].ongoing;refreshDashboard();})(this)">${r.ongoing}</td>
+    </tr>`).join('');
+
+  // ── 部门绩效均分（2列可编辑）────────────────────────────
+  document.getElementById('full-perfDept-table').innerHTML = state.perfDept.depts.map((d,i)=>`
+    <tr>
+      <td><input type="checkbox" class="rc" data-key="perfDept_flat" data-i="${i}"></td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){state.perfDept.depts[${i}]=el.innerText.trim();refreshDashboard();})(this)">${d}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseFloat(el.innerText);if(!isNaN(v))state.perfDept.scores[${i}]=v;else el.innerText=state.perfDept.scores[${i}];refreshDashboard();})(this)">${state.perfDept.scores[i]}</td>
+    </tr>`).join('');
+
+  // ── 培训完成率（2列可编辑）──────────────────────────────
+  document.getElementById('full-training-table').innerHTML = state.training.map((t,i)=>`
+    <tr>
+      <td><input type="checkbox" class="rc" data-key="training" data-i="${i}"></td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){state.training[${i}].dept=el.innerText.trim();refreshDashboard();})(this)">${t.dept}</td>
+      <td contenteditable="true" spellcheck="false"
+          onblur="(function(el){var v=parseFloat(el.innerText);if(!isNaN(v))state.training[${i}].pct=v;else el.innerText=state.training[${i}].pct;refreshDashboard();})(this)">${t.pct}</td>
+    </tr>`).join('');
+}
+
+// 通用添加（{name, value} 结构）
+function addRow(key) {
+  const keyMap = {
+    gender:'gender', age:'age', edu:'edu', tenureDist:'tenureDist',
+    channel:'channel', jobtype:'jobtype', funnel:'funnel', perfDist:'perfDist'
+  };
+  const prefix = 'inp-' + {
+    gender:'gender', age:'age', edu:'edu', tenureDist:'tenure',
+    channel:'channel', jobtype:'jobtype', funnel:'funnel', perfDist:'perf',
+    training:'train'
+  }[key];
+
+  if (key === 'training') {
+    const dept = document.getElementById('inp-train-dept').value.trim();
+    const pct  = parseFloat(document.getElementById('inp-train-pct').value);
+    if (!dept || isNaN(pct)) return;
+    state.training.push({ dept, pct });
+    document.getElementById('inp-train-dept').value = '';
+    document.getElementById('inp-train-pct').value  = '';
+  } else {
+    const nameEl  = document.getElementById(prefix + '-name');
+    const valueEl = document.getElementById(prefix + '-value');
+    if (!nameEl || !valueEl) return;
+    const name  = nameEl.value.trim();
+    const value = parseFloat(valueEl.value);
+    if (!name || isNaN(value)) return;
+    state[key].push({ name, value });
+    nameEl.value = ''; valueEl.value = '';
+  }
+  markDirty(); renderDataTables();
+}
+
+function addTrendRow() {
+  const month = document.getElementById('inp-trend-month').value.trim();
+  const join  = parseInt(document.getElementById('inp-trend-join').value);
+  const leave = parseInt(document.getElementById('inp-trend-leave').value);
+  if (!month || isNaN(join) || isNaN(leave)) return;
+  state.trend.months.push(month);
+  state.trend.join.push(join);
+  state.trend.leave.push(leave);
+  document.getElementById('inp-trend-month').value = '';
+  document.getElementById('inp-trend-join').value  = '';
+  document.getElementById('inp-trend-leave').value = '';
+  markDirty(); renderDataTables();
+}
+
+function addRecruitRow() {
+  const dept    = document.getElementById('inp-recruit-dept').value.trim();
+  const need    = parseInt(document.getElementById('inp-recruit-need').value);
+  const hired   = parseInt(document.getElementById('inp-recruit-hired').value);
+  const ongoing = parseInt(document.getElementById('inp-recruit-ongoing').value);
+  if (!dept || isNaN(need)) return;
+  state.recruitProgress.push({ dept, need, hired:hired||0, ongoing:ongoing||0 });
+  ['dept','need','hired','ongoing'].forEach(f=>{ document.getElementById('inp-recruit-'+f).value=''; });
+  markDirty(); renderDataTables();
+}
+
+function addPerfDeptRow() {
+  const name  = document.getElementById('inp-perfdept-name').value.trim();
+  const score = parseFloat(document.getElementById('inp-perfdept-score').value);
+  if (!name || isNaN(score)) return;
+  state.perfDept.depts.push(name);
+  state.perfDept.scores.push(score);
+  document.getElementById('inp-perfdept-name').value  = '';
+  document.getElementById('inp-perfdept-score').value = '';
+  markDirty(); renderDataTables();
+}
+
+function addDept() {
+  const name  = document.getElementById('inp-dept-name').value.trim();
+  const count = parseInt(document.getElementById('inp-dept-count').value);
+  const tr    = parseFloat(document.getElementById('inp-dept-tr').value);
+  if (!name || isNaN(count)) return;
+  state.dept.push({ name, count, tr: isNaN(tr)?0:tr });
+  document.getElementById('inp-dept-name').value  = '';
+  document.getElementById('inp-dept-count').value = '';
+  document.getElementById('inp-dept-tr').value    = '';
+  markDirty(); renderDataTables();
+}
+
+// 通用删除
+function deleteRows(key) {
+  const idxs = [...document.querySelectorAll(`.rc[data-key="${key}"]:checked`)]
+    .map(cb=>parseInt(cb.dataset.i)).sort((a,b)=>b-a);
+  if (key === 'trend_flat') {
+    idxs.forEach(i=>{ state.trend.months.splice(i,1); state.trend.join.splice(i,1); state.trend.leave.splice(i,1); });
+  } else if (key === 'perfDept_flat') {
+    idxs.forEach(i=>{ state.perfDept.depts.splice(i,1); state.perfDept.scores.splice(i,1); });
+  } else {
+    idxs.forEach(i=>state[key].splice(i,1));
+  }
+  markDirty(); renderDataTables();
+}
+
+// 通用导出CSV（{name, value} 结构）
+function doExportCSV(key, headers) {
+  let rows;
+  if (key === 'recruitProgress') {
+    rows = state.recruitProgress.map(r=>[r.dept,r.need,r.hired,r.ongoing].join(','));
+  } else if (key === 'training') {
+    rows = state.training.map(t=>[t.dept,t.pct].join(','));
+  } else {
+    rows = state[key].map(d=>Object.values(d).join(','));
+  }
+  const csv = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = key + '.csv'; a.click();
+}
+
+function exportTrendCSV() {
+  const rows = state.trend.months.map((m,i)=>`${m},${state.trend.join[i]},${state.trend.leave[i]}`);
+  const csv = '\uFEFF月份,入职,离职\n' + rows.join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'trend.csv'; a.click();
+}
+
+function exportPerfDeptCSV() {
+  const rows = state.perfDept.depts.map((d,i)=>`${d},${state.perfDept.scores[i]}`);
+  const csv = '\uFEFF部门,绩效均分\n' + rows.join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = 'perfDept.csv'; a.click();
+}
+
+// =========================================================
+//  CSV 导入（通用）
+// =========================================================
+async function importCSV(input, tableKey, fields) {
+  const file = input.files[0];
+  if (!file) return;
+  const buf = await file.arrayBuffer();
+  let text = new TextDecoder('utf-8').decode(buf);
+  if (text.includes('\ufffd')) text = new TextDecoder('gbk').decode(buf);
+  const lines = text.trim().split('\n').filter(l => l.trim());
+  const rows  = lines.slice(1); // 跳过表头
+
+  if (tableKey === 'trend_flat') {
+    // 特殊处理：展开为三个并行数组
+    state.trend.months = [];
+    state.trend.join   = [];
+    state.trend.leave  = [];
+    rows.forEach(line => {
+      const cols = line.split(',');
+      state.trend.months.push(cols[0]?.trim() || '');
+      state.trend.join.push(parseFloat(cols[1]) || 0);
+      state.trend.leave.push(parseFloat(cols[2]) || 0);
+    });
+  } else if (tableKey === 'perfDept_flat') {
+    state.perfDept.depts  = [];
+    state.perfDept.scores = [];
+    rows.forEach(line => {
+      const cols = line.split(',');
+      state.perfDept.depts.push(cols[0]?.trim() || '');
+      state.perfDept.scores.push(parseFloat(cols[1]) || 0);
+    });
+  } else {
+    // 通用 {field: value} 结构
+    state[tableKey] = rows.map(line => {
+      const cols = line.split(',');
+      const obj  = {};
+      fields.forEach((f, i) => {
+        const val = cols[i]?.trim() || '';
+        obj[f] = isNaN(val) || val === '' ? val : parseFloat(val);
+      });
+      return obj;
+    });
+  }
+
+  input.value = ''; // 重置允许重复导入
+  markDirty();
+  renderDataTables();
+}
+
+// =========================================================
+//  SAVE ALL
+// =========================================================
+function saveAll() {
+  // 1. 把当前 state 注入到 HTML 的初始化脚本里
+  //    找到 <script> 中 "const state = {...}" 的部分并替换
+  let html = document.documentElement.outerHTML;
+
+  // 将当前 state 序列化（深拷贝，避免循环引用）
+  const stateJson = JSON.stringify(state, null, 2);
+
+  // 在 HTML 中注入一个 <script> 让下次打开时自动载入已保存数据
+  // 方法：在 </head> 前插入一个 restore-state 脚本标记
+  const restoreTag = `<script id="saved-state-restore">
+// AUTO-SAVED STATE — DO NOT EDIT MANUALLY
+(function(){
+  try {
+    window.__savedState = ${stateJson};
+  } catch(e){}
+})();
+<\/script>`;
+
+  // 清理旧的 restore 脚本（如果有），再插入新的
+  html = html.replace(/<script id="saved-state-restore">[\s\S]*?<\/script>/m, '');
+  html = html.replace('</head>', restoreTag + '\n</head>');
+
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([html], { type:'text/html' }));
+  a.download = 'CreamData_HR人力看板.html';
+  a.click();
+  // 显示保存成功提示
+  (function(){
+    const t = document.createElement('div');
+    t.textContent = '✅ 存档成功！文件已下载';
+    t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1a56db;color:#fff;padding:10px 24px;border-radius:12px;font-weight:700;font-size:14px;z-index:9999;box-shadow:0 4px 20px rgba(26,86,219,.3);';
+    document.body.appendChild(t);
+    setTimeout(()=>t.remove(), 2800);
+  })();
+}
+
+// =========================================================
+//  EXPORT PNG
+// =========================================================
+async function exportPNG() {
+  if (!window.html2canvas) {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    document.head.appendChild(s);
+    await new Promise(r => s.onload = r);
+  }
+  const pages = document.querySelectorAll('.page-canvas');
+  for (let i = 0; i < pages.length; i++) {
+    const canvas = await html2canvas(pages[i], { scale:2, useCORS:true, backgroundColor:'#F2F4FA' });
+    const a = document.createElement('a');
+    a.href = canvas.toDataURL('image/png');
+    a.download = `HR看板_P${i+1}.png`;
+    a.click();
+    await new Promise(r=>setTimeout(r,300));
+  }
+}
+
+// =========================================================
+//  INIT
+// =========================================================
+window.addEventListener('load', () => {
+  // 恢复存档数据（saveAll 注入的 __savedState）
+  if (window.__savedState) {
+    try { Object.assign(state, window.__savedState); } catch(e) {}
+  }
+  setTimeout(() => initPageCharts('p1'), 150);
+});
+window.addEventListener('resize', () => {
+  Object.values(pools[curPool]).forEach(c => { try { c.resize(); } catch(e){} });
+});
+</script>
+</body>
+</html>

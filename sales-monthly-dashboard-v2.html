@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CreamViz 销售月报</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg-page:#EAECF0;--bg:#FFFFFF;
+  --sh-up:0 2px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
+  --sh-sm:0 1px 4px rgba(0,0,0,.10);--sh-in:inset 0 1px 4px rgba(0,0,0,.08);
+  --sh-deep:0 4px 24px rgba(0,0,0,.12),0 1px 6px rgba(0,0,0,.07);
+  --t1:#0D1117;--t2:#1F2937;--tm:#4B5563;--t3:#9CA3AF;
+  --accent:#5470c6;--accent-light:rgba(84,112,198,.12);
+  --accent-grad:linear-gradient(135deg,#5470c6 0%,#7bc6e6 100%);
+  --green:#3ba272;--green-light:rgba(59,162,114,.12);
+  --red:#ee6666;--red-light:rgba(238,102,102,.12);
+  --amber:#fac858;--amber-light:rgba(250,200,88,.18);
+  --c1:#7bc6e6;--c2:#fac858;--c3:#9a60b4;--c4:#5470c6;--c5:#ff9f7f;--c6:#ee6666;
+  --gap-sm:12px;--gap-md:16px;--gap-lg:24px;
+  --r-sm:12px;--r-md:18px;--r-lg:24px;--r-xl:30px;
+  --font-d:'Nunito',sans-serif;--font-b:'Noto Sans SC',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:var(--font-b);background:var(--bg-page);
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;padding:24px 40px 80px;gap:14px;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── Global Nav ── */
+.global-nav{
+  width:100%;height:64px;padding:0 22px;
+  background:var(--bg);border-radius:var(--r-lg);
+  box-shadow:var(--sh-up);display:flex;
+  justify-content:space-between;align-items:center;
+}
+.logo-block{display:flex;flex-direction:column;gap:2px;}
+.logo-name{font-family:var(--font-d);font-size:18px;font-weight:900;color:var(--t1);cursor:text;}
+.logo-name em{color:var(--accent);font-style:normal;}
+.logo-sub{font-size:11px;color:var(--t3);font-weight:500;cursor:text;}
+[contenteditable="true"]:focus{outline:2px dashed var(--accent);outline-offset:3px;border-radius:4px;}
+.nav-center{
+  display:flex;align-items:center;gap:6px;
+  font-size:12px;color:var(--t3);font-weight:600;
+}
+.brand-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:20px;
+  background:var(--accent-light);color:var(--accent);
+  font-size:11px;font-weight:700;font-family:var(--font-d);
+  cursor:default;user-select:none;
+}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.nbtn{
+  padding:7px 15px;border:none;border-radius:var(--r-sm);
+  font-weight:700;font-size:13px;cursor:pointer;
+  background:var(--bg);color:var(--tm);
+  box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);
+}
+.nbtn:hover{transform:translateY(-1px);}
+.nbtn.active{color:var(--accent);box-shadow:var(--sh-in);}
+.nbtn-save{background:var(--accent);color:#fff!important;}
+
+/* ── View / Page ── */
+.view{display:none;width:100%;}
+.view.active{display:flex;flex-direction:column;gap:14px;}
+.page-frame{
+  width:100%;background:var(--bg);
+  border-radius:var(--r-xl);padding:20px;
+  box-shadow:var(--sh-deep);display:flex;flex-direction:column;gap:14px;
+}
+.ptab-row{display:flex;gap:var(--gap-sm);align-items:center;}
+.ptab{
+  padding:6px 20px;border:none;border-radius:var(--r-sm);
+  font-weight:700;font-size:13px;cursor:pointer;
+  background:var(--bg-page);color:var(--tm);
+  box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);
+}
+.ptab.active{color:var(--accent);box-shadow:var(--sh-in);font-weight:900;background:var(--bg);}
+.ptab-right{margin-left:auto;font-size:12px;color:var(--t3);}
+.page-canvas{display:none;flex-direction:column;gap:14px;}
+.page-canvas.active{display:flex;}
+
+/* ── KPI ── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--gap-md);}
+.kpi-card{
+  background:var(--bg);border-radius:var(--r-md);
+  padding:16px 18px 14px;box-shadow:var(--sh-up);
+  position:relative;overflow:hidden;
+  display:flex;flex-direction:column;gap:6px;
+}
+.kpi-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:4px;
+  border-radius:var(--r-md) var(--r-md) 0 0;
+}
+.kpi-card.c1::before{background:var(--c4);}
+.kpi-card.c2::before{background:var(--c3);}
+.kpi-card.c3::before{background:var(--c2);}
+.kpi-card.c4::before{background:var(--c5);}
+.kpi-card.c5::before{background:var(--c1);}
+.kpi-icon{
+  position:absolute;right:14px;top:14px;
+  width:36px;height:36px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.kpi-card.c1 .kpi-icon{background:var(--accent-light);}
+.kpi-card.c2 .kpi-icon{background:rgba(154,96,180,.12);}
+.kpi-card.c3 .kpi-icon{background:var(--amber-light);}
+.kpi-card.c4 .kpi-icon{background:rgba(255,159,127,.15);}
+.kpi-card.c5 .kpi-icon{background:rgba(123,198,230,.15);}
+.kpi-label{font-size:12px;color:var(--t3);font-weight:500;}
+.kpi-val{font-family:var(--font-d);font-size:28px;font-weight:900;color:var(--t1);line-height:1;}
+.kpi-unit{font-size:13px;color:var(--tm);font-weight:600;margin-left:2px;}
+.kpi-badge{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:11px;font-weight:700;padding:2px 8px;
+  border-radius:20px;width:fit-content;
+}
+.badge-up{background:var(--green-light);color:var(--green);}
+.badge-dn{background:var(--red-light);color:var(--red);}
+.badge-neu{background:var(--accent-light);color:var(--accent);}
+
+/* ── Charts ── */
+.chart-row{display:grid;gap:var(--gap-md);}
+.chart-row.cols-2{grid-template-columns:1fr 1fr;}
+.chart-row.cols-21{grid-template-columns:3fr 2fr;}
+.chart-card{
+  background:var(--bg);border-radius:var(--r-md);
+  padding:16px 18px;box-shadow:var(--sh-up);
+  display:flex;flex-direction:column;gap:10px;
+}
+.card-header{display:flex;flex-direction:column;gap:2px;}
+.card-title{font-size:14px;font-weight:700;color:var(--t2);}
+.card-sub{font-size:12px;color:var(--t3);}
+/* 圆环图专用容器：给足高度防止标签溢出 */
+.chart-box{flex:1;min-height:0;}
+.chart-box-donut{height:300px;width:100%;}
+.chart-box-trend{height:240px;width:100%;}
+.chart-box-funnel{height:260px;width:100%;}
+.chart-box-bar{height:220px;width:100%;}
+.chart-box-stage{height:300px;width:100%;}
+.chart-box-product{height:220px;width:100%;}
+
+/* ── Sales Rank Table ── */
+.sales-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.sales-tbl th{
+  padding:8px 12px;text-align:left;
+  background:var(--bg-page);color:var(--tm);font-weight:700;font-size:12px;
+}
+.sales-tbl td{padding:10px 12px;border-bottom:1px solid #f0f0f0;color:var(--t2);}
+.sales-tbl tr:last-child td{border-bottom:none;}
+.sales-tbl tr:hover td{background:var(--accent-light);}
+.rank-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:900;
+}
+.rank-1{background:#ffd700;color:#7a5a00;}
+.rank-2{background:#C0C0C0;color:#555;}
+.rank-3{background:#CD7F32;color:#fff;}
+.rank-n{background:var(--bg-page);color:var(--t3);}
+.progress-bar{width:100%;height:6px;background:#f0f0f0;border-radius:3px;overflow:hidden;margin-top:4px;}
+.progress-fill{height:100%;border-radius:3px;background:var(--accent-grad);}
+.tag{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:700;}
+.tag-hot{background:rgba(238,102,102,.12);color:var(--red);}
+.tag-warm{background:var(--amber-light);color:#b07800;}
+.tag-cool{background:var(--accent-light);color:var(--accent);}
+
+/* ── Client Grid ── */
+.client-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-md);}
+.client-card{
+  background:var(--bg-page);border-radius:var(--r-md);
+  padding:14px 16px;display:flex;flex-direction:column;gap:6px;
+}
+.client-name{font-size:13px;font-weight:700;color:var(--t2);}
+.client-stage{
+  font-size:11px;font-weight:700;padding:2px 8px;
+  border-radius:8px;width:fit-content;
+}
+.stage-A{background:var(--red-light);color:var(--red);}
+.stage-B{background:var(--amber-light);color:#b07800;}
+.stage-C{background:var(--accent-light);color:var(--accent);}
+.client-val{font-family:var(--font-d);font-size:16px;font-weight:800;color:var(--t1);}
+.client-meta{font-size:11px;color:var(--t3);}
+
+/* ── Data Center ── */
+.dc-frame{
+  width:100%;background:var(--bg);border-radius:var(--r-xl);
+  padding:20px;box-shadow:var(--sh-deep);display:flex;flex-direction:column;gap:14px;
+}
+.dc-tab-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.dc-tab{
+  padding:6px 16px;border:none;border-radius:var(--r-sm);
+  font-weight:700;font-size:13px;cursor:pointer;
+  background:var(--bg-page);color:var(--tm);
+  box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);
+}
+.dc-tab.active{color:var(--accent);box-shadow:var(--sh-in);background:var(--bg);}
+.dc-page{display:none;flex-direction:column;gap:14px;}
+.dc-page.active{display:flex;}
+.dc-section{
+  background:var(--bg-page);border-radius:var(--r-md);
+  padding:16px;display:flex;flex-direction:column;gap:10px;
+}
+.dc-section h3{font-size:14px;font-weight:700;color:var(--t2);}
+.dc-hint{font-size:12px;color:var(--t3);}
+.dc-tbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.dc-btn{
+  padding:6px 14px;border:none;border-radius:var(--r-sm);
+  font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-b);
+  background:var(--accent);color:#fff;transition:.15s;
+}
+.dc-btn-out{
+  padding:6px 14px;border:1px solid var(--accent);border-radius:var(--r-sm);
+  font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-b);
+  background:var(--bg);color:var(--accent);transition:.15s;
+}
+.dc-btn-danger{
+  padding:6px 14px;border:none;border-radius:var(--r-sm);
+  font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-b);
+  background:var(--red-light);color:var(--red);
+}
+.dc-wrap{overflow-x:auto;border-radius:var(--r-sm);border:1px solid #e8eaf0;}
+.dc-tbl{width:100%;border-collapse:collapse;font-size:13px;background:var(--bg);}
+.dc-tbl th{
+  padding:10px 12px;background:var(--bg-page);color:var(--tm);
+  font-weight:700;font-size:12px;text-align:left;
+  border-bottom:1px solid #e8eaf0;white-space:nowrap;
+}
+.dc-tbl td{padding:9px 12px;border-bottom:1px solid #f5f5f7;color:var(--t2);}
+.dc-tbl tr:last-child td{border-bottom:none;}
+.dc-tbl td[contenteditable="true"]:focus{
+  outline:2px solid var(--accent);outline-offset:-2px;
+  background:rgba(84,112,198,.05);border-radius:4px;
+}
+.del-btn{
+  padding:3px 10px;border:none;border-radius:6px;font-size:11px;
+  background:var(--red-light);color:var(--red);cursor:pointer;font-weight:700;font-family:var(--font-b);
+}
+
+/* ── Modal ── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);
+  z-index:1000;align-items:center;justify-content:center;
+}
+.modal-overlay.show{display:flex;}
+.modal-box{
+  background:var(--bg);border-radius:var(--r-lg);padding:24px;
+  width:520px;box-shadow:var(--sh-deep);display:flex;flex-direction:column;gap:16px;
+}
+.modal-title{font-size:16px;font-weight:700;color:var(--t1);}
+.modal-hint{font-size:12px;color:var(--t3);}
+.modal-textarea{
+  width:100%;height:200px;padding:12px;font-size:12px;font-family:monospace;
+  border:1px solid #e0e0e0;border-radius:var(--r-sm);resize:vertical;color:var(--t2);outline:none;
+}
+.modal-textarea:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+
+/* ── Footer brand watermark ── */
+.brand-footer{
+  width:100%;text-align:center;padding:12px 0 0;
+  font-size:11px;color:var(--t3);font-family:var(--font-d);
+  font-weight:600;letter-spacing:.5px;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.brand-footer span{color:var(--accent);font-weight:800;}
+
+/* ── Toast ── */
+.toast{
+  position:fixed;bottom:30px;right:30px;
+  background:var(--t1);color:#fff;padding:10px 20px;
+  border-radius:var(--r-sm);font-size:13px;font-weight:600;
+  z-index:2000;opacity:0;transition:.3s;pointer-events:none;
+}
+.toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- ── Global Nav ── -->
+<nav class="global-nav">
+  <div class="logo-block">
+    <div class="logo-name" id="meta-title" contenteditable="true" spellcheck="false">Cream<em>Viz</em> 销售月报</div>
+    <div class="logo-sub" id="meta-sub" contenteditable="true" spellcheck="false">Sales Performance Dashboard · 2025年3月</div>
+  </div>
+  <div class="nav-center">
+    <span class="brand-badge">🍦 © CreamViz by Alin</span>
+  </div>
+  <div class="nav-r">
+    <button class="nbtn active" id="btn-db" onclick="switchView('db')">📊 可视化看板</button>
+    <button class="nbtn" id="btn-dc" onclick="switchView('dc')">📋 数据中心</button>
+    <button class="nbtn" onclick="exportPNG()">🖼 导出PNG</button>
+    <button class="nbtn" onclick="saveAsHTML()">📥 另存为HTML</button>
+    <button class="nbtn nbtn-save" onclick="saveAll()">💾 保存</button>
+  </div>
+</nav>
+
+<!-- ══════════ 可视化看板 ══════════ -->
+<div class="view active" id="view-db">
+  <div class="page-frame" id="db-frame">
+    <div class="ptab-row">
+      <button class="ptab active" onclick="switchPage(1)">P1 · 总览</button>
+      <button class="ptab" onclick="switchPage(2)">P2 · 客户跟进</button>
+      <span class="ptab-right" id="p1-date" contenteditable="true" spellcheck="false">📅 统计周期：2025年3月1日 — 3月31日</span>
+    </div>
+
+    <!-- ── Page 1 总览 ── -->
+    <div class="page-canvas active" id="page1">
+
+      <!-- KPI Row — 所有文字可编辑 -->
+      <div class="kpi-row">
+        <div class="kpi-card c1">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-label" id="kl1" contenteditable="true" spellcheck="false">月度营收</div>
+          <div><span class="kpi-val" id="kv-revenue">80</span><span class="kpi-unit" contenteditable="true" spellcheck="false">万元</span></div>
+          <div class="kpi-badge badge-up" id="kb1" contenteditable="true" spellcheck="false">↑ 较上月 +12.7%</div>
+        </div>
+        <div class="kpi-card c2">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-label" id="kl2" contenteditable="true" spellcheck="false">目标完成率</div>
+          <div><span class="kpi-val" id="kv-target">89</span><span class="kpi-unit" contenteditable="true" spellcheck="false">%</span></div>
+          <div class="kpi-badge badge-neu" id="kb2" contenteditable="true" spellcheck="false">目标 90万</div>
+        </div>
+        <div class="kpi-card c3">
+          <div class="kpi-icon">📝</div>
+          <div class="kpi-label" id="kl3" contenteditable="true" spellcheck="false">本月签单数</div>
+          <div><span class="kpi-val" id="kv-deals">12</span><span class="kpi-unit" contenteditable="true" spellcheck="false">单</span></div>
+          <div class="kpi-badge badge-up" id="kb3" contenteditable="true" spellcheck="false">↑ 较上月 +3单</div>
+        </div>
+        <div class="kpi-card c4">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-label" id="kl4" contenteditable="true" spellcheck="false">意向客户数</div>
+          <div><span class="kpi-val" id="kv-leads">23</span><span class="kpi-unit" contenteditable="true" spellcheck="false">个</span></div>
+          <div class="kpi-badge badge-neu" id="kb4" contenteditable="true" spellcheck="false">转化率 52%</div>
+        </div>
+        <div class="kpi-card c5">
+          <div class="kpi-icon">💎</div>
+          <div class="kpi-label" id="kl5" contenteditable="true" spellcheck="false">平均客单价</div>
+          <div><span class="kpi-val" id="kv-arpu">6.7</span><span class="kpi-unit" contenteditable="true" spellcheck="false">万元</span></div>
+          <div class="kpi-badge badge-up" id="kb5" contenteditable="true" spellcheck="false">↑ 较上月 +8%</div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div class="chart-row cols-21">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title" id="ct1" contenteditable="true" spellcheck="false">📈 近6月营收趋势</div>
+            <div class="card-sub" id="cs1" contenteditable="true" spellcheck="false">单位：万元 · 蓝柱=实际 黄虚线=目标</div>
+          </div>
+          <div class="chart-box-trend" id="chart-trend"></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title" id="ct2" contenteditable="true" spellcheck="false">🍩 营收来源构成</div>
+            <div class="card-sub" id="cs2" contenteditable="true" spellcheck="false">按产品线拆分（万元）</div>
+          </div>
+          <div class="chart-box-donut" id="chart-donut"></div>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div class="chart-row cols-2">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title" id="ct3" contenteditable="true" spellcheck="false">🏆 销售员业绩排行</div>
+            <div class="card-sub" id="cs3" contenteditable="true" spellcheck="false">本月已签单金额（万元）</div>
+          </div>
+          <table class="sales-tbl" style="margin-top:4px;">
+            <thead><tr>
+              <th>排名</th><th>姓名</th><th>签单额</th><th>签单数</th><th>完成率</th><th>进度</th>
+            </tr></thead>
+            <tbody id="tb-sales-rank"></tbody>
+          </table>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title" id="ct4" contenteditable="true" spellcheck="false">🔄 销售漏斗</div>
+            <div class="card-sub" id="cs4" contenteditable="true" spellcheck="false">本月全流程转化</div>
+          </div>
+          <div class="chart-box-funnel" id="chart-funnel"></div>
+        </div>
+      </div>
+
+    </div><!-- /page1 -->
+
+    <!-- ── Page 2 客户跟进 ── -->
+    <div class="page-canvas" id="page2">
+      <div class="chart-row cols-2">
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title" id="ct5" contenteditable="true" spellcheck="false">📊 意向客户阶段分布</div>
+            <div class="card-sub" id="cs5" contenteditable="true" spellcheck="false">A=高意向 · B=跟进中 · C=初接触</div>
+          </div>
+          <div class="chart-box-stage" id="chart-stage"></div>
+        </div>
+        <div class="chart-card">
+          <div class="card-header">
+            <div class="card-title" id="ct6" contenteditable="true" spellcheck="false">📦 产品线签单对比</div>
+            <div class="card-sub" id="cs6" contenteditable="true" spellcheck="false">本月各产品线签单金额（万元）</div>
+          </div>
+          <div class="chart-box-product" id="chart-product"></div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="card-header">
+          <div class="card-title" id="ct7" contenteditable="true" spellcheck="false">🏢 意向客户列表</div>
+          <div class="card-sub" id="cs7" contenteditable="true" spellcheck="false">共 23 家 · A级8家 B级10家 C级5家</div>
+        </div>
+        <div class="client-grid" id="client-grid-wrap" style="margin-top:8px;"></div>
+      </div>
+    </div><!-- /page2 -->
+
+  </div><!-- /page-frame -->
+</div><!-- /view-db -->
+
+
+<!-- ══════════ 数据中心 ══════════ -->
+<div class="view" id="view-dc">
+  <div class="dc-frame">
+    <div class="dc-tab-row">
+      <button class="dc-tab active" onclick="switchDcTab('sales')">👤 销售员数据</button>
+      <button class="dc-tab" onclick="switchDcTab('trends')">📈 月度趋势</button>
+      <button class="dc-tab" onclick="switchDcTab('clients')">🏢 意向客户</button>
+    </div>
+
+    <div class="dc-page active" id="dc-sales">
+      <div class="dc-section">
+        <h3>👤 销售员本月数据</h3>
+        <div class="dc-hint">双击单元格可直接编辑 · 自动联动看板图表</div>
+        <div class="dc-tbar">
+          <button class="dc-btn-out" onclick="pasteImport('sales')">📋 粘贴导入</button>
+          <button class="dc-btn-out" onclick="exportExcel('sales')">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addSalesRow()">➕ 新增</button>
+          <button class="dc-btn-danger" onclick="clearTable('sales')">🗑 清空</button>
+        </div>
+        <div class="dc-wrap">
+          <table class="dc-tbl">
+            <thead><tr>
+              <th>姓名</th><th>签单金额(万)</th><th>签单数</th><th>目标金额(万)</th><th>新开客户</th><th>操作</th>
+            </tr></thead>
+            <tbody id="tb-dc-sales"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc-page" id="dc-trends">
+      <div class="dc-section">
+        <h3>📈 月度营收趋势数据</h3>
+        <div class="dc-hint">修改后切回可视化看板即可看到图表更新</div>
+        <div class="dc-tbar">
+          <button class="dc-btn-out" onclick="pasteImport('trends')">📋 粘贴导入</button>
+          <button class="dc-btn-out" onclick="exportExcel('trends')">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addTrendRow()">➕ 新增月份</button>
+          <button class="dc-btn-danger" onclick="clearTable('trends')">🗑 清空</button>
+        </div>
+        <div class="dc-wrap">
+          <table class="dc-tbl">
+            <thead><tr>
+              <th>月份</th><th>营收(万)</th><th>目标(万)</th><th>签单数</th><th>意向客户</th><th>操作</th>
+            </tr></thead>
+            <tbody id="tb-dc-trends"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="dc-page" id="dc-clients">
+      <div class="dc-section">
+        <h3>🏢 意向客户列表</h3>
+        <div class="dc-hint">A=高意向 · B=跟进中 · C=初接触</div>
+        <div class="dc-tbar">
+          <button class="dc-btn-out" onclick="pasteImport('clients')">📋 粘贴导入</button>
+          <button class="dc-btn-out" onclick="exportExcel('clients')">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addClientRow()">➕ 新增客户</button>
+          <button class="dc-btn-danger" onclick="clearTable('clients')">🗑 清空</button>
+        </div>
+        <div class="dc-wrap">
+          <table class="dc-tbl">
+            <thead><tr>
+              <th>公司名称</th><th>阶段</th><th>预估金额(万)</th><th>负责销售</th><th>备注</th><th>操作</th>
+            </tr></thead>
+            <tbody id="tb-dc-clients"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── Brand Footer Watermark ── -->
+<div class="brand-footer">
+  <span>🍦 CreamViz</span> · 专业数据可视化 · Powered by Alin · All rights reserved
+</div>
+
+<!-- Paste Modal -->
+<div class="modal-overlay" id="paste-modal">
+  <div class="modal-box">
+    <div class="modal-title">📋 粘贴导入数据</div>
+    <div class="modal-hint">从Excel复制后粘贴到下方（Tab分隔列，回车分隔行）</div>
+    <textarea class="modal-textarea" id="paste-area" placeholder="在此粘贴 Excel 数据..."></textarea>
+    <div class="modal-btns">
+      <button class="dc-btn-out" onclick="closePasteModal()">取消</button>
+      <button class="dc-btn" onclick="confirmPaste()">✅ 确认导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  STATE — 单一数据源
+// ══════════════════════════════════════
+const state = {
+  sales: [
+    { name:'李明', amount:28.5, deals:4, target:30, newClients:3 },
+    { name:'王芳', amount:22.0, deals:3, target:25, newClients:2 },
+    { name:'张磊', amount:18.5, deals:3, target:20, newClients:4 },
+    { name:'刘洋', amount:11.0, deals:2, target:15, newClients:2 },
+  ],
+  trends: [
+    { month:'10月', revenue:58, target:65, deals:8, leads:16 },
+    { month:'11月', revenue:63, target:65, deals:9, leads:18 },
+    { month:'12月', revenue:71, target:75, deals:10, leads:20 },
+    { month:'1月',  revenue:68, target:75, deals:8,  leads:19 },
+    { month:'2月',  revenue:71, target:80, deals:9,  leads:21 },
+    { month:'3月',  revenue:80, target:90, deals:12, leads:23 },
+  ],
+  clients: [
+    { name:'杭州智能科技', stage:'A', amount:12,  owner:'李明', note:'已演示，决策中' },
+    { name:'深圳信息服务', stage:'A', amount:8.5, owner:'王芳', note:'报价已提交' },
+    { name:'成都云谷集团', stage:'A', amount:15,  owner:'李明', note:'CEO在谈，大客户' },
+    { name:'北京协同网络', stage:'A', amount:6.8, owner:'张磊', note:'合同审核中' },
+    { name:'上海翼展数据', stage:'A', amount:9.2, owner:'王芳', note:'3月底决策' },
+    { name:'武汉光谷软件', stage:'A', amount:7.5, owner:'刘洋', note:'采购立项通过' },
+    { name:'广州聚汇科技', stage:'A', amount:11,  owner:'李明', note:'竞品对比中' },
+    { name:'南京天图信息', stage:'A', amount:5.5, owner:'张磊', note:'POC验证完成' },
+    { name:'苏州芯联数据', stage:'B', amount:4.5, owner:'王芳', note:'下周演示' },
+    { name:'西安融合科技', stage:'B', amount:6.0, owner:'刘洋', note:'需求调研中' },
+    { name:'厦门海燕软件', stage:'B', amount:3.8, owner:'李明', note:'已发方案' },
+    { name:'长沙湘云网络', stage:'B', amount:5.0, owner:'张磊', note:'二次跟进' },
+    { name:'合肥博联科技', stage:'B', amount:4.2, owner:'王芳', note:'预算确认中' },
+    { name:'郑州中原信息', stage:'B', amount:7.0, owner:'李明', note:'标准版意向' },
+    { name:'天津港通数字', stage:'B', amount:3.5, owner:'刘洋', note:'初步接触' },
+    { name:'青岛海联智能', stage:'B', amount:5.8, owner:'张磊', note:'转介绍客户' },
+    { name:'石家庄瑞丰科', stage:'B', amount:4.0, owner:'王芳', note:'首次拜访完成' },
+    { name:'太原云起科技', stage:'B', amount:3.2, owner:'刘洋', note:'微信建联' },
+    { name:'福州闽盛网络', stage:'C', amount:2.8, owner:'李明', note:'展会获客' },
+    { name:'昆明彩云数据', stage:'C', amount:3.5, owner:'张磊', note:'官网询盘' },
+    { name:'贵阳黔程科技', stage:'C', amount:2.2, owner:'王芳', note:'线上沟通' },
+    { name:'南宁桂通信息', stage:'C', amount:4.0, owner:'刘洋', note:'老客转介' },
+    { name:'乌鲁木齐丝路', stage:'C', amount:1.8, owner:'李明', note:'远程演示预约' },
+  ],
+  products: [
+    { name:'CRM系统',  amount:28, deals:4 },
+    { name:'ERP标准版', amount:22, deals:4 },
+    { name:'BI分析平台', amount:18, deals:2 },
+    { name:'定制开发',  amount:12, deals:2 },
+  ]
+};
+
+// ══════════════════════════════════════
+//  VIEW & PAGE SWITCH
+// ══════════════════════════════════════
+let curView = 'db', curPage = 1, curDcTab = 'sales';
+
+function switchView(v) {
+  curView = v;
+  document.getElementById('view-db').classList.toggle('active', v === 'db');
+  document.getElementById('view-dc').classList.toggle('active', v === 'dc');
+  document.getElementById('btn-db').classList.toggle('active', v === 'db');
+  document.getElementById('btn-dc').classList.toggle('active', v === 'dc');
+  if (v === 'db') { setTimeout(() => renderPage(curPage), 80); }
+  else { renderDcTable(curDcTab); }
+}
+
+function switchPage(n) {
+  curPage = n;
+  document.querySelectorAll('.ptab').forEach((b, i) => b.classList.toggle('active', i + 1 === n));
+  document.querySelectorAll('.page-canvas').forEach((p, i) => p.classList.toggle('active', i + 1 === n));
+  setTimeout(() => renderPage(n), 80);
+}
+
+function switchDcTab(t) {
+  curDcTab = t;
+  const tabs = ['sales','trends','clients'];
+  document.querySelectorAll('.dc-tab').forEach((b, i) => b.classList.toggle('active', tabs[i] === t));
+  const dcIds = ['dc-sales','dc-trends','dc-clients'];
+  document.querySelectorAll('.dc-page').forEach((p, i) => p.classList.toggle('active', dcIds[i] === `dc-${t}`));
+  renderDcTable(t);
+}
+
+// ══════════════════════════════════════
+//  CHART INSTANCES
+// ══════════════════════════════════════
+const CI = {};
+function mkC(id) {
+  if (CI[id]) { try { CI[id].dispose(); } catch(e){} }
+  const dom = document.getElementById(id);
+  if (!dom) return null;
+  CI[id] = echarts.init(dom, null, { renderer: 'svg' });
+  return CI[id];
+}
+
+// ══════════════════════════════════════
+//  RENDER PAGE
+// ══════════════════════════════════════
+function renderPage(n) {
+  if (n === 1) renderP1();
+  if (n === 2) renderP2();
+}
+
+function renderP1() {
+  const last = state.trends[state.trends.length - 1];
+  document.getElementById('kv-revenue').textContent = last.revenue;
+  document.getElementById('kv-target').textContent = Math.round(last.revenue / last.target * 100);
+  document.getElementById('kv-deals').textContent = last.deals;
+  document.getElementById('kv-leads').textContent = last.leads;
+  const totalAmt = state.sales.reduce((a, s) => a + s.amount, 0);
+  const totalDeals = state.sales.reduce((a, s) => a + s.deals, 0);
+  document.getElementById('kv-arpu').textContent = totalDeals > 0 ? (totalAmt / totalDeals).toFixed(1) : '-';
+
+  renderTrendChart();
+  renderDonutChart();
+  renderSalesRank();
+  renderFunnelChart();
+}
+
+function renderTrendChart() {
+  const c = mkC('chart-trend');
+  if (!c) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    c.setOption({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'cross' } },
+      legend: { data:['实际营收','目标'], bottom:0, itemWidth:12, textStyle:{ fontSize:12 } },
+      grid: { top:20, right:20, bottom:40, left:10, containLabel:true },
+      xAxis: { type:'category', data: state.trends.map(d => d.month), axisLabel:{ fontSize:12 } },
+      yAxis: { type:'value', name:'万元', axisLabel:{ fontSize:11 } },
+      series: [
+        { name:'实际营收', type:'bar', data: state.trends.map(d => d.revenue), barWidth:'40%',
+          itemStyle:{ color:'#5470c6', borderRadius:[6,6,0,0] },
+          label:{ show:true, position:'top', fontSize:11, color:'#5470c6', formatter: v => v.value+'万' }
+        },
+        { name:'目标', type:'line', data: state.trends.map(d => d.target), smooth:true,
+          lineStyle:{ color:'#fac858', width:2, type:'dashed' },
+          itemStyle:{ color:'#fac858' }, symbol:'circle', symbolSize:6,
+          label:{ show:true, position:'top', fontSize:10, color:'#b07800', formatter: v => v.value }
+        }
+      ]
+    });
+    c.resize();
+  }));
+}
+
+function renderDonutChart() {
+  const c = mkC('chart-donut');
+  if (!c) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const colors = ['#5470c6','#9a60b4','#fac858','#ff9f7f'];
+    // 关键：legend在底部，圆环缩小并居中偏左，给标签充足空间
+    c.setOption({
+      tooltip: { trigger:'item', formatter:'{b}: {c}万 ({d}%)' },
+      legend: {
+        orient:'horizontal', bottom:2,
+        data: state.products.map(p => p.name),
+        textStyle:{ fontSize:11 }, itemWidth:10, itemHeight:10
+      },
+      series: [{
+        type:'pie',
+        radius: ['38%','60%'],
+        center: ['50%','44%'],
+        padAngle: 4,
+        itemStyle: { borderRadius:6, borderColor:'#fff', borderWidth:2 },
+        avoidLabelOverlap: true,  // ← 防止标签重叠
+        label: {
+          show: true,
+          position: 'outside',
+          formatter: (p) => `${p.name}\n${p.value}万`,
+          fontSize: 11,
+          lineHeight: 15,
+          overflow: 'none'
+        },
+        labelLine: {
+          show: true,
+          length: 18,
+          length2: 10,
+          smooth: false
+        },
+        emphasis: {
+          label: { fontSize: 12, fontWeight: 'bold' }
+        },
+        data: state.products.map((p, i) => ({
+          name: p.name, value: p.amount,
+          itemStyle: { color: colors[i] }
+        }))
+      }]
+    });
+    c.resize();
+  }));
+}
+
+function renderSalesRank() {
+  const sorted = [...state.sales].sort((a, b) => b.amount - a.amount);
+  const maxAmt = sorted[0]?.amount || 1;
+  const tbody = document.getElementById('tb-sales-rank');
+  tbody.innerHTML = sorted.map((s, i) => {
+    const pct = Math.round(s.amount / s.target * 100);
+    const rankClass = ['rank-1','rank-2','rank-3','rank-n'][Math.min(i, 3)];
+    const tagCls = pct >= 100 ? 'tag-hot' : pct >= 80 ? 'tag-warm' : 'tag-cool';
+    const tagTxt = pct >= 100 ? '达标✓' : pct >= 80 ? '冲刺中' : '追赶中';
+    return `<tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td><b>${s.name}</b></td>
+      <td><b style="font-family:var(--font-d);font-size:15px;">${s.amount}</b> 万</td>
+      <td>${s.deals} 单</td>
+      <td><span class="tag ${tagCls}">${pct}% · ${tagTxt}</span></td>
+      <td style="width:110px;">
+        <div class="progress-bar"><div class="progress-fill" style="width:${s.amount/maxAmt*100}%"></div></div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function renderFunnelChart() {
+  const c = mkC('chart-funnel');
+  if (!c) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const last = state.trends[state.trends.length - 1];
+    const data = [
+      { name:'线索接触', value: Math.round(last.leads * 2.1) },
+      { name:'初步沟通', value: Math.round(last.leads * 1.4) },
+      { name:'意向确认', value: last.leads },
+      { name:'方案演示', value: Math.round(last.leads * 0.7) },
+      { name:'签单成交', value: last.deals },
+    ];
+    c.setOption({
+      tooltip: { trigger:'item', formatter:'{b}: {c}个' },
+      series: [{
+        type:'funnel',
+        left:'5%', width:'55%',
+        top:10, bottom:10,
+        sort:'descending', gap:4,
+        label: {
+          show:true, position:'right',
+          formatter: p => `${p.name}  ${p.value}个`,
+          fontSize:12, color:'#4B5563'
+        },
+        itemStyle: { borderColor:'#fff', borderWidth:1 },
+        data: data.map((d, i) => ({
+          ...d,
+          itemStyle: { color:['#5470c6','#7bc6e6','#9a60b4','#fac858','#ff9f7f'][i] }
+        }))
+      }]
+    });
+    c.resize();
+  }));
+}
+
+function renderP2() {
+  renderStageChart();
+  renderProductChart();
+  renderClientGrid();
+}
+
+function renderStageChart() {
+  const c = mkC('chart-stage');
+  if (!c) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const A = state.clients.filter(x => x.stage === 'A').length;
+    const B = state.clients.filter(x => x.stage === 'B').length;
+    const C = state.clients.filter(x => x.stage === 'C').length;
+    c.setOption({
+      tooltip: { trigger:'item', formatter:'{b}级: {c}家 ({d}%)' },
+      legend: { orient:'horizontal', bottom:2, textStyle:{ fontSize:11 }, itemWidth:10, itemHeight:10 },
+      series: [{
+        type:'pie',
+        radius: ['40%','64%'],
+        center: ['50%','44%'],
+        padAngle: 5,
+        itemStyle: { borderRadius:8, borderColor:'#fff', borderWidth:2 },
+        avoidLabelOverlap: true,
+        label: {
+          show:true, position:'outside',
+          formatter: p => `${p.name}级\n${p.value}家`,
+          fontSize:12, lineHeight:16
+        },
+        labelLine: { show:true, length:20, length2:12 },
+        emphasis: { label:{ fontSize:14, fontWeight:'bold' } },
+        data: [
+          { name:'A', value:A, itemStyle:{ color:'#ee6666' } },
+          { name:'B', value:B, itemStyle:{ color:'#fac858' } },
+          { name:'C', value:C, itemStyle:{ color:'#5470c6' } },
+        ]
+      }]
+    });
+    c.resize();
+  }));
+}
+
+function renderProductChart() {
+  const c = mkC('chart-product');
+  if (!c) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const colors = ['#5470c6','#9a60b4','#fac858','#ff9f7f'];
+    c.setOption({
+      tooltip: { trigger:'axis' },
+      grid: { top:20, right:60, bottom:20, left:10, containLabel:true },
+      xAxis: { type:'value', axisLabel:{ fontSize:11 } },
+      yAxis: { type:'category', data: state.products.map(p => p.name), axisLabel:{ fontSize:12 } },
+      series: [{
+        type:'bar', barWidth:'50%',
+        data: state.products.map((p, i) => ({
+          value: p.amount,
+          itemStyle: { color: colors[i], borderRadius:[0,8,8,0] }
+        })),
+        label: { show:true, position:'right', fontSize:12, formatter: v => v.value + '万' }
+      }]
+    });
+    c.resize();
+  }));
+}
+
+function renderClientGrid() {
+  const wrap = document.getElementById('client-grid-wrap');
+  wrap.innerHTML = state.clients.map(c => {
+    const stageClass = { A:'stage-A', B:'stage-B', C:'stage-C' }[c.stage];
+    const stageLabel = { A:'🔥 A级', B:'⭐ B级', C:'🌱 C级' }[c.stage];
+    return `<div class="client-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px;">
+        <div class="client-name">${c.name}</div>
+        <span class="client-stage ${stageClass}" style="flex-shrink:0;">${stageLabel}</span>
+      </div>
+      <div class="client-val">¥${c.amount}万</div>
+      <div class="client-meta">📌 ${c.owner} · ${c.note}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+//  DATA CENTER RENDER
+// ══════════════════════════════════════
+function renderDcTable(tab) {
+  if (tab === 'sales') renderDcSales();
+  if (tab === 'trends') renderDcTrends();
+  if (tab === 'clients') renderDcClients();
+}
+
+function renderDcSales() {
+  document.getElementById('tb-dc-sales').innerHTML = state.sales.map((s, i) => `
+    <tr>
+      <td contenteditable="true" onblur="state.sales[${i}].name=this.textContent;refreshIfDb()">${s.name}</td>
+      <td contenteditable="true" onblur="state.sales[${i}].amount=parseFloat(this.textContent)||0;refreshIfDb()">${s.amount}</td>
+      <td contenteditable="true" onblur="state.sales[${i}].deals=parseInt(this.textContent)||0;refreshIfDb()">${s.deals}</td>
+      <td contenteditable="true" onblur="state.sales[${i}].target=parseFloat(this.textContent)||0;refreshIfDb()">${s.target}</td>
+      <td contenteditable="true" onblur="state.sales[${i}].newClients=parseInt(this.textContent)||0;refreshIfDb()">${s.newClients}</td>
+      <td><button class="del-btn" onclick="deleteSalesRow(${i})">删除</button></td>
+    </tr>`).join('');
+}
+
+function renderDcTrends() {
+  document.getElementById('tb-dc-trends').innerHTML = state.trends.map((t, i) => `
+    <tr>
+      <td contenteditable="true" onblur="state.trends[${i}].month=this.textContent;refreshIfDb()">${t.month}</td>
+      <td contenteditable="true" onblur="state.trends[${i}].revenue=parseFloat(this.textContent)||0;refreshIfDb()">${t.revenue}</td>
+      <td contenteditable="true" onblur="state.trends[${i}].target=parseFloat(this.textContent)||0;refreshIfDb()">${t.target}</td>
+      <td contenteditable="true" onblur="state.trends[${i}].deals=parseInt(this.textContent)||0;refreshIfDb()">${t.deals}</td>
+      <td contenteditable="true" onblur="state.trends[${i}].leads=parseInt(this.textContent)||0;refreshIfDb()">${t.leads}</td>
+      <td><button class="del-btn" onclick="deleteTrendRow(${i})">删除</button></td>
+    </tr>`).join('');
+}
+
+function renderDcClients() {
+  document.getElementById('tb-dc-clients').innerHTML = state.clients.map((c, i) => `
+    <tr>
+      <td contenteditable="true" onblur="state.clients[${i}].name=this.textContent;refreshIfDb()">${c.name}</td>
+      <td contenteditable="true" onblur="state.clients[${i}].stage=this.textContent;refreshIfDb()">${c.stage}</td>
+      <td contenteditable="true" onblur="state.clients[${i}].amount=parseFloat(this.textContent)||0;refreshIfDb()">${c.amount}</td>
+      <td contenteditable="true" onblur="state.clients[${i}].owner=this.textContent;refreshIfDb()">${c.owner}</td>
+      <td contenteditable="true" onblur="state.clients[${i}].note=this.textContent;refreshIfDb()">${c.note}</td>
+      <td><button class="del-btn" onclick="deleteClientRow(${i})">删除</button></td>
+    </tr>`).join('');
+}
+
+function refreshIfDb() {
+  if (curView === 'db') renderPage(curPage);
+}
+
+// ══════════════════════════════════════
+//  ADD / DELETE
+// ══════════════════════════════════════
+function addSalesRow(){ state.sales.push({name:'新销售',amount:0,deals:0,target:20,newClients:0}); renderDcSales(); }
+function deleteSalesRow(i){ if(confirm('确认删除？')){ state.sales.splice(i,1); renderDcSales(); refreshIfDb(); } }
+function addTrendRow(){ state.trends.push({month:'新月份',revenue:0,target:90,deals:0,leads:0}); renderDcTrends(); }
+function deleteTrendRow(i){ if(confirm('确认删除？')){ state.trends.splice(i,1); renderDcTrends(); refreshIfDb(); } }
+function addClientRow(){ state.clients.push({name:'新客户',stage:'C',amount:0,owner:'待分配',note:''}); renderDcClients(); }
+function deleteClientRow(i){ if(confirm('确认删除？')){ state.clients.splice(i,1); renderDcClients(); refreshIfDb(); } }
+function clearTable(t){
+  if(!confirm(`确认清空${t}数据？`)) return;
+  if(t==='sales') state.sales=[];
+  if(t==='trends') state.trends=[];
+  if(t==='clients') state.clients=[];
+  renderDcTable(t); showToast('✅ 已清空');
+}
+
+// ══════════════════════════════════════
+//  PASTE IMPORT
+// ══════════════════════════════════════
+let pasteTarget = '';
+function pasteImport(t){ pasteTarget=t; document.getElementById('paste-area').value=''; document.getElementById('paste-modal').classList.add('show'); }
+function closePasteModal(){ document.getElementById('paste-modal').classList.remove('show'); }
+function confirmPaste(){
+  const raw = document.getElementById('paste-area').value.trim();
+  if(!raw){ showToast('⚠️ 内容为空'); return; }
+  const rows = raw.split('\n').map(r => r.split('\t'));
+  try {
+    if(pasteTarget==='sales'){
+      state.sales = rows.map(r=>({name:r[0]||'',amount:parseFloat(r[1])||0,deals:parseInt(r[2])||0,target:parseFloat(r[3])||0,newClients:parseInt(r[4])||0}));
+      renderDcSales();
+    } else if(pasteTarget==='trends'){
+      state.trends = rows.map(r=>({month:r[0]||'',revenue:parseFloat(r[1])||0,target:parseFloat(r[2])||0,deals:parseInt(r[3])||0,leads:parseInt(r[4])||0}));
+      renderDcTrends();
+    } else {
+      state.clients = rows.map(r=>({name:r[0]||'',stage:r[1]||'C',amount:parseFloat(r[2])||0,owner:r[3]||'',note:r[4]||''}));
+      renderDcClients();
+    }
+    closePasteModal(); refreshIfDb(); showToast('✅ 粘贴导入成功！');
+  } catch(e){ showToast('❌ 导入失败: '+e.message); }
+}
+
+// ══════════════════════════════════════
+//  EXCEL EXPORT
+// ══════════════════════════════════════
+function exportExcel(tab){
+  const wb = XLSX.utils.book_new();
+  let data, name;
+  if(tab==='sales'){
+    data = state.sales.map(s=>({姓名:s.name,签单金额:s.amount,签单数:s.deals,目标:s.target,新开客户:s.newClients}));
+    name='销售员数据';
+  } else if(tab==='trends'){
+    data = state.trends.map(t=>({月份:t.month,营收:t.revenue,目标:t.target,签单数:t.deals,意向客户:t.leads}));
+    name='月度趋势';
+  } else {
+    data = state.clients.map(c=>({公司:c.name,阶段:c.stage,预估金额:c.amount,负责销售:c.owner,备注:c.note}));
+    name='意向客户';
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(data), name);
+  XLSX.writeFile(wb, `${name}_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('✅ Excel导出成功！');
+}
+
+// ══════════════════════════════════════
+//  EDITABLE TITLES — 收集 & 恢复
+// ══════════════════════════════════════
+function collectTitles() {
+  if (!state.ui) state.ui = {};
+  if (!state.ui.titles) state.ui.titles = {};
+  document.querySelectorAll('[contenteditable="true"][id]').forEach(el => {
+    state.ui.titles[el.id] = el.innerHTML.trim();
+  });
+}
+function restoreEditable() {
+  if (!state.ui?.titles) return;
+  Object.entries(state.ui.titles).forEach(([id, html]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
+}
+
+// ══════════════════════════════════════
+//  💾 保存 — localStorage
+// ══════════════════════════════════════
+function saveAll(){
+  collectTitles();
+  try {
+    localStorage.setItem('creamviz_sales_v2', JSON.stringify(state));
+    showToast('✅ 已保存到本地，下次打开自动加载');
+  } catch(e){ showToast('⚠️ 保存失败：' + e.message); }
+}
+
+// ══════════════════════════════════════
+//  📥 另存为HTML — 读原始源码注入数据
+// ══════════════════════════════════════
+function saveAsHTML(){
+  collectTitles();
+  const snapshot = JSON.stringify(state);
+  const marker = '// ══════════════════════════════════════\n//  INIT';
+  const inject = '// ── 嵌入数据（另存为HTML时自动写入）──\n'
+    + '(function(){try{Object.assign(state,' + snapshot + ');}catch(e){}})();\n'
+    + marker;
+  // ✅ fetch 原始文件文本，完全不碰 DOM，不会带入图表 SVG 节点
+  fetch(location.href)
+    .then(r => r.text())
+    .then(src => {
+      const out = src.replace(marker, inject);
+      const blob = new Blob([out], { type: 'text/html;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'CreamViz月报_' + new Date().toISOString().slice(0,10) + '.html';
+      a.click();
+      showToast('📥 已另存为HTML，打开即是完整数据');
+    })
+    .catch(() => {
+      showToast('⚠️ 需通过网址访问才能使用另存功能（上传到 Netlify 后即可）');
+    });
+}
+
+// ══════════════════════════════════════
+//  LOAD
+// ══════════════════════════════════════
+function loadSaved(){
+  const raw = localStorage.getItem('creamviz_sales_v2');
+  if(raw){
+    try{
+      const s=JSON.parse(raw);
+      Object.assign(state,s);
+    } catch(e){}
+  }
+}
+
+// ══════════════════════════════════════
+//  🖼 导出PNG
+// ══════════════════════════════════════
+function exportPNG(){
+  const frame = document.getElementById('db-frame');
+  html2canvas(frame,{scale:2,backgroundColor:'#EAECF0',useCORS:true}).then(canvas=>{
+    const a=document.createElement('a');
+    a.href=canvas.toDataURL('image/png');
+    a.download=`CreamViz月报_${new Date().toISOString().slice(0,10)}.png`;
+    a.click(); showToast('✅ PNG导出成功！');
+  });
+}
+
+// ══════════════════════════════════════
+//  TOAST & RESIZE
+// ══════════════════════════════════════
+let toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+window.addEventListener('resize',()=>{ Object.values(CI).forEach(c=>{ if(c&&c.resize) c.resize(); }); });
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+loadSaved();
+restoreEditable();
+setTimeout(()=>renderPage(1), 120);
+</script>
+</body>
+</html>

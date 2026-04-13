@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>库存管理看板系统</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg-page:#EAECF0;--bg:#FFFFFF;
+  --sh-up:0 2px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
+  --sh-sm:0 1px 4px rgba(0,0,0,.10);--sh-in:inset 0 1px 4px rgba(0,0,0,.08);
+  --sh-deep:0 4px 24px rgba(0,0,0,.12),0 1px 6px rgba(0,0,0,.07);
+  --t1:#0D1117;--t2:#1F2937;--tm:#4B5563;--t3:#9CA3AF;
+  --accent:#5470c6;--accent-light:rgba(84,112,198,.12);
+  --accent-grad:linear-gradient(135deg,#5470c6 0%,#7bc6e6 100%);
+  --green:#3ba272;--green-light:rgba(59,162,114,.12);
+  --red:#ee6666;--red-light:rgba(238,102,102,.12);
+  --amber:#fac858;--amber-light:rgba(250,200,88,.18);
+  --purple:#9a60b4;--purple-light:rgba(154,96,180,.12);
+  --c1:#7bc6e6;--c2:#fac858;--c3:#9a60b4;--c4:#5470c6;--c5:#ff9f7f;--c6:#ee6666;--c7:#ef65ce;
+  --gap-xs:8px;--gap-sm:12px;--gap-md:16px;--gap-lg:24px;
+  --r-sm:12px;--r-md:18px;--r-lg:24px;--r-xl:30px;
+  --font-d:'Nunito',sans-serif;--font-b:'Noto Sans SC',system-ui,sans-serif;
+}
+body{font-family:var(--font-b);background:var(--bg-page);display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 32px 60px;gap:12px;-webkit-font-smoothing:antialiased;}
+
+/* ── Global Nav ── */
+.global-nav{width:100%;height:58px;padding:0 20px;background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-up);display:flex;justify-content:space-between;align-items:center;}
+.logo-wrap{display:flex;flex-direction:column;gap:1px;}
+.logo-name{font-family:var(--font-d);font-size:16px;font-weight:900;color:var(--t1);}
+.logo-name em{color:var(--accent);font-style:normal;}
+.logo-sub{font-size:11px;color:var(--t3);cursor:text;}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.nbtn{padding:6px 14px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:12px;cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);}
+.nbtn:hover{transform:translateY(-1px);}
+.nbtn.active{color:var(--accent);box-shadow:var(--sh-in);}
+.nbtn-save{background:var(--accent);color:#fff !important;}
+.nbtn-save:hover{background:#4460b8;}
+
+/* ── View & Pages ── */
+.view{display:none;width:100%;}
+.view.active{display:block;}
+.page-frame{width:100%;display:flex;flex-direction:column;gap:12px;}
+
+/* ── Page Tabs ── */
+.ptab-row{display:flex;gap:8px;align-items:center;}
+.ptab{padding:6px 18px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:12px;cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);}
+.ptab.active{color:var(--accent);box-shadow:var(--sh-in);font-weight:900;}
+.page-canvas{display:none;width:100%;flex-direction:column;gap:12px;}
+.page-canvas.active{display:flex;}
+
+/* ── Cards & Grid ── */
+.card{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);padding:18px 20px;}
+.card-title{font-size:13px;font-weight:700;color:var(--tm);margin-bottom:14px;display:flex;align-items:center;gap:6px;}
+.grid{display:grid;gap:12px;}
+.g5{grid-template-columns:repeat(5,1fr);}
+.g3{grid-template-columns:repeat(3,1fr);}
+.g2{grid-template-columns:repeat(2,1fr);}
+.g21{grid-template-columns:2fr 1fr;}
+.g12{grid-template-columns:1fr 2fr;}
+
+/* ── KPI Cards ── */
+.kpi-card{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);padding:18px 20px;display:flex;flex-direction:column;gap:6px;}
+.kpi-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:4px;}
+.kpi-label{font-size:12px;color:var(--tm);font-weight:600;}
+.kpi-val{font-family:var(--font-d);font-size:26px;font-weight:900;color:var(--t1);line-height:1;}
+.kpi-val-sm{font-family:var(--font-d);font-size:20px;font-weight:900;color:var(--t1);line-height:1;}
+.kpi-unit{font-size:12px;color:var(--t3);font-family:var(--font-b);}
+.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px;margin-top:2px;}
+.badge-up{background:var(--green-light);color:var(--green);}
+.badge-dn{background:var(--red-light);color:var(--red);}
+.badge-am{background:var(--amber-light);color:#b8860b;}
+.badge-bl{background:var(--accent-light);color:var(--accent);}
+
+/* ── Chart containers ── */
+.chart-box{width:100%;height:280px;}
+.chart-box-lg{width:100%;height:320px;}
+.chart-box-sm{width:100%;height:220px;}
+
+/* ── Tables ── */
+.tbl-wrap{overflow-x:auto;border-radius:var(--r-sm);}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.tbl thead th{background:#f8f9fb;padding:9px 12px;text-align:left;font-weight:700;color:var(--tm);border-bottom:1px solid #eaecf0;white-space:nowrap;}
+.tbl tbody td{padding:8px 12px;border-bottom:1px solid #f3f4f6;color:var(--t2);vertical-align:middle;}
+.tbl tbody tr:hover{background:#fafbfd;}
+.tbl tbody tr:last-child td{border-bottom:none;}
+.tag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.tag-a{background:var(--accent-light);color:var(--accent);}
+.tag-g{background:var(--green-light);color:var(--green);}
+.tag-r{background:var(--red-light);color:var(--red);}
+.tag-am{background:var(--amber-light);color:#b8860b;}
+.tag-p{background:var(--purple-light);color:var(--purple);}
+.profit-pos{color:var(--green);font-weight:700;}
+.profit-neg{color:var(--red);font-weight:700;}
+
+/* ── Data Center ── */
+.dc-tab-row{display:flex;gap:8px;flex-wrap:wrap;}
+.dc-tab{padding:6px 16px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:12px;cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);}
+.dc-tab.active{color:var(--accent);box-shadow:var(--sh-in);}
+.dc-page{display:none;}
+.dc-page.active{display:block;}
+.dc-section{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);padding:18px 20px;}
+.dc-section h3{font-size:14px;font-weight:700;color:var(--t1);margin-bottom:4px;}
+.dc-hint{font-size:11px;color:var(--t3);margin-bottom:12px;}
+.dc-tbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;}
+.dc-tbar-btns{display:flex;gap:8px;flex-wrap:wrap;}
+.dc-btn{padding:6px 14px;border:none;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;font-family:var(--font-b);transition:.15s;}
+.dc-btn:hover{background:#4460b8;}
+.dc-btn-out{padding:6px 14px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);color:var(--tm);font-family:var(--font-b);transition:.15s;}
+.dc-btn-out:hover{border-color:var(--accent);color:var(--accent);}
+.dc-btn-del{padding:4px 10px;border:none;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;background:var(--red-light);color:var(--red);font-family:var(--font-b);}
+.dc-tbl{width:100%;border-collapse:collapse;font-size:12px;}
+.dc-tbl thead th{background:#f8f9fb;padding:9px 10px;text-align:left;font-weight:700;color:var(--tm);border-bottom:2px solid #eaecf0;white-space:nowrap;position:sticky;top:0;z-index:2;}
+.dc-tbl tbody td{padding:7px 10px;border-bottom:1px solid #f3f4f6;color:var(--t2);}
+.dc-tbl tbody tr:hover{background:#fafbfd;}
+.dc-tbl td[contenteditable="true"]:focus{background:#eff6ff;outline:2px solid var(--accent);border-radius:4px;}
+.dc-scroll{max-height:480px;overflow-y:auto;border-radius:var(--r-sm);border:1px solid #eaecf0;}
+.dc-info{display:flex;gap:16px;flex-wrap:wrap;}
+.dc-info-item{font-size:12px;color:var(--tm);}<br>
+.dc-info-item strong{color:var(--accent);font-weight:700;}
+
+/* ── Toast ── */
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(20px);background:#1f2937;color:#fff;padding:10px 20px;border-radius:var(--r-md);font-size:13px;font-weight:600;opacity:0;transition:.3s;z-index:9999;pointer-events:none;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── Modal ── */
+.modal-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center;}
+.modal-overlay.active{display:flex;}
+.modal{background:var(--bg);border-radius:var(--r-lg);padding:24px;width:560px;max-height:80vh;overflow-y:auto;box-shadow:var(--sh-deep);}
+.modal h3{font-size:15px;font-weight:700;color:var(--t1);margin-bottom:4px;}
+.modal p{font-size:12px;color:var(--t3);margin-bottom:16px;}
+.modal textarea{width:100%;height:200px;border:1px solid #e5e7eb;border-radius:var(--r-sm);padding:10px;font-size:12px;font-family:var(--font-b);resize:vertical;outline:none;}
+.modal textarea:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;margin-top:12px;justify-content:flex-end;}
+
+/* ── Form ── */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group label{font-size:12px;font-weight:700;color:var(--tm);}
+.form-input{padding:8px 12px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;font-family:var(--font-b);outline:none;}
+.form-input:focus{border-color:var(--accent);}
+.form-group-full{grid-column:1/-1;}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#f1f1f1;border-radius:10px;}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:10px;}
+
+/* ── Separator ── */
+.sep{height:1px;background:#f3f4f6;margin:6px 0;}
+.section-title{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+</style>
+</head>
+<body>
+
+<!-- ── Global Nav ── -->
+<nav class="global-nav">
+  <div class="logo-wrap">
+    <div class="logo-name">库存<em>管理</em>看板</div>
+    <div class="logo-sub" contenteditable="true">Inventory Management System</div>
+  </div>
+  <div class="nav-r">
+    <button class="nbtn active" id="btn-db" onclick="switchView('db')">📊 可视化看板</button>
+    <button class="nbtn" id="btn-dc" onclick="switchView('dc')">📋 数据中心</button>
+    <button class="nbtn" onclick="exportExcel()">📤 导出Excel</button>
+    <button class="nbtn nbtn-save" onclick="saveAll()">💾 存档</button>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════════
+     可视化看板
+════════════════════════════════════════════ -->
+<div class="view active" id="view-db">
+  <div class="page-frame">
+    <!-- Page Tabs -->
+    <div class="ptab-row">
+      <button class="ptab active" onclick="switchPage(1)">P1 · 总览看板</button>
+      <button class="ptab" onclick="switchPage(2)">P2 · 库存明细</button>
+      <button class="ptab" onclick="switchPage(3)">P3 · 订单管理</button>
+      <button class="ptab" onclick="switchPage(4)">P4 · 利润分析</button>
+    </div>
+
+    <!-- ── P1 总览看板 ── -->
+    <div class="page-canvas active" id="page1">
+      <!-- 5 KPI Cards -->
+      <div class="grid g5" id="kpi-row"></div>
+      <!-- Charts Row 1 -->
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-title">📈 近12月销售额 & 利润趋势</div>
+          <div class="chart-box" id="chart-trend"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🏷️ 品类库存价值占比</div>
+          <div class="chart-box" id="chart-cat-pie"></div>
+        </div>
+      </div>
+      <!-- Charts Row 2 -->
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-title">📦 TOP10 库存数量</div>
+          <div class="chart-box" id="chart-stock-bar"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">💰 TOP10 商品利润贡献</div>
+          <div class="chart-box" id="chart-profit-bar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── P2 库存明细 ── -->
+    <div class="page-canvas" id="page2">
+      <div class="grid g3" id="p2-kpi-row"></div>
+      <div class="card">
+        <div class="card-title">📦 库存明细表 <span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:8px;">含进价(税前/税后)、售价、利润率</span></div>
+        <div class="dc-tbar">
+          <div class="dc-tbar-btns">
+            <input type="text" id="search-sku" placeholder="🔍 搜索商品名称/SKU..." style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;width:220px;outline:none;">
+            <select id="filter-cat" style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;outline:none;font-family:var(--font-b);" onchange="renderP2Table()">
+              <option value="">全部品类</option>
+            </select>
+          </div>
+          <div class="dc-tbar-btns">
+            <button class="dc-btn-out" onclick="exportP2Excel()">📤 导出库存表</button>
+          </div>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>SKU</th><th>商品名称</th><th>品类</th>
+                <th>库存数量</th><th>单位</th>
+                <th>进价(税前)</th><th>税率</th><th>进价(税后)</th>
+                <th>售价</th><th>毛利</th><th>毛利率</th>
+                <th>库存价值(进价)</th><th>库存价值(售价)</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="tb-p2"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--t3);" id="p2-summary"></div>
+      </div>
+    </div>
+
+    <!-- ── P3 订单管理 ── -->
+    <div class="page-canvas" id="page3">
+      <div class="grid g3" id="p3-kpi-row"></div>
+      <div class="card">
+        <div class="card-title">🛒 订单明细 <span style="font-weight:400;color:var(--t3);font-size:11px;margin-left:8px;">每单卖了什么、数量、金额、利润</span></div>
+        <div class="dc-tbar">
+          <div class="dc-tbar-btns">
+            <input type="text" id="search-order" placeholder="🔍 搜索订单号/客户..." style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;width:220px;outline:none;">
+            <select id="filter-order-status" style="padding:6px 12px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;outline:none;font-family:var(--font-b);" onchange="renderP3Table()">
+              <option value="">全部状态</option>
+              <option value="已完成">已完成</option>
+              <option value="处理中">处理中</option>
+              <option value="已取消">已取消</option>
+            </select>
+            <input type="date" id="filter-date-from" style="padding:6px 10px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;outline:none;" onchange="renderP3Table()">
+            <span style="font-size:12px;color:var(--t3);">至</span>
+            <input type="date" id="filter-date-to" style="padding:6px 10px;border:1px solid #e5e7eb;border-radius:var(--r-sm);font-size:12px;outline:none;" onchange="renderP3Table()">
+          </div>
+          <button class="dc-btn-out" onclick="exportOrderExcel()">📤 导出订单表</button>
+        </div>
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>订单号</th><th>日期</th><th>客户</th>
+                <th>商品名称</th><th>SKU</th><th>数量</th>
+                <th>单价(售)</th><th>总售价</th>
+                <th>成本单价</th><th>总成本</th>
+                <th>毛利润</th><th>利润率</th>
+                <th>状态</th><th>备注</th>
+              </tr>
+            </thead>
+            <tbody id="tb-p3"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:10px;font-size:11px;color:var(--t3);" id="p3-summary"></div>
+      </div>
+    </div>
+
+    <!-- ── P4 利润分析 ── -->
+    <div class="page-canvas" id="page4">
+      <div class="grid g2">
+        <div class="card">
+          <div class="card-title">📊 各品类毛利率对比</div>
+          <div class="chart-box-lg" id="chart-margin-bar"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">💵 月度销售额 vs 成本 vs 利润</div>
+          <div class="chart-box-lg" id="chart-monthly-bar"></div>
+        </div>
+      </div>
+      <div class="grid g3">
+        <div class="card">
+          <div class="card-title">🏆 利润贡献TOP商品</div>
+          <div class="chart-box-sm" id="chart-top-profit"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🔄 订单状态分布</div>
+          <div class="chart-box-sm" id="chart-order-status"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📦 库存健康度分析</div>
+          <div class="chart-box-sm" id="chart-stock-health"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     数据中心
+════════════════════════════════════════════ -->
+<div class="view" id="view-dc">
+  <div class="page-frame">
+    <div class="dc-tab-row">
+      <button class="dc-tab active" onclick="switchDcPage('products')">📦 商品库存表</button>
+      <button class="dc-tab" onclick="switchDcPage('orders')">🛒 订单明细表</button>
+    </div>
+
+    <!-- 商品库存表 -->
+    <div class="dc-page active" id="dc-products">
+      <div class="dc-section">
+        <h3>📦 商品库存主表</h3>
+        <div class="dc-hint">双击单元格可直接编辑 · 数据自动同步到看板图表 · 支持Excel批量导入</div>
+        <div class="dc-tbar">
+          <div class="dc-tbar-btns">
+            <button class="dc-btn-out" onclick="importProductExcel()">📥 导入Excel</button>
+            <button class="dc-btn-out" onclick="pasteProducts()">📋 粘贴导入</button>
+            <button class="dc-btn-out" onclick="exportExcel()">📤 导出Excel</button>
+            <button class="dc-btn" onclick="addProduct()">➕ 新增商品</button>
+          </div>
+          <div class="dc-info" id="product-stats"></div>
+        </div>
+        <div class="dc-scroll">
+          <table class="dc-tbl">
+            <thead>
+              <tr>
+                <th>#</th><th>SKU</th><th>商品名称</th><th>品类</th><th>单位</th>
+                <th>库存数量</th><th>安全库存</th>
+                <th>进价(税前)</th><th>税率%</th><th>进价(税后)</th>
+                <th>售价</th><th>毛利</th><th>毛利率%</th>
+                <th>库存值(进)</th><th>状态</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="tb-dc-products"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 订单明细表 -->
+    <div class="dc-page" id="dc-orders">
+      <div class="dc-section">
+        <h3>🛒 订单明细主表</h3>
+        <div class="dc-hint">每一笔销售记录 · 自动从商品表匹配成本价 · 自动计算利润</div>
+        <div class="dc-tbar">
+          <div class="dc-tbar-btns">
+            <button class="dc-btn-out" onclick="importOrderExcel()">📥 导入Excel</button>
+            <button class="dc-btn-out" onclick="pasteOrders()">📋 粘贴导入</button>
+            <button class="dc-btn-out" onclick="exportOrderExcel()">📤 导出订单</button>
+            <button class="dc-btn" onclick="addOrder()">➕ 新增订单</button>
+          </div>
+          <div class="dc-info" id="order-stats"></div>
+        </div>
+        <div class="dc-scroll">
+          <table class="dc-tbl">
+            <thead>
+              <tr>
+                <th>#</th><th>订单号</th><th>日期</th><th>客户名称</th>
+                <th>商品名称</th><th>SKU</th><th>数量</th>
+                <th>售价/件</th><th>总售价</th>
+                <th>成本/件</th><th>总成本</th>
+                <th>毛利润</th><th>利润率%</th>
+                <th>状态</th><th>备注</th><th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="tb-dc-orders"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modals ── -->
+<div class="modal-overlay" id="modal-paste">
+  <div class="modal">
+    <h3 id="modal-paste-title">📋 粘贴导入数据</h3>
+    <p id="modal-paste-hint">从Excel复制数据后粘贴到下方文本框，系统将自动解析</p>
+    <textarea id="paste-textarea" placeholder="从Excel复制后粘贴在这里..."></textarea>
+    <div class="modal-btns">
+      <button class="dc-btn-out" onclick="closeModal('modal-paste')">取消</button>
+      <button class="dc-btn" id="modal-paste-confirm">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-product">
+  <div class="modal">
+    <h3>➕ 新增商品</h3>
+    <p>填写商品基本信息，税后进价自动计算</p>
+    <div class="form-grid">
+      <div class="form-group"><label>SKU编码 *</label><input class="form-input" id="np-sku" placeholder="如: SKU-001"></div>
+      <div class="form-group"><label>商品名称 *</label><input class="form-input" id="np-name" placeholder="商品名称"></div>
+      <div class="form-group"><label>品类</label><input class="form-input" id="np-cat" placeholder="如: 电子产品"></div>
+      <div class="form-group"><label>单位</label><input class="form-input" id="np-unit" placeholder="如: 件/箱/个"></div>
+      <div class="form-group"><label>库存数量</label><input class="form-input" id="np-qty" type="number" placeholder="0"></div>
+      <div class="form-group"><label>安全库存</label><input class="form-input" id="np-safe" type="number" placeholder="0"></div>
+      <div class="form-group"><label>进价(税前)</label><input class="form-input" id="np-cost-ex" type="number" placeholder="0.00" oninput="calcTaxPrice()"></div>
+      <div class="form-group"><label>税率 (%)</label><input class="form-input" id="np-tax" type="number" placeholder="6" value="6" oninput="calcTaxPrice()"></div>
+      <div class="form-group"><label>进价(税后) — 自动</label><input class="form-input" id="np-cost-in" type="number" placeholder="自动计算" readonly style="background:#f8f9fb;"></div>
+      <div class="form-group"><label>售价</label><input class="form-input" id="np-price" type="number" placeholder="0.00"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="dc-btn-out" onclick="closeModal('modal-add-product')">取消</button>
+      <button class="dc-btn" onclick="confirmAddProduct()">保存商品</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-add-order">
+  <div class="modal">
+    <h3>➕ 新增订单</h3>
+    <p>录入订单信息，成本从商品表自动匹配</p>
+    <div class="form-grid">
+      <div class="form-group"><label>订单号 *</label><input class="form-input" id="no-id" placeholder="如: ORD-20240101-001"></div>
+      <div class="form-group"><label>日期 *</label><input class="form-input" id="no-date" type="date"></div>
+      <div class="form-group"><label>客户名称</label><input class="form-input" id="no-customer" placeholder="客户/渠道名称"></div>
+      <div class="form-group"><label>商品SKU</label>
+        <select class="form-input" id="no-sku" onchange="fillOrderProduct()">
+          <option value="">-- 选择SKU --</option>
+        </select>
+      </div>
+      <div class="form-group form-group-full"><label>商品名称</label><input class="form-input" id="no-name" placeholder="自动填入或手动输入"></div>
+      <div class="form-group"><label>销售数量</label><input class="form-input" id="no-qty" type="number" placeholder="0" oninput="calcOrderProfit()"></div>
+      <div class="form-group"><label>售价/件</label><input class="form-input" id="no-price" type="number" placeholder="0.00" oninput="calcOrderProfit()"></div>
+      <div class="form-group"><label>成本/件 (自动)</label><input class="form-input" id="no-cost" type="number" placeholder="自动匹配" oninput="calcOrderProfit()"></div>
+      <div class="form-group"><label>毛利润 (自动)</label><input class="form-input" id="no-profit" readonly style="background:#f8f9fb;"></div>
+      <div class="form-group"><label>状态</label>
+        <select class="form-input" id="no-status">
+          <option>已完成</option><option>处理中</option><option>已取消</option>
+        </select>
+      </div>
+      <div class="form-group form-group-full"><label>备注</label><input class="form-input" id="no-remark" placeholder="可选备注"></div>
+    </div>
+    <div class="modal-btns">
+      <button class="dc-btn-out" onclick="closeModal('modal-add-order')">取消</button>
+      <button class="dc-btn" onclick="confirmAddOrder()">保存订单</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════
+// STATE & DEFAULT DATA
+// ══════════════════════════════════════════════
+const FILE_ID = 'inventory_mgmt_v1';
+
+const defaultProducts = [
+  {sku:'SKU-001',name:'无线蓝牙耳机 Pro',cat:'电子产品',unit:'件',qty:120,safe:30,costEx:85,tax:13,costIn:96.05,price:199,status:'正常'},
+  {sku:'SKU-002',name:'便携充电宝 20000mAh',cat:'电子产品',unit:'件',qty:85,safe:20,costEx:62,tax:13,costIn:70.06,price:149,status:'正常'},
+  {sku:'SKU-003',name:'机械键盘 RGB版',cat:'电子产品',unit:'件',qty:45,safe:15,costEx:155,tax:13,costIn:175.15,price:399,status:'正常'},
+  {sku:'SKU-004',name:'不锈钢保温杯 500ml',cat:'日用品',unit:'件',qty:200,safe:50,costEx:18,tax:9,costIn:19.62,price:59,status:'正常'},
+  {sku:'SKU-005',name:'瑜伽垫 加厚版',cat:'运动健身',unit:'件',qty:60,safe:20,costEx:35,tax:9,costIn:38.15,price:89,status:'正常'},
+  {sku:'SKU-006',name:'LED台灯 护眼款',cat:'家居照明',unit:'件',qty:15,safe:20,costEx:42,tax:13,costIn:47.46,price:128,status:'低库存'},
+  {sku:'SKU-007',name:'咖啡豆 埃塞俄比亚 250g',cat:'食品饮料',unit:'袋',qty:300,safe:80,costEx:28,tax:9,costIn:30.52,price:68,status:'正常'},
+  {sku:'SKU-008',name:'竹纤维毛巾套装',cat:'日用品',unit:'套',qty:150,safe:40,costEx:15,tax:9,costIn:16.35,price:45,status:'正常'},
+  {sku:'SKU-009',name:'蓝牙音响 户外防水',cat:'电子产品',unit:'件',qty:8,safe:15,costEx:98,tax:13,costIn:110.74,price:269,status:'低库存'},
+  {sku:'SKU-010',name:'乳胶枕 泰国进口',cat:'寝具',unit:'件',qty:55,safe:20,costEx:88,tax:9,costIn:95.92,price:228,status:'正常'},
+  {sku:'SKU-011',name:'折叠收纳箱 大号',cat:'家居收纳',unit:'件',qty:180,safe:50,costEx:12,tax:9,costIn:13.08,price:38,status:'正常'},
+  {sku:'SKU-012',name:'运动水壶 Tritan材质',cat:'运动健身',unit:'件',qty:0,safe:30,costEx:22,tax:9,costIn:23.98,price:55,status:'缺货'},
+];
+
+const defaultOrders = [
+  {id:'ORD-20240301-001',date:'2024-03-01',customer:'张三',name:'无线蓝牙耳机 Pro',sku:'SKU-001',qty:2,salePrice:199,cost:96.05,status:'已完成',remark:''},
+  {id:'ORD-20240301-002',date:'2024-03-01',customer:'李四',name:'不锈钢保温杯 500ml',sku:'SKU-004',qty:5,salePrice:59,cost:19.62,status:'已完成',remark:'批发'},
+  {id:'ORD-20240302-001',date:'2024-03-02',customer:'王五',name:'机械键盘 RGB版',sku:'SKU-003',qty:1,salePrice:399,cost:175.15,status:'已完成',remark:''},
+  {id:'ORD-20240305-001',date:'2024-03-05',customer:'赵六',name:'咖啡豆 埃塞俄比亚 250g',sku:'SKU-007',qty:10,salePrice:68,cost:30.52,status:'已完成',remark:''},
+  {id:'ORD-20240308-001',date:'2024-03-08',customer:'小红书官方',name:'瑜伽垫 加厚版',sku:'SKU-005',qty:8,salePrice:89,cost:38.15,status:'已完成',remark:'网红推广单'},
+  {id:'ORD-20240310-001',date:'2024-03-10',customer:'陈七',name:'便携充电宝 20000mAh',sku:'SKU-002',qty:3,salePrice:149,cost:70.06,status:'已完成',remark:''},
+  {id:'ORD-20240312-001',date:'2024-03-12',customer:'线下门店A',name:'竹纤维毛巾套装',sku:'SKU-008',qty:20,salePrice:42,cost:16.35,status:'已完成',remark:'批发优惠'},
+  {id:'ORD-20240315-001',date:'2024-03-15',customer:'刘八',name:'LED台灯 护眼款',sku:'SKU-006',qty:2,salePrice:128,cost:47.46,status:'已完成',remark:''},
+  {id:'ORD-20240318-001',date:'2024-03-18',customer:'孙九',name:'乳胶枕 泰国进口',sku:'SKU-010',qty:2,salePrice:228,cost:95.92,status:'已完成',remark:''},
+  {id:'ORD-20240320-001',date:'2024-03-20',customer:'企业采购B',name:'折叠收纳箱 大号',sku:'SKU-011',qty:50,salePrice:35,cost:13.08,status:'已完成',remark:'企业批采'},
+  {id:'ORD-20240322-001',date:'2024-03-22',customer:'周十',name:'蓝牙音响 户外防水',sku:'SKU-009',qty:1,salePrice:269,cost:110.74,status:'已完成',remark:''},
+  {id:'ORD-20240325-001',date:'2024-03-25',customer:'吴十一',name:'无线蓝牙耳机 Pro',sku:'SKU-001',qty:3,salePrice:199,cost:96.05,status:'处理中',remark:''},
+  {id:'ORD-20240326-001',date:'2024-03-26',customer:'郑十二',name:'机械键盘 RGB版',sku:'SKU-003',qty:1,salePrice:399,cost:175.15,status:'处理中',remark:''},
+  {id:'ORD-20240328-001',date:'2024-03-28',customer:'王十三',name:'咖啡豆 埃塞俄比亚 250g',sku:'SKU-007',qty:5,salePrice:68,cost:30.52,status:'已取消',remark:'买家申请取消'},
+  // More months
+  {id:'ORD-20240201-001',date:'2024-02-01',customer:'批发商C',name:'不锈钢保温杯 500ml',sku:'SKU-004',qty:30,salePrice:55,cost:19.62,status:'已完成',remark:'2月批发'},
+  {id:'ORD-20240215-001',date:'2024-02-15',customer:'线上旗舰店',name:'便携充电宝 20000mAh',sku:'SKU-002',qty:15,salePrice:149,cost:70.06,status:'已完成',remark:''},
+  {id:'ORD-20240220-001',date:'2024-02-20',customer:'李四',name:'瑜伽垫 加厚版',sku:'SKU-005',qty:4,salePrice:89,cost:38.15,status:'已完成',remark:''},
+  {id:'ORD-20240101-001',date:'2024-01-10',customer:'年终大促',name:'LED台灯 护眼款',sku:'SKU-006',qty:12,salePrice:118,cost:47.46,status:'已完成',remark:'年促'},
+  {id:'ORD-20240115-001',date:'2024-01-15',customer:'企业采购A',name:'乳胶枕 泰国进口',sku:'SKU-010',qty:6,salePrice:218,cost:95.92,status:'已完成',remark:''},
+  {id:'ORD-20231201-001',date:'2023-12-05',customer:'双12大促',name:'无线蓝牙耳机 Pro',sku:'SKU-001',qty:20,salePrice:179,cost:96.05,status:'已完成',remark:'双12促销价'},
+  {id:'ORD-20231215-001',date:'2023-12-15',customer:'线下门店B',name:'竹纤维毛巾套装',sku:'SKU-008',qty:30,salePrice:42,cost:16.35,status:'已完成',remark:''},
+  {id:'ORD-20231220-001',date:'2023-12-20',customer:'周十',name:'折叠收纳箱 大号',sku:'SKU-011',qty:25,salePrice:36,cost:13.08,status:'已完成',remark:''},
+];
+
+// Trend data (月度汇总, used for charts)
+const defaultTrends = [
+  {month:'2023-09',revenue:18500,cost:9800,orders:12},
+  {month:'2023-10',revenue:22300,cost:11200,orders:15},
+  {month:'2023-11',revenue:28700,cost:14500,orders:20},
+  {month:'2023-12',revenue:45200,cost:22800,orders:31},
+  {month:'2024-01',revenue:31500,cost:16200,orders:22},
+  {month:'2024-02',revenue:26800,cost:13500,orders:18},
+  {month:'2024-03',revenue:38400,cost:19200,orders:26},
+];
+
+let state = {
+  products: [...defaultProducts],
+  orders: [...defaultOrders],
+  trends: [...defaultTrends]
+};
+
+// ── Load from localStorage ──
+function loadLocal(){
+  try{
+    const saved = localStorage.getItem(FILE_ID);
+    if(saved){ state = JSON.parse(saved); }
+  }catch(e){}
+}
+
+function saveLocal(){
+  localStorage.setItem(FILE_ID, JSON.stringify(state));
+}
+
+function saveAll(){
+  // Recalculate derived fields
+  recalc();
+  saveLocal();
+  // Also save as downloadable HTML with embedded state
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob([html],{type:'text/html'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `库存管理看板_${new Date().toISOString().slice(0,10)}.html`;
+  a.click();
+  showToast('✅ 已存档并下载HTML备份');
+}
+
+// ── Recalculate derived fields ──
+function recalc(){
+  state.products.forEach(p=>{
+    p.costIn = +(p.costEx * (1 + p.tax/100)).toFixed(2);
+    p.gross = +(p.price - p.costIn).toFixed(2);
+    p.margin = p.price > 0 ? +((p.gross/p.price)*100).toFixed(1) : 0;
+    p.stockValCost = +(p.qty * p.costIn).toFixed(2);
+    p.stockValSale = +(p.qty * p.price).toFixed(2);
+    if(p.qty <= 0) p.status = '缺货';
+    else if(p.qty < p.safe) p.status = '低库存';
+    else p.status = '正常';
+  });
+  state.orders.forEach(o=>{
+    // Auto-match cost from product table
+    const prod = state.products.find(p=>p.sku === o.sku);
+    if(prod && (!o.cost || o.cost===0)) o.cost = prod.costIn;
+    o.totalSale = +(o.qty * o.salePrice).toFixed(2);
+    o.totalCost = +(o.qty * (o.cost||0)).toFixed(2);
+    o.profit = +(o.totalSale - o.totalCost).toFixed(2);
+    o.margin = o.totalSale > 0 ? +((o.profit/o.totalSale)*100).toFixed(1) : 0;
+  });
+}
+
+// ══════════════════════════════════════════════
+// VIEW SWITCHING
+// ══════════════════════════════════════════════
+let curView = 'db', curPage = 1, curDcPage = 'products';
+
+function switchView(v){
+  curView = v;
+  document.getElementById('view-db').classList.toggle('active', v==='db');
+  document.getElementById('view-dc').classList.toggle('active', v==='dc');
+  document.getElementById('btn-db').classList.toggle('active', v==='db');
+  document.getElementById('btn-dc').classList.toggle('active', v==='dc');
+  if(v==='db') renderPage(curPage);
+  else renderDc(curDcPage);
+}
+
+function switchPage(n){
+  curPage = n;
+  document.querySelectorAll('.ptab').forEach((b,i)=>b.classList.toggle('active',i+1===n));
+  document.querySelectorAll('.page-canvas').forEach((p,i)=>p.classList.toggle('active',i+1===n));
+  renderPage(n);
+}
+
+function switchDcPage(p){
+  curDcPage = p;
+  document.querySelectorAll('.dc-tab').forEach(b=>b.classList.toggle('active',b.textContent.includes(p==='products'?'商品':'订单')));
+  document.getElementById('dc-products').classList.toggle('active', p==='products');
+  document.getElementById('dc-orders').classList.toggle('active', p==='orders');
+  renderDc(p);
+}
+
+// ══════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════
+const CI = {}; // chart instances
+
+function mkC(id){
+  if(CI[id]) CI[id].dispose();
+  CI[id] = echarts.init(document.getElementById(id), null, {renderer:'svg'});
+  return CI[id];
+}
+
+function renderPage(n){
+  recalc();
+  if(n===1) renderP1();
+  else if(n===2) renderP2();
+  else if(n===3) renderP3();
+  else if(n===4) renderP4();
+}
+
+// ── P1 KPI Calculations ──
+function calcKPIs(){
+  const completedOrders = state.orders.filter(o=>o.status==='已完成');
+  const totalStockVal = state.products.reduce((s,p)=>s+p.stockValCost,0);
+  const totalRevenue = completedOrders.reduce((s,o)=>s+o.totalSale,0);
+  const totalProfit = completedOrders.reduce((s,o)=>s+o.profit,0);
+  const soldQty = completedOrders.reduce((s,o)=>s+o.qty,0);
+  const stockQty = state.products.reduce((s,p)=>s+p.qty,0);
+  return {totalStockVal,totalRevenue,totalProfit,soldQty,stockQty};
+}
+
+function renderP1(){
+  const k = calcKPIs();
+  const kpiData = [
+    {icon:'📦',label:'总库存价值',val:fmtMoney(k.totalStockVal),unit:'元(成本)',color:'--accent',bg:'--accent-light'},
+    {icon:'💰',label:'总销售额',val:fmtMoney(k.totalRevenue),unit:'元',color:'--c4',bg:'--accent-light'},
+    {icon:'💵',label:'总利润',val:fmtMoney(k.totalProfit),unit:'元',color:'--green',bg:'--green-light'},
+    {icon:'🛒',label:'已售数量',val:k.soldQty.toLocaleString(),unit:'件',color:'--purple',bg:'--purple-light'},
+    {icon:'📊',label:'在库数量',val:k.stockQty.toLocaleString(),unit:'件',color:'--amber',bg:'--amber-light'},
+  ];
+  const row = document.getElementById('kpi-row');
+  row.innerHTML = kpiData.map(d=>`
+    <div class="kpi-card">
+      <div class="kpi-icon" style="background:var(${d.bg});"><span>${d.icon}</span></div>
+      <div class="kpi-label">${d.label}</div>
+      <div class="kpi-val" style="color:var(${d.color});">${d.val}</div>
+      <div class="kpi-unit">${d.unit}</div>
+    </div>`).join('');
+
+  // Trend chart
+  const trendMonths = state.trends.map(t=>t.month);
+  const trendRevenue = state.trends.map(t=>t.revenue);
+  const trendCost = state.trends.map(t=>t.cost);
+  const trendProfit = state.trends.map(t=>+(t.revenue-t.cost).toFixed(0));
+  mkC('chart-trend').setOption({
+    tooltip:{trigger:'axis'},
+    legend:{data:['销售额','成本','利润'],bottom:0,textStyle:{fontSize:11}},
+    grid:{top:10,left:50,right:20,bottom:40},
+    xAxis:{type:'category',data:trendMonths,axisLabel:{fontSize:10}},
+    yAxis:{type:'value',axisLabel:{fontSize:10,formatter:v=>(v>=10000?v/10000+'万':v)}},
+    series:[
+      {name:'销售额',type:'line',data:trendRevenue,smooth:true,lineStyle:{width:2},areaStyle:{opacity:.08},
+       label:{show:true,formatter:p=>p.value>=10000?(p.value/10000).toFixed(1)+'万':p.value,fontSize:9,color:'#5470c6'},itemStyle:{color:'#5470c6'}},
+      {name:'成本',type:'line',data:trendCost,smooth:true,lineStyle:{width:2},
+       label:{show:false},itemStyle:{color:'#ff9f7f'}},
+      {name:'利润',type:'bar',data:trendProfit,barMaxWidth:24,
+       label:{show:true,position:'top',formatter:p=>p.value>=10000?(p.value/10000).toFixed(1)+'万':p.value,fontSize:9},itemStyle:{color:'#3ba272',borderRadius:[4,4,0,0]}}
+    ]
+  });
+
+  // Category pie
+  const catMap = {};
+  state.products.forEach(p=>{ catMap[p.cat] = (catMap[p.cat]||0)+p.stockValCost; });
+  const catData = Object.entries(catMap).map(([name,value])=>({name,value:+value.toFixed(0)}))
+    .sort((a,b)=>b.value-a.value);
+  mkC('chart-cat-pie').setOption({
+    tooltip:{trigger:'item',formatter:'{b}: {c}元 ({d}%)'},
+    legend:{orient:'vertical',right:10,top:'center',textStyle:{fontSize:10}},
+    series:[{
+      type:'pie',radius:['40%','70%'],center:['38%','50%'],
+      itemStyle:{borderRadius:6,borderWidth:2,borderColor:'#fff'},
+      label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:10,lineHeight:14},
+      labelLine:{show:true,length:8,length2:6},
+      data:catData,
+      color:['#5470c6','#fac858','#9a60b4','#7bc6e6','#ff9f7f','#ee6666','#ef65ce']
+    }]
+  });
+
+  // Stock bar TOP10
+  const topStock = [...state.products].sort((a,b)=>b.qty-a.qty).slice(0,10);
+  mkC('chart-stock-bar').setOption({
+    tooltip:{trigger:'axis',formatter:p=>`${p[0].name}: ${p[0].value}件`},
+    grid:{top:10,left:110,right:50,bottom:20},
+    xAxis:{type:'value',axisLabel:{fontSize:10}},
+    yAxis:{type:'category',data:topStock.map(p=>p.name.length>8?p.name.slice(0,8)+'…':p.name),axisLabel:{fontSize:10}},
+    series:[{type:'bar',data:topStock.map(p=>p.qty),barMaxWidth:18,
+      label:{show:true,position:'right',formatter:'{c}件',fontSize:9},
+      itemStyle:{color:'#5470c6',borderRadius:[0,4,4,0]}}]
+  });
+
+  // Profit bar TOP10
+  const topProfit = [...state.products].sort((a,b)=>b.gross-a.gross).slice(0,10);
+  mkC('chart-profit-bar').setOption({
+    tooltip:{trigger:'axis'},
+    grid:{top:10,left:110,right:60,bottom:20},
+    xAxis:{type:'value',axisLabel:{fontSize:10}},
+    yAxis:{type:'category',data:topProfit.map(p=>p.name.length>8?p.name.slice(0,8)+'…':p.name),axisLabel:{fontSize:10}},
+    series:[{type:'bar',data:topProfit.map(p=>p.gross),barMaxWidth:18,
+      label:{show:true,position:'right',formatter:p=>`${p.value}元`,fontSize:9},
+      itemStyle:{color:'#3ba272',borderRadius:[0,4,4,0]}}]
+  });
+}
+
+// ── P2 库存明细 ──
+function renderP2(){
+  const k = calcKPIs();
+  const lowStk = state.products.filter(p=>p.status==='低库存').length;
+  const noStk = state.products.filter(p=>p.status==='缺货').length;
+  document.getElementById('p2-kpi-row').innerHTML = `
+    <div class="kpi-card"><div class="kpi-icon" style="background:var(--accent-light);">📦</div>
+      <div class="kpi-label">在库品种数</div><div class="kpi-val-sm">${state.products.length}</div><div class="kpi-unit">个SKU</div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:var(--amber-light);">⚠️</div>
+      <div class="kpi-label">低库存预警</div><div class="kpi-val-sm" style="color:var(--amber);">${lowStk}</div><div class="kpi-unit">个SKU需补货</div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:var(--red-light);">🚫</div>
+      <div class="kpi-label">缺货品种</div><div class="kpi-val-sm" style="color:var(--red);">${noStk}</div><div class="kpi-unit">个SKU已断货</div></div>`;
+
+  // Populate category filter
+  const cats = [...new Set(state.products.map(p=>p.cat))];
+  const sel = document.getElementById('filter-cat');
+  sel.innerHTML = '<option value="">全部品类</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+
+  renderP2Table();
+
+  // Attach search
+  document.getElementById('search-sku').oninput = renderP2Table;
+}
+
+function renderP2Table(){
+  const q = document.getElementById('search-sku').value.toLowerCase();
+  const cat = document.getElementById('filter-cat').value;
+  const filtered = state.products.filter(p=>{
+    const matchQ = !q || p.name.toLowerCase().includes(q) || p.sku.toLowerCase().includes(q);
+    const matchC = !cat || p.cat===cat;
+    return matchQ && matchC;
+  });
+  const tbody = document.getElementById('tb-p2');
+  tbody.innerHTML = filtered.map(p=>{
+    const statusTag = p.status==='正常'?'tag-g':p.status==='低库存'?'tag-am':'tag-r';
+    return `<tr>
+      <td>${p.sku}</td><td><b>${p.name}</b></td><td><span class="tag tag-a">${p.cat}</span></td>
+      <td><b>${p.qty}</b> ${p.unit}</td><td>${p.unit}</td>
+      <td>¥${p.costEx}</td><td>${p.tax}%</td><td>¥${p.costIn}</td>
+      <td>¥${p.price}</td>
+      <td class="${p.gross>=0?'profit-pos':'profit-neg'}">¥${p.gross}</td>
+      <td><span class="tag ${p.margin>=30?'tag-g':p.margin>=15?'tag-am':'tag-r'}">${p.margin}%</span></td>
+      <td>¥${fmtMoney(p.stockValCost)}</td><td>¥${fmtMoney(p.stockValSale)}</td>
+      <td><span class="tag ${statusTag}">${p.status}</span></td>
+    </tr>`;
+  }).join('');
+  const totCost = filtered.reduce((s,p)=>s+p.stockValCost,0);
+  const totSale = filtered.reduce((s,p)=>s+p.stockValSale,0);
+  document.getElementById('p2-summary').innerHTML =
+    `共 ${filtered.length} 个SKU · 库存总成本价值: <b>¥${fmtMoney(totCost)}</b> · 库存总售价价值: <b>¥${fmtMoney(totSale)}</b>`;
+}
+
+// ── P3 订单管理 ──
+function renderP3(){
+  const completed = state.orders.filter(o=>o.status==='已完成');
+  const totalRev = completed.reduce((s,o)=>s+o.totalSale,0);
+  const totalProfit = completed.reduce((s,o)=>s+o.profit,0);
+  document.getElementById('p3-kpi-row').innerHTML = `
+    <div class="kpi-card"><div class="kpi-icon" style="background:var(--accent-light);">🛒</div>
+      <div class="kpi-label">订单总数</div><div class="kpi-val-sm">${state.orders.length}</div><div class="kpi-unit">笔</div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:var(--green-light);">💰</div>
+      <div class="kpi-label">已完成销售额</div><div class="kpi-val-sm" style="color:var(--accent);">¥${fmtMoney(totalRev)}</div><div class="kpi-unit">元</div></div>
+    <div class="kpi-card"><div class="kpi-icon" style="background:var(--purple-light);">💵</div>
+      <div class="kpi-label">已完成利润</div><div class="kpi-val-sm" style="color:var(--green);">¥${fmtMoney(totalProfit)}</div><div class="kpi-unit">元</div></div>`;
+  document.getElementById('search-order').oninput = renderP3Table;
+  renderP3Table();
+}
+
+function renderP3Table(){
+  const q = (document.getElementById('search-order').value||'').toLowerCase();
+  const st = document.getElementById('filter-order-status').value;
+  const df = document.getElementById('filter-date-from').value;
+  const dt = document.getElementById('filter-date-to').value;
+  const filtered = state.orders.filter(o=>{
+    const mq = !q||(o.id.toLowerCase().includes(q)||o.customer.toLowerCase().includes(q)||o.name.toLowerCase().includes(q));
+    const ms = !st||o.status===st;
+    const md = (!df||o.date>=df)&&(!dt||o.date<=dt);
+    return mq&&ms&&md;
+  });
+  const tbody = document.getElementById('tb-p3');
+  tbody.innerHTML = filtered.map(o=>{
+    const stTag = o.status==='已完成'?'tag-g':o.status==='处理中'?'tag-am':'tag-r';
+    return `<tr>
+      <td><code style="font-size:10px;">${o.id}</code></td>
+      <td>${o.date}</td><td>${o.customer}</td>
+      <td><b>${o.name}</b></td><td style="color:var(--t3);">${o.sku}</td>
+      <td><b>${o.qty}</b></td>
+      <td>¥${o.salePrice}</td><td><b>¥${fmtMoney(o.totalSale)}</b></td>
+      <td>¥${o.cost||''}</td><td>¥${fmtMoney(o.totalCost)}</td>
+      <td class="${o.profit>=0?'profit-pos':'profit-neg'}"><b>¥${fmtMoney(o.profit)}</b></td>
+      <td><span class="tag ${o.margin>=30?'tag-g':o.margin>=15?'tag-am':'tag-r'}">${o.margin}%</span></td>
+      <td><span class="tag ${stTag}">${o.status}</span></td>
+      <td style="color:var(--t3);font-size:11px;">${o.remark||'-'}</td>
+    </tr>`;
+  }).join('');
+  const totSale = filtered.reduce((s,o)=>s+o.totalSale,0);
+  const totProfit = filtered.filter(o=>o.status==='已完成').reduce((s,o)=>s+o.profit,0);
+  document.getElementById('p3-summary').innerHTML =
+    `共 ${filtered.length} 笔订单 · 合计售价: <b>¥${fmtMoney(totSale)}</b> · 已完成利润: <b>¥${fmtMoney(totProfit)}</b>`;
+}
+
+// ── P4 利润分析 ──
+function renderP4(){
+  // Category margin bar
+  const catMap = {};
+  state.products.forEach(p=>{
+    if(!catMap[p.cat]) catMap[p.cat]={margin:0,count:0};
+    catMap[p.cat].margin += p.margin;
+    catMap[p.cat].count++;
+  });
+  const catNames = Object.keys(catMap);
+  const catMargins = catNames.map(c=>+(catMap[c].margin/catMap[c].count).toFixed(1));
+  mkC('chart-margin-bar').setOption({
+    tooltip:{trigger:'axis',formatter:p=>`${p[0].name}<br>平均毛利率: ${p[0].value}%`},
+    grid:{top:20,left:80,right:40,bottom:30},
+    xAxis:{type:'category',data:catNames,axisLabel:{fontSize:10}},
+    yAxis:{type:'value',axisLabel:{formatter:v=>v+'%',fontSize:10}},
+    series:[{type:'bar',data:catMargins,barMaxWidth:40,
+      label:{show:true,position:'top',formatter:'{c}%',fontSize:10},
+      itemStyle:{borderRadius:[6,6,0,0],
+        color:function(p){const cs=['#5470c6','#fac858','#9a60b4','#7bc6e6','#ff9f7f','#ee6666','#ef65ce'];return cs[p.dataIndex%cs.length];}
+      }
+    }]
+  });
+
+  // Monthly stacked bar
+  const months = state.trends.map(t=>t.month);
+  mkC('chart-monthly-bar').setOption({
+    tooltip:{trigger:'axis'},
+    legend:{data:['销售额','成本','利润'],bottom:0,textStyle:{fontSize:11}},
+    grid:{top:20,left:55,right:20,bottom:40},
+    xAxis:{type:'category',data:months,axisLabel:{fontSize:10}},
+    yAxis:{type:'value',axisLabel:{fontSize:10,formatter:v=>v>=10000?v/10000+'万':v}},
+    series:[
+      {name:'销售额',type:'bar',data:state.trends.map(t=>t.revenue),barMaxWidth:28,stack:'total',
+       label:{show:false},itemStyle:{color:'#7bc6e6',borderRadius:[0,0,0,0]}},
+      {name:'成本',type:'bar',data:state.trends.map(t=>t.cost),barMaxWidth:28,stack:'total',
+       label:{show:false},itemStyle:{color:'#ff9f7f'}},
+      {name:'利润',type:'line',data:state.trends.map(t=>+(t.revenue-t.cost).toFixed(0)),smooth:true,
+       label:{show:true,formatter:p=>p.value>=10000?(p.value/10000).toFixed(1)+'万':p.value,fontSize:9},
+       lineStyle:{width:2,color:'#3ba272'},itemStyle:{color:'#3ba272'},symbol:'circle',symbolSize:5}
+    ]
+  });
+
+  // Top profit products (by total order profit per product)
+  const profitByProd = {};
+  state.orders.filter(o=>o.status==='已完成').forEach(o=>{
+    profitByProd[o.name] = (profitByProd[o.name]||0)+o.profit;
+  });
+  const topProd = Object.entries(profitByProd).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  mkC('chart-top-profit').setOption({
+    tooltip:{trigger:'item'},
+    series:[{
+      type:'pie',radius:['35%','65%'],center:['50%','50%'],
+      itemStyle:{borderRadius:5,borderWidth:2,borderColor:'#fff'},
+      label:{show:true,position:'outside',formatter:'{b}\n¥{c}',fontSize:9,lineHeight:13},
+      data:topProd.map(([name,value])=>({name:name.length>6?name.slice(0,6)+'…':name,value:+value.toFixed(0)})),
+      color:['#5470c6','#fac858','#9a60b4','#7bc6e6','#ff9f7f','#ee6666']
+    }]
+  });
+
+  // Order status donut
+  const statusCount = {已完成:0,处理中:0,已取消:0};
+  state.orders.forEach(o=>{ statusCount[o.status]=(statusCount[o.status]||0)+1; });
+  mkC('chart-order-status').setOption({
+    tooltip:{trigger:'item'},
+    series:[{
+      type:'pie',radius:['40%','68%'],center:['50%','50%'],
+      itemStyle:{borderRadius:6,borderWidth:2,borderColor:'#fff'},
+      label:{show:true,position:'outside',formatter:'{b}: {c}笔\n({d}%)',fontSize:10,lineHeight:14},
+      data:[
+        {name:'已完成',value:statusCount['已完成']},
+        {name:'处理中',value:statusCount['处理中']},
+        {name:'已取消',value:statusCount['已取消']}
+      ],
+      color:['#3ba272','#fac858','#ee6666']
+    }]
+  });
+
+  // Stock health gauge
+  const total = state.products.length;
+  const normal = state.products.filter(p=>p.status==='正常').length;
+  const low = state.products.filter(p=>p.status==='低库存').length;
+  const out = state.products.filter(p=>p.status==='缺货').length;
+  mkC('chart-stock-health').setOption({
+    tooltip:{trigger:'item'},
+    series:[{
+      type:'pie',radius:['40%','68%'],center:['50%','50%'],
+      itemStyle:{borderRadius:6,borderWidth:2,borderColor:'#fff'},
+      label:{show:true,position:'outside',formatter:'{b}: {c}个\n({d}%)',fontSize:10,lineHeight:14},
+      data:[
+        {name:'库存正常',value:normal},
+        {name:'低库存预警',value:low},
+        {name:'已缺货',value:out}
+      ],
+      color:['#3ba272','#fac858','#ee6666']
+    }]
+  });
+}
+
+// ══════════════════════════════════════════════
+// DATA CENTER RENDER
+// ══════════════════════════════════════════════
+function renderDc(page){
+  recalc();
+  if(page==='products') renderDcProducts();
+  else renderDcOrders();
+}
+
+function renderDcProducts(){
+  const tbody = document.getElementById('tb-dc-products');
+  tbody.innerHTML = state.products.map((p,i)=>`
+    <tr>
+      <td style="color:var(--t3);">${i+1}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'sku',this.textContent)">${p.sku}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'name',this.textContent)"><b>${p.name}</b></td>
+      <td contenteditable="true" onblur="updateProduct(${i},'cat',this.textContent)">${p.cat}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'unit',this.textContent)">${p.unit}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'qty',this.textContent)">${p.qty}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'safe',this.textContent)">${p.safe}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'costEx',this.textContent)">${p.costEx}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'tax',this.textContent)">${p.tax}</td>
+      <td style="background:#f8f9fb;color:var(--t3);">${p.costIn}</td>
+      <td contenteditable="true" onblur="updateProduct(${i},'price',this.textContent)">${p.price}</td>
+      <td class="${p.gross>=0?'profit-pos':'profit-neg'}">${p.gross}</td>
+      <td><span class="tag ${p.margin>=30?'tag-g':p.margin>=15?'tag-am':'tag-r'}">${p.margin}%</span></td>
+      <td>¥${fmtMoney(p.stockValCost)}</td>
+      <td><span class="tag ${p.status==='正常'?'tag-g':p.status==='低库存'?'tag-am':'tag-r'}">${p.status}</span></td>
+      <td><button class="dc-btn-del" onclick="deleteProduct(${i})">删除</button></td>
+    </tr>`).join('');
+
+  const totVal = state.products.reduce((s,p)=>s+p.stockValCost,0);
+  const totQty = state.products.reduce((s,p)=>s+p.qty,0);
+  document.getElementById('product-stats').innerHTML = `
+    <span class="dc-info-item">品种: <strong>${state.products.length}</strong></span>
+    <span class="dc-info-item">总在库: <strong>${totQty}件</strong></span>
+    <span class="dc-info-item">库存总值: <strong>¥${fmtMoney(totVal)}</strong></span>`;
+}
+
+function renderDcOrders(){
+  const tbody = document.getElementById('tb-dc-orders');
+  tbody.innerHTML = state.orders.map((o,i)=>{
+    const stTag = o.status==='已完成'?'tag-g':o.status==='处理中'?'tag-am':'tag-r';
+    return `<tr>
+      <td style="color:var(--t3);">${i+1}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'id',this.textContent)">${o.id}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'date',this.textContent)">${o.date}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'customer',this.textContent)">${o.customer}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'name',this.textContent)"><b>${o.name}</b></td>
+      <td contenteditable="true" onblur="updateOrder(${i},'sku',this.textContent)">${o.sku}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'qty',this.textContent)">${o.qty}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'salePrice',this.textContent)">${o.salePrice}</td>
+      <td>¥${fmtMoney(o.totalSale)}</td>
+      <td contenteditable="true" onblur="updateOrder(${i},'cost',this.textContent)">${o.cost||''}</td>
+      <td>¥${fmtMoney(o.totalCost)}</td>
+      <td class="${o.profit>=0?'profit-pos':'profit-neg'}"><b>¥${fmtMoney(o.profit)}</b></td>
+      <td><span class="tag ${o.margin>=30?'tag-g':o.margin>=15?'tag-am':'tag-r'}">${o.margin}%</span></td>
+      <td><select style="border:none;font-size:11px;background:transparent;cursor:pointer;" onchange="updateOrder(${i},'status',this.value)">
+        <option ${o.status==='已完成'?'selected':''}>已完成</option>
+        <option ${o.status==='处理中'?'selected':''}>处理中</option>
+        <option ${o.status==='已取消'?'selected':''}>已取消</option>
+      </select></td>
+      <td contenteditable="true" onblur="updateOrder(${i},'remark',this.textContent)">${o.remark||''}</td>
+      <td><button class="dc-btn-del" onclick="deleteOrder(${i})">删除</button></td>
+    </tr>`;
+  }).join('');
+
+  const completed = state.orders.filter(o=>o.status==='已完成');
+  const totRev = completed.reduce((s,o)=>s+o.totalSale,0);
+  const totProfit = completed.reduce((s,o)=>s+o.profit,0);
+  document.getElementById('order-stats').innerHTML = `
+    <span class="dc-info-item">订单总数: <strong>${state.orders.length}笔</strong></span>
+    <span class="dc-info-item">已完成销售额: <strong>¥${fmtMoney(totRev)}</strong></span>
+    <span class="dc-info-item">已完成利润: <strong>¥${fmtMoney(totProfit)}</strong></span>`;
+}
+
+// ── Update Functions ──
+function updateProduct(i,field,val){
+  const numFields=['qty','safe','costEx','tax','price'];
+  state.products[i][field] = numFields.includes(field)?+val:val.trim();
+  recalc();
+  saveLocal();
+  setTimeout(()=>renderDcProducts(),50);
+  if(curView==='db') setTimeout(()=>renderPage(curPage),100);
+}
+
+function updateOrder(i,field,val){
+  const numFields=['qty','salePrice','cost'];
+  state.orders[i][field] = numFields.includes(field)?+val:val.trim();
+  recalc();
+  saveLocal();
+  if(curView==='db') setTimeout(()=>renderPage(curPage),100);
+}
+
+function deleteProduct(i){
+  if(confirm('确定删除该商品？')) {
+    state.products.splice(i,1); saveLocal(); renderDcProducts();
+    if(curView==='db') renderPage(curPage);
+    showToast('✅ 已删除商品');
+  }
+}
+
+function deleteOrder(i){
+  if(confirm('确定删除该订单？')) {
+    state.orders.splice(i,1); saveLocal(); renderDcOrders();
+    if(curView==='db') renderPage(curPage);
+    showToast('✅ 已删除订单');
+  }
+}
+
+// ── Add Product ──
+function addProduct(){
+  document.getElementById('modal-add-product').classList.add('active');
+}
+function calcTaxPrice(){
+  const ex = +document.getElementById('np-cost-ex').value;
+  const tx = +document.getElementById('np-tax').value||0;
+  document.getElementById('np-cost-in').value = ex>0?(ex*(1+tx/100)).toFixed(2):'';
+}
+function confirmAddProduct(){
+  const sku=document.getElementById('np-sku').value.trim();
+  const name=document.getElementById('np-name').value.trim();
+  if(!sku||!name){showToast('❌ SKU和商品名称必填');return;}
+  const costEx=+document.getElementById('np-cost-ex').value||0;
+  const tax=+document.getElementById('np-tax').value||0;
+  const costIn=+(costEx*(1+tax/100)).toFixed(2);
+  const price=+document.getElementById('np-price').value||0;
+  state.products.push({
+    sku,name,cat:document.getElementById('np-cat').value||'其他',
+    unit:document.getElementById('np-unit').value||'件',
+    qty:+document.getElementById('np-qty').value||0,
+    safe:+document.getElementById('np-safe').value||0,
+    costEx,tax,costIn,price,status:'正常'
+  });
+  recalc(); saveLocal();
+  closeModal('modal-add-product');
+  if(curView==='dc') renderDcProducts();
+  else renderPage(curPage);
+  showToast('✅ 商品已添加');
+  ['np-sku','np-name','np-cat','np-unit','np-qty','np-safe','np-cost-ex','np-cost-in','np-price'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('np-tax').value='6';
+}
+
+// ── Add Order ──
+function addOrder(){
+  // Populate SKU dropdown
+  const sel=document.getElementById('no-sku');
+  sel.innerHTML='<option value="">-- 选择SKU --</option>'+state.products.map(p=>`<option value="${p.sku}">${p.sku} · ${p.name}</option>`).join('');
+  document.getElementById('no-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('no-id').value='ORD-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+String(state.orders.length+1).padStart(3,'0');
+  document.getElementById('modal-add-order').classList.add('active');
+}
+function fillOrderProduct(){
+  const sku=document.getElementById('no-sku').value;
+  const prod=state.products.find(p=>p.sku===sku);
+  if(prod){
+    document.getElementById('no-name').value=prod.name;
+    document.getElementById('no-cost').value=prod.costIn;
+    document.getElementById('no-price').value=prod.price;
+    calcOrderProfit();
+  }
+}
+function calcOrderProfit(){
+  const qty=+document.getElementById('no-qty').value||0;
+  const price=+document.getElementById('no-price').value||0;
+  const cost=+document.getElementById('no-cost').value||0;
+  const profit=+(qty*(price-cost)).toFixed(2);
+  document.getElementById('no-profit').value=profit;
+}
+function confirmAddOrder(){
+  const id=document.getElementById('no-id').value.trim();
+  const name=document.getElementById('no-name').value.trim();
+  if(!id||!name){showToast('❌ 订单号和商品名称必填');return;}
+  const qty=+document.getElementById('no-qty').value||0;
+  const salePrice=+document.getElementById('no-price').value||0;
+  const cost=+document.getElementById('no-cost').value||0;
+  state.orders.unshift({
+    id,date:document.getElementById('no-date').value,
+    customer:document.getElementById('no-customer').value||'未知',
+    name,sku:document.getElementById('no-sku').value,
+    qty,salePrice,cost,
+    status:document.getElementById('no-status').value,
+    remark:document.getElementById('no-remark').value
+  });
+  recalc(); saveLocal();
+  closeModal('modal-add-order');
+  if(curView==='dc') renderDcOrders();
+  else renderPage(curPage);
+  showToast('✅ 订单已添加');
+}
+
+// ── Paste Import ──
+let pasteTarget = '';
+function pasteProducts(){
+  pasteTarget='products';
+  document.getElementById('modal-paste-title').textContent='📋 粘贴导入商品数据';
+  document.getElementById('modal-paste-hint').textContent='从Excel复制商品数据粘贴在下方。列顺序: SKU | 商品名称 | 品类 | 单位 | 库存数量 | 安全库存 | 进价(税前) | 税率% | 售价';
+  document.getElementById('paste-textarea').value='';
+  document.getElementById('modal-paste-confirm').onclick=()=>confirmPaste('products');
+  document.getElementById('modal-paste').classList.add('active');
+}
+function pasteOrders(){
+  pasteTarget='orders';
+  document.getElementById('modal-paste-title').textContent='📋 粘贴导入订单数据';
+  document.getElementById('modal-paste-hint').textContent='从Excel复制订单数据粘贴在下方。列顺序: 订单号 | 日期 | 客户 | 商品名称 | SKU | 数量 | 售价/件 | 成本/件 | 状态 | 备注';
+  document.getElementById('paste-textarea').value='';
+  document.getElementById('modal-paste-confirm').onclick=()=>confirmPaste('orders');
+  document.getElementById('modal-paste').classList.add('active');
+}
+function confirmPaste(type){
+  const text=document.getElementById('paste-textarea').value.trim();
+  if(!text){showToast('❌ 粘贴内容为空');return;}
+  const rows=text.split('\n').map(r=>r.split('\t').map(c=>c.trim())).filter(r=>r.length>1);
+  let count=0;
+  rows.forEach(r=>{
+    if(type==='products'&&r.length>=5){
+      const costEx=+r[6]||0, tax=+r[7]||0;
+      state.products.push({
+        sku:r[0],name:r[1],cat:r[2]||'其他',unit:r[3]||'件',
+        qty:+r[4]||0,safe:+r[5]||0,costEx,tax,
+        costIn:+(costEx*(1+tax/100)).toFixed(2),price:+r[8]||0,status:'正常'
+      });count++;
+    }else if(type==='orders'&&r.length>=6){
+      state.orders.push({
+        id:r[0],date:r[1],customer:r[2],name:r[3],sku:r[4],
+        qty:+r[5]||0,salePrice:+r[6]||0,cost:+r[7]||0,
+        status:r[8]||'已完成',remark:r[9]||''
+      });count++;
+    }
+  });
+  recalc(); saveLocal();
+  closeModal('modal-paste');
+  renderDc(type);
+  showToast(`✅ 成功导入 ${count} 条${type==='products'?'商品':'订单'}数据`);
+}
+
+// ── Excel Import/Export ──
+function importProductExcel(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.xlsx,.xls';
+  inp.onchange=e=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        let count=0;
+        data.slice(1).forEach(r=>{
+          if(r[0]){
+            const costEx=+r[6]||0,tax=+r[7]||0;
+            state.products.push({
+              sku:String(r[0]),name:String(r[1]),cat:String(r[2]||'其他'),unit:String(r[3]||'件'),
+              qty:+r[4]||0,safe:+r[5]||0,costEx,tax,
+              costIn:+(costEx*(1+tax/100)).toFixed(2),price:+r[8]||0,status:'正常'
+            });count++;
+          }
+        });
+        recalc();saveLocal();renderDcProducts();
+        showToast(`✅ 导入${count}个商品成功`);
+      }catch(err){showToast('❌ 导入失败: '+err.message);}
+    };reader.readAsArrayBuffer(e.target.files[0]);
+  };inp.click();
+}
+
+function importOrderExcel(){
+  const inp=document.createElement('input');inp.type='file';inp.accept='.xlsx,.xls';
+  inp.onchange=e=>{
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'array'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+        let count=0;
+        data.slice(1).forEach(r=>{
+          if(r[0]){
+            state.orders.push({
+              id:String(r[0]),date:String(r[1]),customer:String(r[2]),name:String(r[3]),sku:String(r[4]),
+              qty:+r[5]||0,salePrice:+r[6]||0,cost:+r[7]||0,status:String(r[8]||'已完成'),remark:String(r[9]||'')
+            });count++;
+          }
+        });
+        recalc();saveLocal();renderDcOrders();
+        showToast(`✅ 导入${count}笔订单成功`);
+      }catch(err){showToast('❌ 导入失败: '+err.message);}
+    };reader.readAsArrayBuffer(e.target.files[0]);
+  };inp.click();
+}
+
+function exportExcel(){
+  recalc();
+  const wb=XLSX.utils.book_new();
+  // Products sheet
+  const pData=[['SKU','商品名称','品类','单位','库存数量','安全库存','进价(税前)','税率%','进价(税后)','售价','毛利','毛利率%','库存值(成本)','库存值(售价)','状态'],
+    ...state.products.map(p=>[p.sku,p.name,p.cat,p.unit,p.qty,p.safe,p.costEx,p.tax,p.costIn,p.price,p.gross,p.margin,p.stockValCost,p.stockValSale,p.status])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pData),'商品库存表');
+  // Orders sheet
+  const oData=[['订单号','日期','客户','商品名称','SKU','数量','售价/件','总售价','成本/件','总成本','毛利润','利润率%','状态','备注'],
+    ...state.orders.map(o=>[o.id,o.date,o.customer,o.name,o.sku,o.qty,o.salePrice,o.totalSale,o.cost,o.totalCost,o.profit,o.margin,o.status,o.remark])];
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(oData),'订单明细表');
+  XLSX.writeFile(wb,`库存管理数据_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('✅ Excel导出成功');
+}
+
+function exportP2Excel(){
+  recalc();
+  const pData=[['SKU','商品名称','品类','单位','库存数量','安全库存','进价(税前)','税率%','进价(税后)','售价','毛利','毛利率%','库存值(成本)','库存值(售价)','状态'],
+    ...state.products.map(p=>[p.sku,p.name,p.cat,p.unit,p.qty,p.safe,p.costEx,p.tax,p.costIn,p.price,p.gross,p.margin,p.stockValCost,p.stockValSale,p.status])];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pData),'库存明细');
+  XLSX.writeFile(wb,`库存明细_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('✅ 库存表导出成功');
+}
+
+function exportOrderExcel(){
+  recalc();
+  const oData=[['订单号','日期','客户','商品名称','SKU','数量','售价/件','总售价','成本/件','总成本','毛利润','利润率%','状态','备注'],
+    ...state.orders.map(o=>[o.id,o.date,o.customer,o.name,o.sku,o.qty,o.salePrice,o.totalSale,o.cost,o.totalCost,o.profit,o.margin,o.status,o.remark])];
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(oData),'订单明细');
+  XLSX.writeFile(wb,`订单明细_${new Date().toISOString().slice(0,10)}.xlsx`);
+  showToast('✅ 订单表导出成功');
+}
+
+// ── Utils ──
+function fmtMoney(v){
+  if(v==null||isNaN(v))return'0';
+  return v>=10000?(v/10000).toFixed(2)+'万':(+v).toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:0});
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── Resize ──
+window.addEventListener('resize',()=>{Object.values(CI).forEach(c=>{if(c&&c.resize)c.resize();});});
+
+// ── Click outside modal to close ──
+document.querySelectorAll('.modal-overlay').forEach(el=>{
+  el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('active');});
+});
+
+// ── INIT ──
+loadLocal();
+recalc();
+renderPage(1);
+</script>
+</body>
+</html>

@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CreamData V9.5 · 成本分析系统</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<style>
+:root{
+  --bg:#F5F7FA;--bg-page:#E8EDF3;
+  --sh-up:8px 8px 20px #C8D0DC,-6px -6px 16px #FFF;
+  --sh-sm:4px 4px 10px #C8D0DC,-3px -3px 8px #FFF;
+  --sh-in:inset 5px 5px 12px #C8D0DC,inset -4px -4px 10px #FFF;
+  --sh-deep:0 24px 64px rgba(0,120,100,.10),0 4px 16px rgba(0,120,100,.06);
+  --shadow:#C8D0DC;
+  --t1:#0d2137;--t2:#1e3a4a;--tm:#4a6878;--t3:#8eaab8;
+  --accent:#1ABC9C;--accent-light:rgba(26,188,156,.12);--accent-xlight:rgba(26,188,156,.06);
+  --accent-grad:linear-gradient(135deg,#1ABC9C,#48d8be);
+  --green:#16803a;--green-bg:rgba(22,128,58,.10);
+  --red:#e74c3c;--red-bg:rgba(231,76,60,.10);
+  --amber:#e67e22;--amber-bg:rgba(230,126,34,.10);
+  --c1:#1ABC9C;--c2:#e67e22;--c3:#9b59b6;--c4:#f1c40f;
+  --c5:#3498db;--c6:#e91e8c;--c7:#16a085;--c8:#d35400;
+  --r-sm:10px;--r-md:16px;--r-lg:20px;--r-xl:26px;
+  --FD:'Outfit',sans-serif;--FB:'Noto Sans SC',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--FB);background:var(--bg-page);
+  display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:20px 0 60px;}
+.W{width:1520px;}
+
+/* ── 顶部导航 ── */
+.gnav{width:1520px;height:64px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;margin-bottom:14px;position:sticky;top:14px;z-index:200;
+  background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-up);}
+.logo{font-family:var(--FD);font-size:18px;font-weight:900;color:var(--t1);}
+.logo span{color:var(--accent);}
+.pages{display:flex;gap:6px;}
+.pb{padding:7px 16px;border:none;border-radius:var(--r-sm);font:700 13px/1 var(--FB);
+  cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.18s;}
+.pb:hover{color:var(--accent);}
+.pb.on{color:var(--accent);box-shadow:var(--sh-in);}
+.gright{display:flex;align-items:center;gap:8px;}
+.period-ctrl{display:flex;align-items:center;gap:4px;}
+.pval{font:800 14px/1 var(--FD);color:var(--t1);padding:5px 14px;
+  background:var(--bg);border-radius:var(--r-sm);box-shadow:var(--sh-in);min-width:80px;text-align:center;}
+.parr{width:26px;height:26px;border:none;border-radius:8px;cursor:pointer;
+  background:var(--bg);color:var(--tm);font-size:13px;box-shadow:var(--sh-sm);
+  display:flex;align-items:center;justify-content:center;transition:.15s;}
+.parr:hover{color:var(--accent);}
+.ba{padding:7px 18px;border:none;border-radius:var(--r-sm);font:700 13px/1 var(--FB);cursor:pointer;transition:.18s;}
+.ba-ghost{background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);}
+.ba-ghost:hover{color:var(--accent);}
+.ba-accent{background:var(--accent-grad);color:#fff;box-shadow:0 4px 14px rgba(26,188,156,.35);}
+.ba-purple{background:var(--bg);color:var(--c3);box-shadow:var(--sh-sm);}
+
+/* ── 视图 ── */
+.view{display:none;}.view.on{display:block;}
+
+/* ── 穿透面包屑 ── */
+.drill-bar{width:1520px;height:40px;display:none;align-items:center;
+  padding:0 18px;margin-bottom:10px;
+  background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-sm);}
+.drill-bar.on{display:flex;}
+.dcrumb{font:700 13px/1 var(--FB);color:var(--tm);cursor:pointer;
+  padding:4px 10px;border-radius:var(--r-sm);transition:.15s;white-space:nowrap;}
+.dcrumb:hover,.dcrumb.cur{color:var(--accent);}
+.dcrumb.cur{background:var(--accent-xlight);}
+.dsep{color:var(--t3);font-size:15px;margin:0 1px;}
+.dback{margin-left:auto;padding:5px 16px;border:none;border-radius:var(--r-sm);
+  font:700 12px/1 var(--FB);cursor:pointer;background:var(--bg);
+  color:var(--tm);box-shadow:var(--sh-sm);flex-shrink:0;transition:.15s;}
+.dback:hover{color:var(--red);}
+
+/* ── 画布 16:9 ── */
+.canvas{width:1520px;height:855px;padding:18px 22px 16px;
+  display:flex;flex-direction:column;gap:14px;overflow:hidden;
+  margin-bottom:20px;position:relative;
+  background:var(--bg);border-radius:var(--r-xl);box-shadow:var(--sh-deep);}
+.cbadge{position:absolute;top:14px;right:18px;font:700 11px/1 var(--FB);
+  color:var(--tm);background:var(--bg);padding:3px 12px;border-radius:20px;
+  box-shadow:2px 2px 5px var(--shadow),-1px -1px 3px #fff;}
+
+/* ── 穿透详情画布（高度自适应） ── */
+.drill-canvas{width:1520px;min-height:600px;padding:22px 24px 28px;
+  display:flex;flex-direction:column;gap:16px;margin-bottom:20px;
+  background:var(--bg);border-radius:var(--r-xl);box-shadow:var(--sh-deep);}
+
+/* ── 可编辑标题（表头/卡片标题） ── */
+[contenteditable]{outline:none;cursor:text;}
+[contenteditable]:focus{
+  background:var(--accent-xlight);border-radius:4px;
+  box-shadow:0 0 0 2px var(--accent-light);padding:1px 4px;}
+[contenteditable]:hover:not(:focus){background:rgba(0,0,0,.04);border-radius:4px;}
+
+/* ── 标题栏 ── */
+.ptitle{height:50px;display:flex;align-items:center;
+  justify-content:space-between;padding:0 4px;flex-shrink:0;}
+.ptitle-main{font:900 20px/1 var(--FD);color:var(--t1);}
+.ptitle-sub{font-size:12px;color:var(--tm);margin-top:3px;}
+
+/* ── KPI 行 ── */
+.krow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;height:120px;flex-shrink:0;}
+.kcard{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-up);
+  padding:14px 18px;position:relative;overflow:hidden;
+  display:flex;flex-direction:column;justify-content:space-between;}
+.kcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r-lg) var(--r-lg) 0 0;}
+.k1::before{background:linear-gradient(90deg,#1ABC9C,#76d7c4);}
+.k2::before{background:linear-gradient(90deg,#e67e22,#f0a050);}
+.k3::before{background:linear-gradient(90deg,#9b59b6,#c39bd3);}
+.k4::before{background:linear-gradient(90deg,#e74c3c,#f87171);}
+.k5::before{background:linear-gradient(90deg,#3498db,#74b9e8);}
+.klabel{font:700 12px/1 var(--FB);color:var(--tm);}
+.kval{font:800 2.4rem/1 var(--FD);color:var(--t1);}
+.kfoot{display:flex;align-items:center;justify-content:space-between;}
+.ku{font:700 11px/1 var(--FB);padding:2px 8px;border-radius:20px;}
+.ku1{background:var(--accent-light);color:var(--accent);}
+.ku2{background:var(--amber-bg);color:var(--amber);}
+.ku3{background:rgba(155,89,182,.12);color:var(--c3);}
+.ku4{background:var(--red-bg);color:var(--red);}
+.ku5{background:rgba(52,152,219,.12);color:var(--c5);}
+.kvs{font:700 11px/1 var(--FB);}
+.kico{position:absolute;top:12px;right:14px;font-size:1.8rem;opacity:.25;}
+.kcard.clickable{cursor:pointer;}
+.kcard.clickable:hover{box-shadow:var(--sh-up),0 0 0 2px var(--accent-light);}
+
+/* 小 KPI（穿透页） */
+.mkrow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;flex-shrink:0;}
+.mk{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-sm);
+  padding:12px 16px;display:flex;flex-direction:column;gap:3px;position:relative;}
+.mk::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:var(--r-md) var(--r-md) 0 0;}
+.mk1::before{background:linear-gradient(90deg,#1ABC9C,#76d7c4);}
+.mk2::before{background:linear-gradient(90deg,#e67e22,#f0a050);}
+.mk3::before{background:linear-gradient(90deg,#9b59b6,#c39bd3);}
+.mk4::before{background:linear-gradient(90deg,#e74c3c,#f87171);}
+.mk5::before{background:linear-gradient(90deg,#3498db,#74b9e8);}
+.mkl{font:700 11px/1 var(--FB);color:var(--tm);}
+.mkv{font:800 1.7rem/1.2 var(--FD);color:var(--t1);}
+.mks{font:700 11px/1 var(--FB);}
+
+/* ── 卡片 ── */
+.card{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-up);
+  padding:16px 20px;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;}
+.ct{font:900 14px/1 var(--FB);color:var(--t1);display:flex;align-items:center;gap:6px;}
+.ct::before{content:'';width:3px;height:14px;border-radius:2px;
+  background:var(--accent-grad);display:inline-block;flex-shrink:0;}
+.csub{font:normal 11px/1 var(--FB);color:var(--tm);}
+.cf{flex:1;min-height:0;width:100%;}
+
+/* ── 穿透触发 ── */
+.dr{cursor:pointer;transition:.12s;}
+.dr:hover{color:var(--accent);}
+tr.dr:hover td{background:var(--accent-xlight)!important;}
+.dico{font-size:10px;color:var(--accent);margin-left:4px;opacity:0;transition:.12s;}
+.dr:hover .dico{opacity:1;}
+
+/* ── 表格 ── */
+.mt{width:100%;border-collapse:collapse;}
+.mt thead th{background:var(--accent-xlight);padding:7px 10px;
+  font:700 11px/1 var(--FB);color:var(--tm);text-align:left;
+  border-bottom:2px solid var(--shadow);}
+.mt thead th[contenteditable]:focus{color:var(--accent);}
+.mt tbody tr{border-bottom:1px solid rgba(200,208,220,.4);}
+.mt tbody td{padding:7px 10px;font-size:12px;color:var(--t2);}
+
+/* 原始数据表 */
+.rtw{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-in);overflow:auto;max-height:500px;}
+.rt{width:100%;border-collapse:collapse;}
+.rt thead th{background:var(--accent-light);padding:9px 14px;font:700 12px/1 var(--FB);
+  color:var(--tm);text-align:left;position:sticky;top:0;border-bottom:2px solid var(--shadow);white-space:nowrap;}
+.rt thead th[contenteditable]:focus{color:var(--accent);}
+.rt tbody tr{border-bottom:1px solid rgba(200,208,220,.35);}
+.rt tbody tr:hover td{background:var(--accent-xlight);}
+.rt tbody td{padding:7px 14px;font-size:12px;color:var(--t2);white-space:nowrap;}
+.cedit{border:none;background:transparent;font:700 12px/1 var(--FB);color:var(--t2);
+  padding:3px 6px;border-radius:6px;width:100%;min-width:54px;}
+.cedit:focus{outline:none;background:var(--accent-xlight);box-shadow:var(--sh-in);}
+
+/* badges */
+.b{font:700 11px/1 var(--FB);padding:2px 8px;border-radius:20px;display:inline-block;}
+.bg{background:var(--green-bg);color:var(--green);}
+.br{background:var(--red-bg);color:var(--red);}
+.ba2{background:var(--amber-bg);color:var(--amber);}
+.bt{background:var(--accent-light);color:var(--accent);}
+.bp{background:rgba(155,89,182,.12);color:var(--c3);}
+.rk{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;
+  justify-content:center;font-size:10px;color:#fff;font-weight:900;}
+.rk1{background:linear-gradient(135deg,#FFD700,#B8860B);}
+.rk2{background:linear-gradient(135deg,#C0C0C0,#909090);}
+.rk3{background:linear-gradient(135deg,#CD7F32,#8B4513);}
+.rkn{background:var(--shadow);color:var(--tm);}
+.raised{background:var(--bg);box-shadow:var(--sh-sm);border-radius:var(--r-sm);
+  padding:2px 8px;font-weight:900;display:inline-block;font-size:12px;}
+
+/* 数据中心 */
+.dcwrap{padding:24px 28px;}
+.dctabs{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.bsm{padding:6px 14px;border:none;border-radius:var(--r-sm);font:700 12px/1 var(--FB);
+  cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.15s;}
+.bsm:hover{color:var(--accent);}
+.bsm-a{background:var(--accent-grad);color:#fff!important;box-shadow:0 3px 10px rgba(26,188,156,.35);}
+.bsm-r{color:var(--red)!important;}
+.twrap{background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-in);max-height:560px;overflow-y:auto;}
+.at{width:100%;border-collapse:collapse;}
+.at thead th{background:var(--accent-light);padding:10px 14px;font:700 12px/1 var(--FB);
+  color:var(--tm);text-align:left;position:sticky;top:0;z-index:1;border-bottom:2px solid var(--shadow);}
+.at tbody tr{border-bottom:1px solid rgba(200,208,220,.4);}
+.at tbody tr:hover{background:rgba(26,188,156,.04);}
+.at tbody td{padding:6px 14px;}
+.ai{width:100%;border:none;background:transparent;font:700 12px/1 var(--FB);color:var(--t2);padding:3px 6px;border-radius:6px;}
+.ai:focus{outline:none;background:var(--accent-xlight);box-shadow:var(--sh-in);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--shadow);border-radius:10px;}
+</style>
+</head>
+<body>
+<div class="W">
+
+<!-- ═══ 导航 ═══ -->
+<nav class="gnav">
+  <div style="display:flex;align-items:center;gap:20px;">
+    <div class="logo">CreamData <span>V9.5</span></div>
+    <div class="pages">
+      <button class="pb on"  id="nb-p1" onclick="showPage('p1')">📊 成本总览</button>
+      <button class="pb"     id="nb-p2" onclick="showPage('p2')">🏢 部门分析</button>
+      <button class="pb"     id="nb-p3" onclick="showPage('p3')">📦 类目分析</button>
+      <button class="pb"     id="nb-p4" onclick="showPage('p4')">📈 趋势分析</button>
+      <button class="pb"     id="nb-dc" onclick="showPage('dc')">🗄️ 数据中心</button>
+    </div>
+  </div>
+  <div class="gright">
+    <div class="period-ctrl">
+      <button class="parr" onclick="changePeriod(-1)">◀</button>
+      <div class="pval" id="pval">2026-01</div>
+      <button class="parr" onclick="changePeriod(1)">▶</button>
+    </div>
+    <button class="ba ba-purple" onclick="loadDemo()">✨ 示例</button>
+    <button class="ba ba-ghost"  onclick="exportPNG()">↓ 导出</button>
+    <button class="ba ba-accent" onclick="saveAll()">💾 存档</button>
+  </div>
+</nav>
+
+<!-- 穿透面包屑 -->
+<div class="drill-bar" id="dbar"></div>
+
+<!-- ═══ P1 成本总览 ═══ -->
+<div class="view on" id="view-p1">
+<div class="canvas" id="page-p1">
+  <div class="cbadge">P1 · 成本总览</div>
+  <div class="ptitle">
+    <div>
+      <div class="ptitle-main" id="title-p1" contenteditable="true">💰 成本总览</div>
+      <div class="ptitle-sub" id="sub-p1" contenteditable="true">Cost Overview · 月度成本结构快照</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="b bt" id="badge-p1">2026-01</span>
+      <span class="b bp">🔍 点击图表/行穿透明细</span>
+    </div>
+  </div>
+  <div class="krow">
+    <div class="kcard k1 clickable" onclick="drillTo('costtype')">
+      <div class="klabel" contenteditable="true">本月总成本</div>
+      <div class="kval" id="kv1">—</div>
+      <div class="kfoot"><span class="ku ku1">万元</span><span class="kvs" id="kvs1"></span></div>
+      <div class="kico">💸</div>
+    </div>
+    <div class="kcard k2 clickable" onclick="drillTo('dept')">
+      <div class="klabel" contenteditable="true">人力成本</div>
+      <div class="kval" id="kv2">—</div>
+      <div class="kfoot"><span class="ku ku2">万元</span><span class="kvs" id="kvs2"></span></div>
+      <div class="kico">👥</div>
+    </div>
+    <div class="kcard k3 clickable" onclick="drillTo('supplier')">
+      <div class="klabel" contenteditable="true">采购费用</div>
+      <div class="kval" id="kv3">—</div>
+      <div class="kfoot"><span class="ku ku3">万元</span><span class="kvs" id="kvs3"></span></div>
+      <div class="kico">🏭</div>
+    </div>
+    <div class="kcard k4">
+      <div class="klabel" contenteditable="true">成本费用率</div>
+      <div class="kval" id="kv4">—</div>
+      <div class="kfoot"><span class="ku ku4">%</span><span class="kvs" id="kvs4"></span></div>
+      <div class="kico">📉</div>
+    </div>
+  </div>
+  <!-- 中行 flex:3 -->
+  <div style="flex:3;min-height:0;display:grid;grid-template-columns:4fr 6fr;gap:14px;">
+    <div class="card dr" onclick="drillTo('costtype')">
+      <div class="ch">
+        <div class="ct"><span contenteditable="true" onclick="event.stopPropagation()">成本构成</span></div>
+        <span class="csub" style="color:var(--accent)">🔍 点击穿透</span>
+      </div>
+      <div id="c-donut" class="cf"></div>
+    </div>
+    <div class="card" style="padding:12px 16px;">
+      <div class="ch">
+        <div class="ct"><span contenteditable="true">部门成本排行</span></div>
+        <span class="csub" style="color:var(--accent)">🔍 点击行穿透</span>
+      </div>
+      <div style="overflow-y:auto;flex:1;min-height:0;">
+        <table class="mt">
+          <thead><tr>
+            <th contenteditable="true">#</th>
+            <th contenteditable="true">部门</th>
+            <th contenteditable="true">预算(万)</th>
+            <th contenteditable="true">实际(万)</th>
+            <th contenteditable="true">差额</th>
+            <th contenteditable="true">执行率</th>
+            <th contenteditable="true">状态</th>
+          </tr></thead>
+          <tbody id="dept-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- 底行 flex:2 -->
+  <div style="flex:2;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="card dr" onclick="drillTo('supplier')">
+      <div class="ch">
+        <div class="ct"><span contenteditable="true" onclick="event.stopPropagation()">供应商采购 TOP5</span></div>
+        <span class="csub" style="color:var(--accent)">🔍 点击穿透</span>
+      </div>
+      <div id="c-supp" class="cf"></div>
+    </div>
+    <div class="card dr" onclick="drillTo('costtype')">
+      <div class="ch">
+        <div class="ct"><span contenteditable="true" onclick="event.stopPropagation()">费用类目对比</span></div>
+        <span class="csub" style="color:var(--accent)">🔍 点击穿透</span>
+      </div>
+      <div id="c-type" class="cf"></div>
+    </div>
+  </div>
+</div>
+<div id="drill-p1"></div>
+</div>
+
+<!-- ═══ P2 部门分析 ═══ -->
+<div class="view" id="view-p2">
+<div class="canvas" id="page-p2">
+  <div class="cbadge">P2 · 部门分析</div>
+  <div class="ptitle">
+    <div>
+      <div class="ptitle-main" contenteditable="true">🏢 部门成本分析</div>
+      <div class="ptitle-sub" contenteditable="true">Department Analysis · 预算执行 / 人均成本 / 超支监控</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="b bt" id="badge-p2">2026-01</span>
+      <span class="b bp">🔍 点击部门行 → 科目明细</span>
+    </div>
+  </div>
+  <div class="krow">
+    <div class="kcard k1"><div class="klabel" contenteditable="true">部门数量</div><div class="kval" id="dkv1">—</div><div class="kfoot"><span class="ku ku1">个</span><span class="kvs">本期</span></div><div class="kico">🏢</div></div>
+    <div class="kcard k2"><div class="klabel" contenteditable="true">超支部门</div><div class="kval" id="dkv2">—</div><div class="kfoot"><span class="ku ku2">个</span><span class="kvs" id="dkvs2"></span></div><div class="kico">⚠️</div></div>
+    <div class="kcard k3"><div class="klabel" contenteditable="true">最大超支额</div><div class="kval" id="dkv3" style="font-size:2rem">—</div><div class="kfoot"><span class="ku ku3">万元</span><span class="kvs" id="dkvs3"></span></div><div class="kico">📌</div></div>
+    <div class="kcard k4"><div class="klabel" contenteditable="true">总体执行率</div><div class="kval" id="dkv4">—</div><div class="kfoot"><span class="ku ku4">%</span><span class="kvs" id="dkvs4"></span></div><div class="kico">🎯</div></div>
+  </div>
+  <div style="flex:3;min-height:0;display:grid;grid-template-columns:55fr 45fr;gap:14px;">
+    <div class="card">
+      <div class="ch"><div class="ct"><span contenteditable="true">部门预算执行对比</span></div><span class="csub" style="color:var(--accent)">🔍 点击柱子穿透</span></div>
+      <div id="c-deptbar" class="cf"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct"><span contenteditable="true">部门成本占比</span></div></div>
+      <div id="c-deptpie" class="cf"></div>
+    </div>
+  </div>
+  <div style="flex:2;min-height:0;padding:12px 16px;" class="card">
+    <div class="ch"><div class="ct"><span contenteditable="true">部门明细汇总</span></div><span class="csub" style="color:var(--accent)">🔍 点击行 → 科目明细</span></div>
+    <div style="overflow-y:auto;flex:1;min-height:0;">
+      <table class="mt"><thead><tr>
+        <th contenteditable="true">#</th>
+        <th contenteditable="true">部门</th>
+        <th contenteditable="true">预算(万)</th>
+        <th contenteditable="true">实际(万)</th>
+        <th contenteditable="true">差额</th>
+        <th contenteditable="true">执行率</th>
+        <th contenteditable="true">人数</th>
+        <th contenteditable="true">人均(千)</th>
+        <th contenteditable="true">状态</th>
+      </tr></thead><tbody id="dept-tbody2"></tbody></table>
+    </div>
+  </div>
+</div>
+<div id="drill-p2"></div>
+</div>
+
+<!-- ═══ P3 类目分析 ═══ -->
+<div class="view" id="view-p3">
+<div class="canvas" id="page-p3">
+  <div class="cbadge">P3 · 类目分析</div>
+  <div class="ptitle">
+    <div>
+      <div class="ptitle-main" contenteditable="true">📦 成本类目分析</div>
+      <div class="ptitle-sub" contenteditable="true">Cost Type Analysis · 类目分解 / 预算对比</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="b bt" id="badge-p3">2026-01</span>
+      <span class="b bp">🔍 点击图表/行穿透原始数据</span>
+    </div>
+  </div>
+  <div class="krow" id="type-krow"><!-- 动态 --></div>
+  <div style="flex:3;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="card">
+      <div class="ch"><div class="ct"><span contenteditable="true">类目金额对比（本月/上月/预算）</span></div><span class="csub" style="color:var(--accent)">🔍 点击穿透</span></div>
+      <div id="c-typebar" class="cf"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct"><span contenteditable="true">成本构成占比</span></div></div>
+      <div id="c-typepie" class="cf"></div>
+    </div>
+  </div>
+  <div style="flex:2;min-height:0;" class="card">
+    <div class="ch"><div class="ct"><span contenteditable="true">类目明细表</span></div><span class="csub" style="color:var(--accent)">🔍 点击行 → 原始数据</span></div>
+    <div style="overflow-y:auto;flex:1;min-height:0;">
+      <table class="mt"><thead><tr>
+        <th contenteditable="true">#</th>
+        <th contenteditable="true">类目</th>
+        <th contenteditable="true">本月(万)</th>
+        <th contenteditable="true">上月(万)</th>
+        <th contenteditable="true">预算(万)</th>
+        <th contenteditable="true">环比</th>
+        <th contenteditable="true">执行率</th>
+        <th contenteditable="true">占比</th>
+        <th contenteditable="true">状态</th>
+      </tr></thead><tbody id="type-tbody"></tbody></table>
+    </div>
+  </div>
+</div>
+<div id="drill-p3"></div>
+</div>
+
+<!-- ═══ P4 趋势分析 ═══ -->
+<div class="view" id="view-p4">
+<div class="canvas" id="page-p4">
+  <div class="cbadge">P4 · 趋势分析</div>
+  <div class="ptitle">
+    <div>
+      <div class="ptitle-main" contenteditable="true">📈 月度成本趋势</div>
+      <div class="ptitle-sub" contenteditable="true">Trend Analysis · 多月走势 / 预算线 / 超支预警</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <span class="b bt" id="badge-p4">2026-01</span>
+      <span class="b bp">🔍 点击折线节点 → 当月原始数据</span>
+    </div>
+  </div>
+  <div class="krow">
+    <div class="kcard k1"><div class="klabel" contenteditable="true">累计总成本</div><div class="kval" id="tkv1" style="font-size:2rem">—</div><div class="kfoot"><span class="ku ku1">万元</span><span class="kvs" id="tkvs1"></span></div><div class="kico">📊</div></div>
+    <div class="kcard k2"><div class="klabel" contenteditable="true">月均成本</div><div class="kval" id="tkv2" style="font-size:2rem">—</div><div class="kfoot"><span class="ku ku2">万/月</span><span class="kvs" id="tkvs2"></span></div><div class="kico">📐</div></div>
+    <div class="kcard k3"><div class="klabel" contenteditable="true">最高月份</div><div class="kval" id="tkv3" style="font-size:1.8rem">—</div><div class="kfoot"><span class="ku ku3">月</span><span class="kvs" id="tkvs3"></span></div><div class="kico">📌</div></div>
+    <div class="kcard k4"><div class="klabel" contenteditable="true">超预算月份</div><div class="kval" id="tkv4">—</div><div class="kfoot"><span class="ku ku4">个月</span><span class="kvs" id="tkvs4"></span></div><div class="kico">⚠️</div></div>
+  </div>
+  <div style="flex:3;min-height:0;" class="card">
+    <div class="ch"><div class="ct"><span contenteditable="true">月度成本趋势（含预算线）</span></div><span class="csub" style="color:var(--accent)">🔍 点击折线节点 → 当月原始数据</span></div>
+    <div id="c-trend" class="cf"></div>
+  </div>
+  <div style="flex:2;min-height:0;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div class="card">
+      <div class="ch"><div class="ct"><span contenteditable="true">月度明细表</span></div><span class="csub" style="color:var(--accent)">🔍 点击行</span></div>
+      <div style="overflow-y:auto;flex:1;min-height:0;">
+        <table class="mt"><thead><tr>
+          <th contenteditable="true">月份</th>
+          <th contenteditable="true">总成本</th>
+          <th contenteditable="true">人力</th>
+          <th contenteditable="true">运营</th>
+          <th contenteditable="true">采购</th>
+          <th contenteditable="true">预算</th>
+          <th contenteditable="true">差额</th>
+          <th contenteditable="true">执行率</th>
+        </tr></thead><tbody id="trend-tbody"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct"><span contenteditable="true">各系列月度堆叠</span></div></div>
+      <div id="c-trendbar" class="cf"></div>
+    </div>
+  </div>
+</div>
+<div id="drill-p4"></div>
+</div>
+
+<!-- ═══ 数据中心 ═══ -->
+<div class="view" id="view-dc">
+<div class="dcwrap">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div style="font:900 18px/1 var(--FD);color:var(--t1)">⚙️ 数据管理中心</div>
+    <div style="font-size:12px;color:var(--tm)">
+      <b style="color:var(--accent)">costItems</b> 是主表，所有看板由此驱动 · 
+      <b style="color:var(--accent)">supplier</b> 供应商 · 
+      <b style="color:var(--accent)">baseline</b> 收入/预算基准
+    </div>
+  </div>
+  <div class="dctabs" id="dctabs"></div>
+  <div style="display:flex;gap:8px;margin-bottom:14px;">
+    <button class="bsm bsm-a" onclick="dcAddRow()">＋ 新增行</button>
+    <button class="bsm" onclick="dcExport()">↓ 导出 CSV</button>
+    <label class="bsm" style="cursor:pointer">↑ 导入 CSV<input type="file" accept=".csv" style="display:none" onchange="dcImport(this)"></label>
+    <button class="bsm bsm-r" onclick="dcBatchDel()">🗑 批量删除</button>
+  </div>
+  <div class="twrap">
+    <table class="at"><thead id="dc-th"></thead><tbody id="dc-tb"></tbody></table>
+  </div>
+</div>
+</div>
+
+</div><!-- /.W -->
+
+<script>
+// ★ 数据胶囊
+const APP = {
+  meta:{ company:"示例公司", savedAt:"2026-01-01" },
+  activePeriod:"2026-01",
+
+  // ── 表头标签（可编辑后存储） ──
+  labels:{
+    costItems:["期间","部门","科目","类别","实际(万)","预算(万)","上月(万)","人数"],
+    supplier: ["期间","供应商","类别","本月(万)","上月(万)"],
+    baseline: ["期间","总收入(万)","总预算(万)"]
+  },
+
+  // ── 三张合并后的数据表 ──
+  schemas:{
+    costItems:{label:"成本明细（主表）", fields:[
+      {k:"period",  l:"期间",    t:"text", tip:"YYYY-MM 格式，如 2026-01"},
+      {k:"dept",    l:"部门",    t:"text"},
+      {k:"subject", l:"科目",    t:"text", tip:"如：员工薪资、云服务、差旅等"},
+      {k:"category",l:"类别",    t:"text", tip:"如：人力、IT、营销、管理"},
+      {k:"actual",  l:"实际(万)",t:"num"},
+      {k:"budget",  l:"预算(万)",t:"num"},
+      {k:"last",    l:"上月(万)",t:"num"},
+      {k:"head",    l:"人数",    t:"num", tip:"该部门在此科目下的人数，科目级填0"}
+    ]},
+    supplier:{label:"供应商", fields:[
+      {k:"period",l:"期间",    t:"text"},
+      {k:"name",  l:"供应商",  t:"text"},
+      {k:"cate",  l:"类别",    t:"text"},
+      {k:"amt",   l:"本月(万)",t:"num"},
+      {k:"last",  l:"上月(万)",t:"num"}
+    ]},
+    baseline:{label:"收入/预算基准", fields:[
+      {k:"period",      l:"期间",      t:"text"},
+      {k:"revenue",     l:"总收入(万)", t:"num"},
+      {k:"totalBudget", l:"总预算(万)", t:"num"}
+    ]}
+  },
+
+  // ── 数据（含 2025-07 ~ 2026-03 多期） ──
+  data:{
+    costItems: [],
+    supplier:  [],
+    baseline:  []
+  }
+};
+
+// ── 生成多期数据 ──
+(function seedData(){
+  const depts = [
+    {name:"研发中心",   base:598, bgt:620, head:85},
+    {name:"销售部门",   base:512, bgt:480, head:62},
+    {name:"市场部门",   base:308, bgt:320, head:38},
+    {name:"运营部门",   base:398, bgt:420, head:55},
+    {name:"行政人事",   base:265, bgt:280, head:32},
+    {name:"财务法务",   base:175, bgt:180, head:18},
+    {name:"客户服务",   base:280, bgt:260, head:42},
+    {name:"IT基础设施", base:198, bgt:220, head:24}
+  ];
+  const subjects = {
+    "研发中心":   [{s:"员工薪资",c:"人力",r:.52},{s:"社保公积金",c:"人力",r:.15},{s:"云服务资源",c:"IT",r:.14},{s:"软件订阅",c:"IT",r:.07},{s:"差旅培训",c:"管理",r:.06},{s:"设备折旧",c:"设备",r:.06}],
+    "销售部门":   [{s:"员工薪资",c:"人力",r:.48},{s:"销售提成",c:"人力",r:.23},{s:"差旅费",c:"管理",r:.13},{s:"客户招待",c:"管理",r:.09},{s:"广告投放",c:"营销",r:.07}],
+    "市场部门":   [{s:"员工薪资",c:"人力",r:.55},{s:"活动赞助",c:"营销",r:.22},{s:"内容制作",c:"营销",r:.15},{s:"推广费用",c:"营销",r:.08}],
+    "运营部门":   [{s:"员工薪资",c:"人力",r:.57},{s:"系统许可证",c:"IT",r:.21},{s:"运营耗材",c:"物料",r:.14},{s:"外包服务",c:"外包",r:.08}],
+    "行政人事":   [{s:"员工薪资",c:"人力",r:.60},{s:"办公耗材",c:"物料",r:.16},{s:"物业水电",c:"设施",r:.14},{s:"招聘费用",c:"人力",r:.10}],
+    "财务法务":   [{s:"员工薪资",c:"人力",r:.64},{s:"审计费用",c:"专业",r:.22},{s:"法务顾问",c:"专业",r:.14}],
+    "客户服务":   [{s:"员工薪资",c:"人力",r:.63},{s:"系统工具",c:"IT",r:.21},{s:"培训费用",c:"管理",r:.11},{s:"外包客服",c:"外包",r:.05}],
+    "IT基础设施": [{s:"硬件采购",c:"设备",r:.41},{s:"网络费用",c:"IT",r:.28},{s:"安全服务",c:"IT",r:.19},{s:"运维人力",c:"人力",r:.12}]
+  };
+
+  const periods = [];
+  for(let y=2025;y<=2026;y++){
+    const start=y===2025?7:1, end=y===2025?12:3;
+    for(let m=start;m<=end;m++) periods.push(`${y}-${String(m).padStart(2,'0')}`);
+  }
+
+  const items=[], supps=[], baselines=[];
+  periods.forEach((p,pi)=>{
+    const trend = 1 + pi*0.02 + (Math.random()-.5)*.05; // 整体微增趋势
+    depts.forEach(d=>{
+      const actual = Math.round(d.base * trend * (1+(Math.random()-.48)*.12));
+      const budget = Math.round(d.bgt * (1+pi*.01));
+      const last   = pi>0 ? Math.round(d.base*(1+(pi-1)*0.02+(Math.random()-.5)*.05)) : Math.round(actual*.95);
+      const subs   = subjects[d.name];
+      subs.forEach(sb=>{
+        items.push({
+          period:p, dept:d.name, subject:sb.s, category:sb.c,
+          actual: Math.round(actual*sb.r),
+          budget: Math.round(budget*sb.r),
+          last:   Math.round(last*sb.r),
+          head:   sb.c==='人力'?Math.round(d.head*sb.r*2):0
+        });
+      });
+    });
+
+    const suppBase=[{n:"华为云服务",c:"云计算",b:185},{n:"阿里巴巴",c:"电商",b:143},{n:"腾讯企服",c:"SaaS",b:118},{n:"京东物流",c:"物流",b:96},{n:"用友软件",c:"ERP",b:78}];
+    suppBase.forEach(s=>{
+      const amt=Math.round(s.b*(1+pi*.015+(Math.random()-.5)*.1));
+      const lastAmt=pi>0?Math.round(s.b*(1+(pi-1)*.015+(Math.random()-.5)*.1)):Math.round(amt*.93);
+      supps.push({period:p,name:s.n,cate:s.c,amt,last:lastAmt});
+    });
+
+    const totalActual=items.filter(r=>r.period===p).reduce((s,r)=>s+r.actual,0);
+    baselines.push({period:p, revenue:Math.round(totalActual/0.832*(1+(Math.random()-.5)*.03)), totalBudget:Math.round(totalActual*1.05)});
+  });
+
+  APP.data.costItems = items;
+  APP.data.supplier  = supps;
+  APP.data.baseline  = baselines;
+})();
+
+// ── 运行时副本 ──
+let S = JSON.parse(JSON.stringify(APP));
+let curPage = 'p1';
+let dcTable = 'costItems';
+
+// ── 工具函数 ──
+const fmt   = n => Number(n||0).toLocaleString();
+const pct   = (a,b) => b ? ((a/b)*100).toFixed(1) : '—';
+const delta = (a,b) => b ? (((a-b)/b)*100).toFixed(1) : null;
+const chgStr= (a,b) => { const v=delta(a,b); return v==null?'—':v>=0?`↑+${v}%`:`↓${v}%`; };
+const chgClr= (a,b) => { const v=delta(a,b); return v==null?'var(--tm)':v>=0?'var(--red)':'var(--green)'; };
+
+// 当前期间原始行
+const snapItems    = () => (S.data.costItems||[]).filter(r=>r.period===S.activePeriod);
+const snapSupplier = () => (S.data.supplier||[]).filter(r=>r.period===S.activePeriod);
+const snapBaseline = () => (S.data.baseline||[]).find(r=>r.period===S.activePeriod)||{};
+// 上期
+const lastPeriod   = () => { const ps=periods(); const i=ps.indexOf(S.activePeriod); return i>0?ps[i-1]:null; };
+const lastItems    = () => { const lp=lastPeriod(); return lp?(S.data.costItems||[]).filter(r=>r.period===lp):[]; };
+const lastSupp     = () => { const lp=lastPeriod(); return lp?(S.data.supplier||[]).filter(r=>r.period===lp):[]; };
+const periods      = () => [...new Set((S.data.baseline||[]).map(r=>r.period))].sort();
+
+// 汇总：按字段 group by
+function groupBy(rows, key){
+  const m={};
+  rows.forEach(r=>{
+    const k=r[key]||'未知';
+    if(!m[k]) m[k]={actual:0,budget:0,last:0,head:0};
+    m[k].actual+=r.actual||0;
+    m[k].budget+=r.budget||0;
+    m[k].last  +=r.last  ||0;
+    m[k].head  +=r.head  ||0;
+  });
+  return Object.entries(m).map(([k,v])=>({name:k,...v})).sort((a,b)=>b.actual-a.actual);
+}
+
+// ── 颜色系统 ──
+// 每个类别/部门/类目都有固定颜色（用名称哈希）
+const PALETTE = ['#1ABC9C','#e67e22','#9b59b6','#f1c40f','#3498db','#e91e8c','#16a085','#d35400','#27ae60','#8e44ad','#2980b9','#f39c12'];
+// 固定颜色映射：名称→颜色，保证同名永远同色、同图内不同名不同色
+const COLOR_REGISTRY = [
+  // 费用类别
+  ['人力',    '#e67e22'],['IT',      '#3498db'],['营销',    '#e91e8c'],
+  ['管理',    '#9b59b6'],['设备',    '#d35400'],['物料',    '#f1c40f'],
+  ['外包',    '#8e44ad'],['专业',    '#27ae60'],['设施',    '#2980b9'],
+  // 成本类目
+  ['人力资源','#e67e22'],['市场营销','#e91e8c'],['技术研发','#3498db'],
+  ['行政办公','#9b59b6'],['采购物料','#f39c12'],['销售费用','#d35400'],
+  // 部门
+  ['研发中心',  '#1ABC9C'],['销售部门',  '#e67e22'],['市场部门',  '#e91e8c'],
+  ['运营部门',  '#3498db'],['行政人事',  '#9b59b6'],['财务法务',  '#27ae60'],
+  ['客户服务',  '#f1c40f'],['IT基础设施','#d35400'],
+  // 供应商
+  ['华为云服务','#1ABC9C'],['阿里巴巴',  '#e67e22'],['腾讯企服',  '#9b59b6'],
+  ['京东物流',  '#3498db'],['用友软件',  '#f1c40f'],
+  // 供应商类别
+  ['云计算','#1ABC9C'],['电商','#e67e22'],['SaaS','#9b59b6'],['物流','#3498db'],['ERP','#f1c40f']
+];
+const colorMap = Object.fromEntries(COLOR_REGISTRY);
+let _colorIdx = COLOR_REGISTRY.length % PALETTE.length;
+function getColor(name){
+  if(!colorMap[name]){
+    // 找一个未被使用的颜色
+    const usedSet = new Set(Object.values(colorMap));
+    let found = PALETTE.find(c=>!usedSet.has(c));
+    if(!found){ _colorIdx=(_colorIdx+1)%PALETTE.length; found=PALETTE[_colorIdx]; }
+    colorMap[name]=found;
+  }
+  return colorMap[name];
+}
+
+const TT = { backgroundColor:'rgba(13,33,55,.92)', borderColor:'transparent',
+             textStyle:{color:'#fff',fontSize:13,fontWeight:700}, padding:[8,14] };
+const pools = {p1:[],p2:[],p3:[],p4:[],dr:[]};
+function dp(pid){ pools[pid].forEach(c=>{try{c.dispose()}catch(e){}}); pools[pid]=[]; }
+function mkChart(id,opt,pid){
+  const el=document.getElementById(id); if(!el||!el.offsetWidth) return null;
+  const c=echarts.init(el); c.setOption(opt); pools[pid].push(c); return c;
+}
+window.addEventListener('resize',()=>Object.values(pools).flat().forEach(c=>{try{c.resize()}catch(e){}}));
+
+// ── 期间 ──
+function changePeriod(dir){
+  const ps=periods(); const i=ps.indexOf(S.activePeriod);
+  const ni=Math.max(0,Math.min(ps.length-1,i+dir));
+  if(ni===i) return;
+  S.activePeriod=ps[ni];
+  document.getElementById('pval').textContent=S.activePeriod;
+  clearDrill();
+  showPage(curPage,true);
+}
+
+// ── 穿透 ──
+let drillCtxType='', drillCtxParam='';
+function drillTo(type, param){
+  clearDrill(true);
+  drillCtxType=type; drillCtxParam=param||'';
+  const container=document.getElementById(`drill-${curPage}`);
+  container.innerHTML='';
+
+  if(type==='dept')       renderDrillDept(container, param);
+  else if(type==='costtype')  renderDrillCostType(container, param);
+  else if(type==='supplier')  renderDrillSupplier(container, param);
+  else if(type==='subject')   renderDrillSubject(container, param);
+  else if(type==='trendmonth')renderDrillTrendMonth(container, param);
+  else if(type==='rawdata')   renderRawData(container, param);
+
+  // 面包屑
+  const bar=document.getElementById('dbar');
+  const tl={dept:'部门科目明细',costtype:'成本类目分解',supplier:'供应商明细',
+    subject:'科目原始数据',trendmonth:'月度原始数据',rawdata:'原始数据表'};
+  const pl=param?` · ${param}`:'';
+  bar.innerHTML=
+    `<button class="dback" onclick="clearDrill()">✕ 收起</button>`+
+    `<span class="dcrumb" onclick="clearDrill()">📊 ${pageLabel(curPage)}</span>`+
+    `<span class="dsep">›</span>`+
+    `<span class="dcrumb cur">${tl[type]||type}${pl}</span>`;
+  bar.classList.add('on');
+  container.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function clearDrill(silent){
+  ['p1','p2','p3','p4'].forEach(p=>{
+    const el=document.getElementById(`drill-${p}`); if(el) el.innerHTML='';
+  });
+  dp('dr');
+  document.getElementById('dbar').classList.remove('on');
+  drillCtxType=''; drillCtxParam='';
+}
+window.addEventListener('keydown',e=>{ if(e.key==='Escape') clearDrill(); });
+const pageLabel = p=>({p1:'成本总览',p2:'部门分析',p3:'类目分析',p4:'趋势分析',dc:'数据中心'}[p]||p);
+
+// ══════════════════════════════════
+//  P1 渲染
+// ══════════════════════════════════
+function renderP1(){
+  const items=snapItems(), supps=snapSupplier(), bl=snapBaseline();
+  const byDept    = groupBy(items,'dept');
+  const byCat     = groupBy(items,'category');
+  const suppLast  = lastSupp();
+
+  const totalActual = items.reduce((s,r)=>s+r.actual,0);
+  const totalLast   = lastItems().reduce((s,r)=>s+r.actual,0);
+  const laborActual = items.filter(r=>r.category==='人力').reduce((s,r)=>s+r.actual,0);
+  const laborLast   = lastItems().filter(r=>r.category==='人力').reduce((s,r)=>s+r.actual,0);
+  const procureAmt  = supps.reduce((s,r)=>s+r.amt,0);
+  const procureLast = suppLast.reduce((s,r)=>s+r.last,0);
+  const revenue     = bl.revenue||1;
+  const costRate    = ((totalActual/revenue)*100).toFixed(1);
+
+  document.getElementById('kv1').textContent=fmt(totalActual);
+  document.getElementById('kvs1').textContent=chgStr(totalActual,totalLast);
+  document.getElementById('kvs1').style.color=chgClr(totalActual,totalLast);
+  document.getElementById('kv2').textContent=fmt(laborActual);
+  document.getElementById('kvs2').textContent=chgStr(laborActual,laborLast);
+  document.getElementById('kvs2').style.color=chgClr(laborActual,laborLast);
+  document.getElementById('kv3').textContent=fmt(procureAmt);
+  document.getElementById('kvs3').textContent=chgStr(procureAmt,procureLast);
+  document.getElementById('kvs3').style.color=chgClr(procureAmt,procureLast);
+  document.getElementById('kv4').textContent=costRate;
+  document.getElementById('kvs4').textContent=`收入${fmt(revenue)}万`;
+  document.getElementById('kvs4').style.color=parseFloat(costRate)>85?'var(--red)':'var(--green)';
+
+  // 部门矩阵
+  const deptSorted=[...byDept].sort((a,b)=>(b.actual-b.budget)-(a.actual-a.budget));
+  document.getElementById('dept-tbody').innerHTML=deptSorted.map((d,i)=>{
+    const diff=d.actual-d.budget;
+    return `<tr class="dr" onclick="drillTo('dept','${d.name}')">
+      <td><span class="rk ${['rk1','rk2','rk3'][i]||'rkn'}">${i+1}</span></td>
+      <td style="font-weight:900;color:var(--t1)">${d.name}<span class="dico">›</span></td>
+      <td style="color:var(--tm)">${fmt(d.budget)}</td>
+      <td style="font-weight:700">${fmt(d.actual)}</td>
+      <td><span class="raised" style="color:${diff>0?'var(--red)':'var(--green)'}">${diff>0?'+':''}${fmt(diff)}</span></td>
+      <td style="font-weight:700;color:${parseFloat(pct(d.actual,d.budget))>100?'var(--red)':'var(--green)'}">${pct(d.actual,d.budget)}%</td>
+      <td><span class="b ${diff>0?'br':diff<-20?'bg':'ba2'}">${diff>0?'超支':diff<-20?'节省':'持平'}</span></td>
+    </tr>`;
+  }).join('');
+
+  dp('p1');
+  setTimeout(()=>{
+    // 环形图 — 按类别，每类别独立颜色
+    const dc=mkChart('c-donut',{
+      tooltip:{trigger:'item',formatter:p=>`${p.name}: ${p.value}万 (${p.percent}%)<br/><span style="color:#1ABC9C;font-size:11px">🔍 点击穿透</span>`,...TT},
+      series:[{type:'pie',radius:['30%','58%'],center:['50%','50%'],
+        data:byCat.map(c=>({name:c.name,value:c.actual,
+          itemStyle:{color:getColor(c.name),borderRadius:6,borderColor:'#F5F7FA',borderWidth:2}})),
+        label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:12,fontWeight:900,
+               color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff',alignTo:'labelLine',bleedMargin:5},
+        labelLine:{show:true,length:12,length2:8,smooth:true,minTurnAngle:90},
+        emphasis:{scale:true,scaleSize:5}}]
+    },'p1');
+    dc&&dc.on('click',()=>drillTo('costtype'));
+
+    // 供应商
+    const sc=mkChart('c-supp',{
+      tooltip:{trigger:'axis',...TT},
+      legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'1%',right:'16%',top:'24px',bottom:'3%',containLabel:true},
+      xAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}}},
+      yAxis:{type:'category',data:supps.map(s=>s.name),axisLabel:{fontWeight:700,fontSize:11,color:'#1e3a4a'},axisTick:{show:false},axisLine:{show:false}},
+      series:[
+        {name:'本月',type:'bar',barMaxWidth:14,
+         data:supps.map(s=>({value:s.amt,itemStyle:{color:getColor(s.name),borderRadius:[0,6,6,0]}})),
+         label:{show:true,position:'right',formatter:p=>`${p.value}万`,fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'上月',type:'bar',barMaxWidth:14,barGap:'30%',
+         data:supps.map(s=>{const lp=suppLast.find(l=>l.name===s.name);return {value:lp?.amt||s.last,itemStyle:{color:getColor(s.name),opacity:.35,borderRadius:[0,6,6,0]}};}),
+         label:{show:false}}
+      ]
+    },'p1');
+    sc&&sc.on('click',()=>drillTo('supplier'));
+
+    // 费用类目对比
+    const tc=mkChart('c-type',{
+      tooltip:{trigger:'axis',...TT},
+      legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'1%',right:'16%',top:'24px',bottom:'3%',containLabel:true},
+      xAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}}},
+      yAxis:{type:'category',data:byCat.map(c=>c.name),axisLabel:{fontWeight:700,fontSize:11,color:'#1e3a4a'},axisTick:{show:false},axisLine:{show:false}},
+      series:[
+        {name:'本月',type:'bar',barMaxWidth:14,
+         data:byCat.map(c=>({value:c.actual,itemStyle:{color:getColor(c.name),borderRadius:[0,5,5,0]}})),
+         label:{show:true,position:'right',formatter:p=>`${p.value}万`,fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'上月',type:'bar',barMaxWidth:14,barGap:'30%',
+         data:byCat.map(c=>({value:c.last,itemStyle:{color:getColor(c.name),opacity:.3,borderRadius:[0,5,5,0]}})),
+         label:{show:false}}
+      ]
+    },'p1');
+    tc&&tc.on('click',()=>drillTo('costtype'));
+  },120);
+}
+
+// ══════════════════════════════════
+//  P2 渲染
+// ══════════════════════════════════
+function renderP2(){
+  const byDept=groupBy(snapItems(),'dept');
+  const totalBudget=byDept.reduce((s,d)=>s+d.budget,0);
+  const totalActual=byDept.reduce((s,d)=>s+d.actual,0);
+  const overDepts=byDept.filter(d=>d.actual>d.budget);
+  const maxOver=byDept.reduce((m,d)=>d.actual-d.budget>m.diff?{d,diff:d.actual-d.budget}:m,{d:null,diff:-Infinity});
+
+  document.getElementById('dkv1').textContent=byDept.length;
+  document.getElementById('dkv2').textContent=overDepts.length;
+  document.getElementById('dkvs2').textContent=overDepts.map(d=>d.name).join(' ');
+  document.getElementById('dkvs2').style.color=overDepts.length>0?'var(--red)':'var(--green)';
+  document.getElementById('dkv3').textContent=maxOver.d?fmt(maxOver.diff):'0';
+  document.getElementById('dkvs3').textContent=maxOver.d?.name||'';
+  document.getElementById('dkvs3').style.color='var(--red)';
+  document.getElementById('dkv4').textContent=pct(totalActual,totalBudget);
+  document.getElementById('dkvs4').textContent=parseFloat(pct(totalActual,totalBudget))>100?'⚠️ 超支':'✅ 达标';
+  document.getElementById('dkvs4').style.color=parseFloat(pct(totalActual,totalBudget))>100?'var(--red)':'var(--green)';
+
+  const sorted=[...byDept].sort((a,b)=>(b.actual-b.budget)-(a.actual-a.budget));
+  document.getElementById('dept-tbody2').innerHTML=sorted.map((d,i)=>{
+    const diff=d.actual-d.budget;
+    const headTotal=snapItems().filter(r=>r.dept===d.name&&r.head>0).reduce((s,r)=>s+r.head,0)||
+                    snapItems().filter(r=>r.dept===d.name).reduce((s,r,_,ar)=>ar.indexOf(r)===0?d.head:s,d.head);
+    const headVal=snapItems().filter(r=>r.dept===d.name).reduce((s,r)=>Math.max(s,r.head),0)||byDept.find(x=>x.name===d.name)?.head||0;
+    // 取该部门所有记录中 head 字段非零的最大值作为部门人数
+    const deptHead = Math.max(...snapItems().filter(r=>r.dept===d.name).map(r=>r.head||0),1);
+    return `<tr class="dr" onclick="drillTo('dept','${d.name}')">
+      <td><span class="rk ${['rk1','rk2','rk3'][i]||'rkn'}">${i+1}</span></td>
+      <td style="font-weight:900;color:var(--t1)">${d.name}<span class="dico">›</span></td>
+      <td style="color:var(--tm)">${fmt(d.budget)}</td>
+      <td style="font-weight:700;color:${d.actual>d.budget?'var(--red)':'var(--t2)'}">${fmt(d.actual)}</td>
+      <td><span class="raised" style="color:${diff>0?'var(--red)':'var(--green)'}">${diff>0?'+':''}${fmt(diff)}</span></td>
+      <td style="font-weight:700;color:${parseFloat(pct(d.actual,d.budget))>100?'var(--red)':'var(--green)'}">${pct(d.actual,d.budget)}%</td>
+      <td style="color:var(--tm)">${deptHead}人</td>
+      <td style="color:var(--tm)">${deptHead?(d.actual/deptHead*10).toFixed(1):'—'}</td>
+      <td><span class="b ${diff>0?'br':diff<-20?'bg':'ba2'}">${diff>0?'超支':diff<-20?'节省':'持平'}</span></td>
+    </tr>`;
+  }).join('');
+
+  dp('p2');
+  setTimeout(()=>{
+    const bc=mkChart('c-deptbar',{
+      tooltip:{trigger:'axis',...TT,formatter:params=>params[0].name+'<br/>'+params.map(p=>`${p.seriesName}: <b>${p.value}万</b>`).join('<br/>')+`<br/><span style="color:#1ABC9C;font-size:11px">🔍 点击穿透</span>`},
+      legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'2%',right:'2%',top:'26px',bottom:'5%',containLabel:true},
+      xAxis:{type:'category',data:byDept.map(d=>d.name),axisLabel:{fontWeight:700,fontSize:10,color:'#1e3a4a'},axisLine:{lineStyle:{color:'#D1D9E6'}},axisTick:{show:false}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}},axisLabel:{fontSize:10,color:'#4a6878'}},
+      series:[
+        {name:'实际',type:'bar',barMaxWidth:22,
+         data:byDept.map(d=>({value:d.actual,itemStyle:{color:d.actual>d.budget?'#e74c3c':getColor(d.name),borderRadius:[4,4,0,0]}})),
+         label:{show:true,position:'top',formatter:p=>`${p.value}万`,fontSize:10,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'预算',type:'bar',barMaxWidth:22,
+         data:byDept.map(d=>({value:d.budget,itemStyle:{color:getColor(d.name),opacity:.25,borderRadius:[4,4,0,0]}})),label:{show:false}}
+      ]
+    },'p2');
+    bc&&bc.on('click',p=>drillTo('dept',p.name));
+
+    mkChart('c-deptpie',{
+      tooltip:{trigger:'item',formatter:p=>`${p.name}: ${p.value}万 (${p.percent}%)`,...TT},
+      series:[{type:'pie',radius:['28%','56%'],center:['50%','50%'],
+        data:byDept.map(d=>({name:d.name,value:d.actual,
+          itemStyle:{color:getColor(d.name),borderRadius:5,borderColor:'#F5F7FA',borderWidth:2}})),
+        label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:11,fontWeight:900,
+               color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff',alignTo:'labelLine'},
+        labelLine:{show:true,length:10,length2:8,smooth:true},emphasis:{scale:true,scaleSize:4}}]
+    },'p2');
+  },120);
+}
+
+// ══════════════════════════════════
+//  P3 渲染
+// ══════════════════════════════════
+function renderP3(){
+  const byCat=groupBy(snapItems(),'category');
+  const total=byCat.reduce((s,c)=>s+c.actual,0);
+
+  document.getElementById('type-krow').innerHTML=byCat.slice(0,4).map((c,i)=>`
+    <div class="kcard k${i+1}">
+      <div class="klabel" contenteditable="true">${c.name}</div>
+      <div class="kval" style="font-size:2rem">${fmt(c.actual)}</div>
+      <div class="kfoot"><span class="ku ku${i+1}">万元</span><span class="kvs" style="color:${chgClr(c.actual,c.last)}">${chgStr(c.actual,c.last)}</span></div>
+      <div class="kico" style="color:${getColor(c.name)}">●</div>
+    </div>`).join('');
+
+  document.getElementById('type-tbody').innerHTML=byCat.map((c,i)=>`
+    <tr class="dr" onclick="drillTo('rawdata',{label:'${c.name}·类别明细',filter:{field:'category',val:'${c.name}'}})">
+      <td><span class="rk" style="background:${getColor(c.name)}">${i+1}</span></td>
+      <td style="font-weight:900;color:var(--t1)">${c.name}<span class="dico">›</span></td>
+      <td style="font-weight:700">${fmt(c.actual)}</td>
+      <td style="color:var(--tm)">${fmt(c.last)}</td>
+      <td style="color:var(--tm)">${fmt(c.budget)}</td>
+      <td style="font-weight:700;color:${chgClr(c.actual,c.last)}">${chgStr(c.actual,c.last)}</td>
+      <td style="font-weight:700;color:${parseFloat(pct(c.actual,c.budget))>100?'var(--red)':'var(--green)'}">${pct(c.actual,c.budget)}%</td>
+      <td>${total?((c.actual/total)*100).toFixed(1):'—'}%</td>
+      <td><span class="b ${c.actual>c.budget?'br':'bg'}">${c.actual>c.budget?'超支':'达标'}</span></td>
+    </tr>`).join('');
+
+  dp('p3');
+  setTimeout(()=>{
+    const bc=mkChart('c-typebar',{
+      tooltip:{trigger:'axis',...TT,formatter:params=>params[0].name+'<br/>'+params.map(p=>`${p.seriesName}: <b>${p.value}万</b>`).join('<br/>')+`<br/><span style="color:#1ABC9C;font-size:11px">🔍 点击穿透</span>`},
+      legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'2%',right:'2%',top:'26px',bottom:'5%',containLabel:true},
+      xAxis:{type:'category',data:byCat.map(c=>c.name),axisLabel:{fontWeight:700,fontSize:11,color:'#1e3a4a'},axisLine:{lineStyle:{color:'#D1D9E6'}},axisTick:{show:false}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}},axisLabel:{fontSize:10,color:'#4a6878'}},
+      series:[
+        {name:'本月',type:'bar',barMaxWidth:28,
+         data:byCat.map(c=>({value:c.actual,itemStyle:{color:getColor(c.name),borderRadius:[5,5,0,0]}})),
+         label:{show:true,position:'top',formatter:p=>`${p.value}万`,fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'上月',type:'bar',barMaxWidth:28,
+         data:byCat.map(c=>({value:c.last,itemStyle:{color:getColor(c.name),opacity:.3,borderRadius:[5,5,0,0]}})),label:{show:false}},
+        {name:'预算',type:'bar',barMaxWidth:28,
+         data:byCat.map(c=>({value:c.budget,itemStyle:{color:'transparent',borderWidth:1.5,borderColor:getColor(c.name),borderRadius:[5,5,0,0]}})),label:{show:false}}
+      ]
+    },'p3');
+    bc&&bc.on('click',p=>drillTo('rawdata',{label:`${p.name}·类别明细`,filter:{field:'category',val:p.name}}));
+
+    mkChart('c-typepie',{
+      tooltip:{trigger:'item',formatter:p=>`${p.name}: ${p.value}万 (${p.percent}%)`,...TT},
+      series:[{type:'pie',radius:['28%','56%'],center:['50%','50%'],
+        data:byCat.map(c=>({name:c.name,value:c.actual,
+          itemStyle:{color:getColor(c.name),borderRadius:5,borderColor:'#F5F7FA',borderWidth:2}})),
+        label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:12,fontWeight:900,
+               color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff',alignTo:'labelLine'},
+        labelLine:{show:true,length:10,length2:8,smooth:true},emphasis:{scale:true,scaleSize:4}}]
+    },'p3');
+  },120);
+}
+
+// ══════════════════════════════════
+//  P4 渲染
+// ══════════════════════════════════
+function renderP4(){
+  const ps=periods();
+  // 按期间汇总
+  const byPeriod=ps.map(p=>{
+    const rows=S.data.costItems.filter(r=>r.period===p);
+    return {
+      month:p.slice(5),  // 只取 月份部分
+      period:p,
+      total:rows.reduce((s,r)=>s+r.actual,0),
+      labor:rows.filter(r=>r.category==='人力').reduce((s,r)=>s+r.actual,0),
+      ops:rows.filter(r=>['管理','IT','设施'].includes(r.category)).reduce((s,r)=>s+r.actual,0),
+      procure:(S.data.supplier.filter(r=>r.period===p)||[]).reduce((s,r)=>s+r.amt,0),
+      budget:(S.data.baseline.find(r=>r.period===p)||{}).totalBudget||0
+    };
+  }).filter(r=>r.total>0);
+
+  const total=byPeriod.reduce((s,r)=>s+r.total,0);
+  const avg=byPeriod.length?Math.round(total/byPeriod.length):0;
+  const maxM=byPeriod.reduce((m,r)=>r.total>m.total?r:m,byPeriod[0]||{total:0,month:'—'});
+  const overMs=byPeriod.filter(r=>r.total>r.budget);
+
+  document.getElementById('tkv1').textContent=fmt(total);
+  document.getElementById('tkvs1').textContent=`${byPeriod.length}个月`;
+  document.getElementById('tkv2').textContent=fmt(avg);
+  document.getElementById('tkvs2').textContent='月均';
+  document.getElementById('tkv3').textContent=maxM.month||'—';
+  document.getElementById('tkvs3').textContent=fmt(maxM.total)+'万';
+  document.getElementById('tkvs3').style.color='var(--red)';
+  document.getElementById('tkv4').textContent=overMs.length;
+  document.getElementById('tkvs4').textContent=overMs.map(r=>r.month).join(' ')||'无';
+  document.getElementById('tkvs4').style.color=overMs.length>0?'var(--red)':'var(--green)';
+
+  document.getElementById('trend-tbody').innerHTML=byPeriod.map(r=>{
+    const diff=r.total-r.budget;
+    return `<tr class="dr" onclick="drillTo('trendmonth','${r.period}')">
+      <td style="font-weight:900;color:${r.period===S.activePeriod?'var(--accent)':'var(--t1)'}">${r.month}${r.period===S.activePeriod?' ◀':''}<span class="dico">›</span></td>
+      <td style="font-weight:700;color:${diff>0?'var(--red)':'var(--t2)'}">${fmt(r.total)}</td>
+      <td style="color:var(--tm)">${fmt(r.labor)}</td>
+      <td style="color:var(--tm)">${fmt(r.ops)}</td>
+      <td style="color:var(--tm)">${fmt(r.procure)}</td>
+      <td style="color:var(--tm)">${fmt(r.budget)}</td>
+      <td style="font-weight:700;color:${diff>0?'var(--red)':'var(--green)'}">${diff>0?'+':''}${fmt(diff)}</td>
+      <td style="font-weight:700;color:${parseFloat(pct(r.total,r.budget))>100?'var(--red)':'var(--green)'}">${pct(r.total,r.budget)}%</td>
+    </tr>`;
+  }).join('');
+
+  dp('p4');
+  setTimeout(()=>{
+    const lc=mkChart('c-trend',{
+      tooltip:{trigger:'axis',...TT,formatter:params=>params[0].name+'<br/>'+params.map(p=>`${p.seriesName}: <b>${p.value}万</b>`).join('<br/>')+`<br/><span style="color:#1ABC9C;font-size:11px">🔍 点击穿透当月数据</span>`},
+      legend:{top:0,right:0,textStyle:{fontSize:12,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:8},
+      grid:{left:'1%',right:'2%',top:'28px',bottom:'4%',containLabel:true},
+      xAxis:{type:'category',data:byPeriod.map(r=>r.month),axisLabel:{fontWeight:700,fontSize:12,color:'#1e3a4a'},axisLine:{lineStyle:{color:'#D1D9E6'}},axisTick:{show:false}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}},axisLabel:{fontSize:11,color:'#4a6878'}},
+      series:[
+        {name:'总成本',type:'line',data:byPeriod.map(r=>r.total),smooth:true,lineStyle:{width:3,color:'#1ABC9C'},itemStyle:{color:'#1ABC9C'},
+         areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:'#1ABC9C3a'},{offset:1,color:'#1ABC9C05'}]}},
+         label:{show:true,position:'top',fontSize:11,fontWeight:900,color:'#1ABC9C',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'人力',   type:'line',data:byPeriod.map(r=>r.labor),  smooth:true,lineStyle:{width:2,color:'#e67e22'},itemStyle:{color:'#e67e22'},label:{show:false}},
+        {name:'运营',   type:'line',data:byPeriod.map(r=>r.ops),    smooth:true,lineStyle:{width:2,color:'#9b59b6'},itemStyle:{color:'#9b59b6'},label:{show:false}},
+        {name:'采购',   type:'line',data:byPeriod.map(r=>r.procure),smooth:true,lineStyle:{width:2,color:'#f1c40f'},itemStyle:{color:'#f1c40f'},label:{show:false}},
+        {name:'预算',   type:'line',data:byPeriod.map(r=>r.budget), smooth:false,lineStyle:{width:2,color:'#e74c3c',type:'dashed'},itemStyle:{color:'#e74c3c'},symbol:'none',label:{show:false}}
+      ]
+    },'p4');
+    lc&&lc.on('click',p=>{
+      const found=byPeriod.find(r=>r.month===p.name);
+      if(found) drillTo('trendmonth',found.period);
+    });
+
+    mkChart('c-trendbar',{
+      tooltip:{trigger:'axis',...TT},
+      legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'2%',right:'2%',top:'26px',bottom:'5%',containLabel:true},
+      xAxis:{type:'category',data:byPeriod.map(r=>r.month),axisLabel:{fontWeight:700,fontSize:12,color:'#1e3a4a'},axisLine:{lineStyle:{color:'#D1D9E6'}},axisTick:{show:false}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}},axisLabel:{fontSize:10,color:'#4a6878'}},
+      series:[
+        {name:'人力',type:'bar',barMaxWidth:18,stack:'s',data:byPeriod.map(r=>({value:r.labor,itemStyle:{color:'#e67e22'}}))},
+        {name:'运营',type:'bar',barMaxWidth:18,stack:'s',data:byPeriod.map(r=>({value:r.ops,  itemStyle:{color:'#9b59b6'}}))},
+        {name:'采购',type:'bar',barMaxWidth:18,stack:'s',data:byPeriod.map(r=>({value:r.procure,itemStyle:{color:'#f1c40f'}})),
+         label:{show:true,position:'top',formatter:(p,idx)=>`${byPeriod[p.dataIndex]?.total||''}万`,fontSize:10,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}}
+      ]
+    },'p4');
+  },120);
+}
+
+// ══════════════════════════════════
+//  穿透渲染
+// ══════════════════════════════════
+function renderDrillDept(container, deptName){
+  const items=snapItems().filter(r=>r.dept===deptName);
+  const deptActual=items.reduce((s,r)=>s+r.actual,0);
+  const deptBudget=items.reduce((s,r)=>s+r.budget,0);
+  const deptLast  =items.reduce((s,r)=>s+r.last,0);
+  const deptHead  =Math.max(...items.map(r=>r.head||0),0)||snapItems().find(r=>r.dept===deptName)?.head||0;
+  const byCat=groupBy(items,'category');
+  const sorted=[...items].sort((a,b)=>b.actual-a.actual);
+
+  container.innerHTML=`
+  <div class="drill-canvas">
+    <div class="ptitle" style="height:auto;margin-bottom:4px;">
+      <div>
+        <div class="ptitle-main">🏢 ${deptName} · 费用科目明细</div>
+        <div class="ptitle-sub">共 ${items.length} 个科目 · 点击行查看原始数据 · ESC 收起</div>
+      </div><span class="b bt">${S.activePeriod}</span>
+    </div>
+    <div class="mkrow">
+      <div class="mk mk1"><div class="mkl">实际总成本</div><div class="mkv">${fmt(deptActual)}<span style="font-size:13px;color:var(--tm)"> 万</span></div><div class="mks" style="color:${chgClr(deptActual,deptLast)}">${chgStr(deptActual,deptLast)}</div></div>
+      <div class="mk mk2"><div class="mkl">预算额度</div><div class="mkv">${fmt(deptBudget)}<span style="font-size:13px;color:var(--tm)"> 万</span></div><div class="mks" style="color:var(--tm)">执行率 ${pct(deptActual,deptBudget)}%</div></div>
+      <div class="mk mk${deptActual>deptBudget?4:3}"><div class="mkl">${deptActual>deptBudget?'超支额':'节省额'}</div>
+        <div class="mkv" style="color:${deptActual>deptBudget?'var(--red)':'var(--green)'}">
+          ${deptActual>deptBudget?'+':''}${fmt(deptActual-deptBudget)}<span style="font-size:13px"> 万</span>
+        </div><div class="mks" style="color:var(--tm)">${deptActual>deptBudget?'⚠️ 超支':'✅ 达标'}</div>
+      </div>
+      <div class="mk mk5"><div class="mkl">人均成本</div><div class="mkv">${deptHead?(deptActual/deptHead*10).toFixed(1):'—'}<span style="font-size:13px;color:var(--tm)"> 千/人</span></div><div class="mks" style="color:var(--tm)">${deptHead}人</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;height:280px;">
+      <div class="card"><div class="ch"><div class="ct">科目金额（红色=超预算）</div><span class="csub" style="color:var(--accent)">🔍 点击穿透</span></div><div id="dc-bar" class="cf"></div></div>
+      <div class="card"><div class="ch"><div class="ct">费用类别构成</div></div><div id="dc-pie" class="cf"></div></div>
+    </div>
+    <div class="card" style="flex-shrink:0;">
+      <div class="ch"><div class="ct">科目明细</div><span class="csub" style="color:var(--accent)">🔍 点击行 → 原始数据</span></div>
+      <table class="mt"><thead><tr>
+        <th contenteditable="true">#</th><th contenteditable="true">科目</th><th contenteditable="true">类别</th>
+        <th contenteditable="true">本月(万)</th><th contenteditable="true">上月(万)</th><th contenteditable="true">预算(万)</th>
+        <th contenteditable="true">环比</th><th contenteditable="true">状态</th>
+      </tr></thead><tbody>
+        ${sorted.map((r,i)=>`<tr class="dr" onclick="drillTo('subject','${deptName}|||${r.subject}')">
+          <td><span class="rk ${['rk1','rk2','rk3'][i]||'rkn'}">${i+1}</span></td>
+          <td style="font-weight:900;color:var(--t1)">${r.subject}<span class="dico">›</span></td>
+          <td><span class="b bt" style="font-size:10px;background:${getColor(r.category)}22;color:${getColor(r.category)}">${r.category}</span></td>
+          <td style="font-weight:700;color:${r.actual>r.budget?'var(--red)':'var(--t2)'}">${fmt(r.actual)}</td>
+          <td style="color:var(--tm)">${fmt(r.last)}</td>
+          <td style="color:var(--tm)">${fmt(r.budget)}</td>
+          <td style="font-weight:700;color:${chgClr(r.actual,r.last)}">${chgStr(r.actual,r.last)}</td>
+          <td><span class="b ${r.actual>r.budget?'br':'bg'}">${r.actual>r.budget?'超支':'达标'}</span></td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+
+  setTimeout(()=>{
+    const bc=mkChart('dc-bar',{
+      tooltip:{trigger:'axis',...TT},
+      grid:{left:'1%',right:'16%',top:'3%',bottom:'3%',containLabel:true},
+      xAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}}},
+      yAxis:{type:'category',data:sorted.map(r=>r.subject),axisLabel:{fontWeight:700,fontSize:10,color:'#1e3a4a'},axisTick:{show:false},axisLine:{show:false}},
+      series:[{type:'bar',barMaxWidth:14,
+        data:sorted.map(r=>({value:r.actual,itemStyle:{color:r.actual>r.budget?'#e74c3c':getColor(r.category),borderRadius:[0,6,6,0]}})),
+        label:{show:true,position:'right',formatter:p=>`${p.value}万`,fontSize:10,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}}]
+    },'dr');
+    bc&&bc.on('click',p=>drillTo('subject',`${deptName}|||${p.name}`));
+
+    mkChart('dc-pie',{
+      tooltip:{trigger:'item',formatter:p=>`${p.name}: ${p.value}万 (${p.percent}%)`,...TT},
+      series:[{type:'pie',radius:['25%','54%'],center:['50%','50%'],
+        data:byCat.map(c=>({name:c.name,value:c.actual,itemStyle:{color:getColor(c.name),borderRadius:5,borderColor:'#F5F7FA',borderWidth:2}})),
+        label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff',alignTo:'labelLine'},
+        labelLine:{show:true,length:8,length2:6,smooth:true},emphasis:{scale:true,scaleSize:4}}]
+    },'dr');
+  },80);
+}
+
+function renderDrillCostType(container){
+  const byCat=groupBy(snapItems(),'category');
+  const total=byCat.reduce((s,c)=>s+c.actual,0);
+  container.innerHTML=`
+  <div class="drill-canvas">
+    <div class="ptitle" style="height:auto;margin-bottom:4px;">
+      <div><div class="ptitle-main">📦 成本类目分解</div><div class="ptitle-sub">本月总计 ${fmt(total)} 万 · 点击行查看原始数据</div></div>
+      <span class="b bt">${S.activePeriod}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;height:300px;">
+      <div class="card"><div class="ch"><div class="ct">类目对比</div><span class="csub" style="color:var(--accent)">🔍 点击穿透</span></div><div id="dct-bar" class="cf"></div></div>
+      <div class="card"><div class="ch"><div class="ct">占比</div></div><div id="dct-pie" class="cf"></div></div>
+    </div>
+    <div class="card" style="flex-shrink:0;">
+      <div class="ch"><div class="ct">类目明细</div><span class="csub" style="color:var(--accent)">🔍 点击行 → 原始数据</span></div>
+      <table class="mt"><thead><tr>
+        <th contenteditable="true">#</th><th contenteditable="true">类别</th>
+        <th contenteditable="true">本月(万)</th><th contenteditable="true">上月(万)</th><th contenteditable="true">预算(万)</th>
+        <th contenteditable="true">环比</th><th contenteditable="true">执行率</th><th contenteditable="true">占比</th><th contenteditable="true">状态</th>
+      </tr></thead><tbody>
+        ${byCat.map((c,i)=>`<tr class="dr" onclick="drillTo('rawdata',{label:'${c.name}·明细',filter:{field:'category',val:'${c.name}'}})">
+          <td><span class="rk" style="background:${getColor(c.name)}">${i+1}</span></td>
+          <td style="font-weight:900">${c.name}<span class="dico">›</span></td>
+          <td style="font-weight:700">${fmt(c.actual)}</td><td style="color:var(--tm)">${fmt(c.last)}</td><td style="color:var(--tm)">${fmt(c.budget)}</td>
+          <td style="font-weight:700;color:${chgClr(c.actual,c.last)}">${chgStr(c.actual,c.last)}</td>
+          <td style="font-weight:700;color:${parseFloat(pct(c.actual,c.budget))>100?'var(--red)':'var(--green)'}">${pct(c.actual,c.budget)}%</td>
+          <td>${total?((c.actual/total)*100).toFixed(1):'—'}%</td>
+          <td><span class="b ${c.actual>c.budget?'br':'bg'}">${c.actual>c.budget?'超支':'达标'}</span></td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const bc=mkChart('dct-bar',{
+      tooltip:{trigger:'axis',...TT},legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'2%',right:'2%',top:'26px',bottom:'5%',containLabel:true},
+      xAxis:{type:'category',data:byCat.map(c=>c.name),axisLabel:{fontWeight:700,fontSize:11,color:'#1e3a4a'},axisLine:{lineStyle:{color:'#D1D9E6'}},axisTick:{show:false}},
+      yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}},axisLabel:{fontSize:10,color:'#4a6878'}},
+      series:[
+        {name:'本月',type:'bar',barMaxWidth:26,data:byCat.map(c=>({value:c.actual,itemStyle:{color:getColor(c.name),borderRadius:[5,5,0,0]}})),
+         label:{show:true,position:'top',formatter:p=>`${p.value}万`,fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'上月',type:'bar',barMaxWidth:26,data:byCat.map(c=>({value:c.last,itemStyle:{color:getColor(c.name),opacity:.3,borderRadius:[5,5,0,0]}})),label:{show:false}},
+        {name:'预算',type:'bar',barMaxWidth:26,data:byCat.map(c=>({value:c.budget,itemStyle:{color:'transparent',borderWidth:1.5,borderColor:getColor(c.name),borderRadius:[5,5,0,0]}})),label:{show:false}}
+      ]
+    },'dr');
+    bc&&bc.on('click',p=>drillTo('rawdata',{label:`${p.name}·明细`,filter:{field:'category',val:p.name}}));
+    mkChart('dct-pie',{
+      tooltip:{trigger:'item',formatter:p=>`${p.name}: ${p.value}万 (${p.percent}%)`,...TT},
+      series:[{type:'pie',radius:['28%','56%'],center:['50%','50%'],
+        data:byCat.map(c=>({name:c.name,value:c.actual,itemStyle:{color:getColor(c.name),borderRadius:5,borderColor:'#F5F7FA',borderWidth:2}})),
+        label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff',alignTo:'labelLine'},
+        labelLine:{show:true,length:8,length2:6,smooth:true},emphasis:{scale:true,scaleSize:4}}]
+    },'dr');
+  },80);
+}
+
+function renderDrillSupplier(container){
+  const supps=snapSupplier();
+  const total=supps.reduce((s,r)=>s+r.amt,0);
+  container.innerHTML=`
+  <div class="drill-canvas">
+    <div class="ptitle" style="height:auto;margin-bottom:4px;">
+      <div><div class="ptitle-main">🏭 供应商采购分析</div><div class="ptitle-sub">本月总计 ${fmt(total)} 万 · 点击行查看原始数据</div></div>
+      <span class="b bt">${S.activePeriod}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:3fr 2fr;gap:14px;height:280px;">
+      <div class="card"><div class="ch"><div class="ct">采购额对比</div><span class="csub" style="color:var(--accent)">🔍 点击穿透</span></div><div id="ds-bar" class="cf"></div></div>
+      <div class="card"><div class="ch"><div class="ct">供应商占比</div></div><div id="ds-pie" class="cf"></div></div>
+    </div>
+    <div class="card" style="flex-shrink:0;">
+      <div class="ch"><div class="ct">供应商明细</div><span class="csub" style="color:var(--accent)">🔍 点击行 → 原始数据</span></div>
+      <table class="mt"><thead><tr>
+        <th contenteditable="true">#</th><th contenteditable="true">供应商</th><th contenteditable="true">类别</th>
+        <th contenteditable="true">本月(万)</th><th contenteditable="true">上月(万)</th><th contenteditable="true">环比</th><th contenteditable="true">占比</th>
+      </tr></thead><tbody>
+        ${supps.map((s,i)=>`<tr class="dr" onclick="drillTo('rawdata',{label:'${s.name}',filter:{field:'name',val:'${s.name}',tbl:'supplier'}})">
+          <td><span class="rk ${['rk1','rk2','rk3'][i]||'rkn'}">${i+1}</span></td>
+          <td style="font-weight:900">${s.name}<span class="dico">›</span></td>
+          <td><span class="b bt" style="font-size:10px;background:${getColor(s.cate)}22;color:${getColor(s.cate)}">${s.cate}</span></td>
+          <td style="font-weight:700">${fmt(s.amt)}</td><td style="color:var(--tm)">${fmt(s.last)}</td>
+          <td style="font-weight:700;color:${chgClr(s.amt,s.last)}">${chgStr(s.amt,s.last)}</td>
+          <td>${total?((s.amt/total)*100).toFixed(1):'—'}%</td>
+        </tr>`).join('')}
+      </tbody></table>
+    </div>
+  </div>`;
+  setTimeout(()=>{
+    const bc=mkChart('ds-bar',{
+      tooltip:{trigger:'axis',...TT},legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#1e3a4a'},icon:'circle',itemWidth:7},
+      grid:{left:'1%',right:'16%',top:'24px',bottom:'3%',containLabel:true},
+      xAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(200,208,220,.5)',type:'dashed'}}},
+      yAxis:{type:'category',data:supps.map(s=>s.name),axisLabel:{fontWeight:700,fontSize:11,color:'#1e3a4a'},axisTick:{show:false},axisLine:{show:false}},
+      series:[
+        {name:'本月',type:'bar',barMaxWidth:16,data:supps.map(s=>({value:s.amt,itemStyle:{color:getColor(s.name),borderRadius:[0,6,6,0]}})),
+         label:{show:true,position:'right',formatter:p=>`${p.value}万`,fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff'}},
+        {name:'上月',type:'bar',barMaxWidth:16,barGap:'30%',data:supps.map(s=>({value:s.last,itemStyle:{color:getColor(s.name),opacity:.35,borderRadius:[0,6,6,0]}})),label:{show:false}}
+      ]
+    },'dr');
+    bc&&bc.on('click',p=>drillTo('rawdata',{label:p.name,filter:{field:'name',val:p.name,tbl:'supplier'}}));
+    mkChart('ds-pie',{
+      tooltip:{trigger:'item',formatter:p=>`${p.name}: ${p.value}万 (${p.percent}%)`,...TT},
+      series:[{type:'pie',radius:['28%','56%'],center:['50%','50%'],
+        data:supps.map(s=>({name:s.name,value:s.amt,itemStyle:{color:getColor(s.name),borderRadius:5,borderColor:'#F5F7FA',borderWidth:2}})),
+        label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:11,fontWeight:900,color:'#1e3a4a',textBorderWidth:2,textBorderColor:'#fff',alignTo:'labelLine'},
+        labelLine:{show:true,length:8,length2:6,smooth:true},emphasis:{scale:true,scaleSize:4}}]
+    },'dr');
+  },80);
+}
+
+function renderDrillSubject(container, key){
+  const [dept,subject]=key.split('|||');
+  const filter={field:'dept_subject',dept,subject};
+  renderRawData(container,{label:`${dept}·${subject}`,filter});
+}
+function renderDrillTrendMonth(container,period){
+  renderRawData(container,{label:`${period}·原始数据`,filter:{field:'period',val:period}});
+}
+
+function renderRawData(container, param){
+  const tbl=param?.filter?.tbl||'costItems';
+  const s=S.schemas[tbl];
+  const allRows=S.data[tbl]||[];
+  let displayRows=allRows;
+  if(param?.filter){
+    const f=param.filter;
+    if(f.field==='period')       displayRows=allRows.filter(r=>r.period===f.val);
+    else if(f.field==='category')displayRows=allRows.filter(r=>r.category===f.val&&r.period===S.activePeriod);
+    else if(f.field==='name')    displayRows=allRows.filter(r=>r.name===f.val&&r.period===S.activePeriod);
+    else if(f.field==='dept_subject') displayRows=allRows.filter(r=>r.dept===f.dept&&r.subject===f.subject&&r.period===S.activePeriod);
+  }
+  const idxMap=displayRows.map(r=>allRows.indexOf(r));
+  const label=param?.label||tbl;
+
+  container.innerHTML=`
+  <div class="drill-canvas">
+    <div class="ptitle" style="height:auto;margin-bottom:4px;">
+      <div><div class="ptitle-main">🗃️ ${label} · 原始数据</div>
+      <div class="ptitle-sub">Raw Data · 共 ${displayRows.length} 条 · 直接编辑，修改实时同步到所有图表</div></div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="b bt">${S.activePeriod}</span>
+        <button class="bsm bsm-a" onclick="rawAdd('${tbl}')">＋ 新增</button>
+        <button class="bsm" onclick="rawExport('${tbl}','${label}')">↓ 导出</button>
+      </div>
+    </div>
+    <div class="rtw">
+      <table class="rt">
+        <thead><tr><th>序号</th>${s.fields.map(f=>`<th contenteditable="true">${f.l}</th>`).join('')}<th>操作</th></tr></thead>
+        <tbody>
+          ${displayRows.map((row,li)=>{
+            const gi=idxMap[li];
+            return `<tr>
+              <td style="color:var(--tm);font-size:11px">${li+1}</td>
+              ${s.fields.map(f=>`<td><input class="cedit" value="${row[f.k]??''}"
+                oninput="rawEdit(${gi},'${tbl}','${f.k}',this.value)"></td>`).join('')}
+              <td><button onclick="rawDel(${gi},'${tbl}')" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:14px;font-weight:900">✕</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="padding:8px 4px;font-size:11px;color:var(--tm);">
+      💡 ${s.fields.map(f=>`<b>${f.l}</b>${f.tip?`(${f.tip})`:''}`).join(' · ')}
+    </div>
+  </div>`;
+}
+
+function rawEdit(gi,tbl,k,val){
+  const r=S.data[tbl]; if(!r||r[gi]==null) return;
+  const f=S.schemas[tbl].fields.find(f=>f.k===k);
+  r[gi][k]=(f?.t==='num'&&val!==''&&!isNaN(val))?Number(val):val;
+  renderP1();renderP2();renderP3();renderP4();
+}
+function rawDel(gi,tbl){
+  S.data[tbl].splice(gi,1);
+  clearDrill(); renderAll(); showToast('✅ 已删除');
+}
+function rawAdd(tbl){
+  const nr={}; S.schemas[tbl].fields.forEach(f=>nr[f.k]=f.t==='num'?0:(f.k==='period'?S.activePeriod:''));
+  S.data[tbl].unshift(nr); clearDrill();
+}
+function rawExport(tbl,label){
+  const s=S.schemas[tbl],r=S.data[tbl];
+  let csv='\uFEFF'+s.fields.map(f=>f.l).join(',')+'\n';
+  csv+=r.map(row=>s.fields.map(f=>row[f.k]).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${label}_${S.activePeriod}.csv`; a.click(); showToast('✅ 已导出');
+}
+
+// ══ 页面切换 ══
+function showPage(p, keepDrill){
+  curPage=p;
+  if(!keepDrill) clearDrill(true);
+  document.querySelectorAll('.view').forEach(el=>el.classList.remove('on'));
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('on'));
+  document.getElementById(`view-${p}`).classList.add('on');
+  document.getElementById(`nb-${p}`).classList.add('on');
+  ['p1','p2','p3','p4'].forEach(id=>{
+    const el=document.getElementById(`badge-${id}`);
+    if(el) el.textContent=S.activePeriod;
+  });
+  if(p==='p1') setTimeout(renderP1,100);
+  if(p==='p2') setTimeout(renderP2,100);
+  if(p==='p3') setTimeout(renderP3,100);
+  if(p==='p4') setTimeout(renderP4,100);
+  if(p==='dc') { dcRenderTabs(); dcRenderTable(); }
+}
+function renderAll(){ renderP1(); renderP2(); renderP3(); renderP4(); }
+
+// ══ 数据中心 ══
+function dcRenderTabs(){
+  document.getElementById('dctabs').innerHTML=
+    Object.entries(S.schemas).map(([k,s])=>
+      `<button class="bsm ${k===dcTable?'bsm-a':''}" onclick="dcSwitch('${k}')">${s.label}</button>`
+    ).join('');
+}
+function dcSwitch(t){ dcTable=t; dcRenderTabs(); dcRenderTable(); }
+function dcRenderTable(){
+  const s=S.schemas[dcTable], r=S.data[dcTable]||[];
+  document.getElementById('dc-th').innerHTML=
+    `<tr><th><input type="checkbox" onclick="dcToggleAll(this.checked)"></th>`+
+    s.fields.map(f=>`<th contenteditable="true">${f.l}</th>`).join('')+`<th>操作</th></tr>`;
+  // 期间筛选提示
+  document.getElementById('dc-tb').innerHTML=r.map((row,i)=>
+    `<tr style="${row.period===S.activePeriod?'background:var(--accent-xlight)':''}">
+      <td><input type="checkbox" class="dcc" data-i="${i}"></td>`+
+    s.fields.map(f=>`<td><input class="ai" value="${row[f.k]??''}"
+       oninput="dcEdit(${i},'${f.k}',this.value)"></td>`).join('')+
+    `<td><button onclick="dcDel(${i})" style="border:none;background:none;color:var(--red);cursor:pointer;font-weight:900">删除</button></td></tr>`
+  ).join('');
+}
+function dcEdit(i,k,v){
+  const f=S.schemas[dcTable].fields.find(f=>f.k===k);
+  S.data[dcTable][i][k]=(f?.t==='num'&&v!==''&&!isNaN(v))?Number(v):v;
+  renderAll();
+}
+function dcAddRow(){ const nr={}; S.schemas[dcTable].fields.forEach(f=>nr[f.k]=f.t==='num'?0:(f.k==='period'?S.activePeriod:'')); S.data[dcTable].unshift(nr); dcRenderTable(); }
+function dcDel(i){ S.data[dcTable].splice(i,1); dcRenderTable(); renderAll(); }
+function dcToggleAll(v){ document.querySelectorAll('.dcc').forEach(c=>c.checked=v); }
+function dcBatchDel(){
+  const idxs=[...document.querySelectorAll('.dcc:checked')].map(c=>+c.dataset.i).sort((a,b)=>b-a);
+  if(!idxs.length) return showToast('⚠️ 请先勾选行');
+  idxs.forEach(i=>S.data[dcTable].splice(i,1));
+  dcRenderTable(); renderAll(); showToast(`✅ 已删除 ${idxs.length} 条`);
+}
+function dcExport(){
+  const s=S.schemas[dcTable],r=S.data[dcTable];
+  let csv='\uFEFF'+s.fields.map(f=>f.l).join(',')+'\n';
+  csv+=r.map(row=>s.fields.map(f=>row[f.k]).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
+  a.download=`${s.label}_${new Date().toISOString().slice(0,10)}.csv`; a.click();
+}
+async function dcImport(input){
+  const file=input.files[0]; if(!file) return;
+  const buf=await file.arrayBuffer();
+  let text=new TextDecoder('utf-8').decode(buf);
+  if(text.includes('\ufffd')) text=new TextDecoder('gbk').decode(buf);
+  const lines=text.trim().split('\n').slice(1);
+  const s=S.schemas[dcTable];
+  const parsed=lines.filter(l=>l.trim()).map(line=>{
+    const vs=line.split(','), nr={};
+    s.fields.forEach((f,i)=>nr[f.k]=f.t==='num'&&vs[i]&&!isNaN(vs[i])?Number(vs[i]):vs[i]||'');
+    return nr;
+  });
+  // 追加而非覆盖
+  S.data[dcTable].push(...parsed);
+  dcRenderTable(); renderAll(); showToast(`✅ 已导入 ${parsed.length} 条`); input.value='';
+}
+
+// ══ 存档 / 导出 ══
+function saveAll(){
+  S.meta.savedAt=new Date().toISOString().slice(0,10);
+  // 把 APP.data 替换
+  const appStr=JSON.stringify({...APP, data:S.data, activePeriod:S.activePeriod, meta:S.meta},null,2);
+  // 把 seedData 函数替换为空（数据已固化）
+  let html=document.documentElement.outerHTML;
+  html=html.replace(/APP\.data\.__COST_ITEMS__/,'[]').replace(/APP\.data\.__SUPPLIER__/,'[]').replace(/APP\.data\.__BASELINE__/,'[]');
+  html=html.replace(/(const APP = \{[\s\S]*?\}\s*;)\s*\/\/ ── 生成多期数据 ──[\s\S]*?\}\)\(\);/,
+    `const APP = ${appStr};\n// data seeded`);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download=`CreamData_成本分析_${S.meta.savedAt}.html`; a.click();
+  showToast('✅ 存档成功');
+}
+async function exportPNG(){
+  const canvas=document.querySelector(`#view-${curPage} .canvas`);
+  if(!canvas) return showToast('⚠️ 请切换到分析页面');
+  showToast('⏳ 导出中...');
+  canvas.scrollIntoView(); await new Promise(r=>setTimeout(r,400));
+  const cv=await html2canvas(canvas,{scale:1920/canvas.offsetWidth,useCORS:true,allowTaint:true,
+    backgroundColor:'#F5F7FA',logging:false,width:canvas.offsetWidth,height:canvas.offsetHeight});
+  const a=document.createElement('a');
+  a.download=`成本分析_${pageLabel(curPage)}_${S.activePeriod}.png`;
+  a.href=cv.toDataURL('image/png',1.0); a.click();
+  showToast('✅ 导出完成');
+}
+function loadDemo(){ S=JSON.parse(JSON.stringify(APP)); showPage(curPage,false); showToast('✅ 示例数据已加载'); }
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:28px;right:28px;background:#0d2137;color:#fff;
+    padding:11px 22px;border-radius:12px;font:700 14px/1 var(--FB);
+    z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.3);pointer-events:none;`;
+  t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),3000);
+}
+
+// 初始化
+window.addEventListener('load',()=>showPage('p1'));
+</script>
+</body>
+</html>

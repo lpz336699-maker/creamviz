@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>技能商店 - CreamViz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FDF8F3;
+      --caramel: #C8954A;
+      --caramel-light: #D4A85C;
+      --caramel-dark: #A67B3D;
+      --text: #3D3D3D;
+      --text-muted: #888;
+      --border: #E8E0D5;
+      --card-bg: #FFF;
+      --shadow: 0 4px 20px rgba(0,0,0,0.06);
+      --radius: 16px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+      padding: 50px 20px;
+      text-align: center;
+      color: #fff;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .header p {
+      font-size: 15px;
+      opacity: 0.9;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Skill Grid */
+    .skill-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    /* Skill Card */
+    .skill-card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .skill-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(200,149,74,0.15);
+      border-color: var(--caramel-light);
+    }
+
+    .skill-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      margin-bottom: 16px;
+    }
+
+    .skill-icon.finance { background: linear-gradient(135deg, #E8F5E9, #C8E6C9); }
+    .skill-icon.data { background: linear-gradient(135deg, #E3F2FD, #BBDEFB); }
+    .skill-icon.trade { background: linear-gradient(135deg, #FFF3E0, #FFE0B2); }
+    .skill-icon.company { background: linear-gradient(135deg, #F3E5F5, #E1BEE7); }
+    .skill-icon.event { background: linear-gradient(135deg, #ECEFF1, #CFD8DC); }
+
+    .skill-name {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .skill-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .skill-tag {
+      background: #FDF4E7;
+      color: var(--caramel);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .skill-arrow {
+      position: absolute;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+      background: var(--cream);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: all 0.3s;
+    }
+
+    .skill-card:hover .skill-arrow {
+      opacity: 1;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+
+    .modal-header {
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+      padding: 30px;
+      color: #fff;
+      position: relative;
+    }
+
+    .modal-close {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .modal-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .modal-subtitle {
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .modal-body {
+      padding: 30px;
+    }
+
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--caramel);
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .section-content {
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .example-box {
+      background: #F8F9FA;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+
+    .example-title {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .example-text {
+      font-size: 14px;
+      color: var(--text);
+      font-family: monospace;
+      background: #fff;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border-left: 3px solid var(--caramel);
+    }
+
+    .use-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .use-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(200,149,74,0.3);
+    }
+
+    .note {
+      background: #FFF8E1;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: 13px;
+      color: #856404;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔧 技能商店</h1>
+    <p>金融数据分析、交易哲学、公司研究等专业技能，一键调用</p>
+  </div>
+
+  <div class="container">
+    <div class="skill-grid">
+      <!-- 技能1：事件数据查询 -->
+      <div class="skill-card" onclick="openChat('event')">
+        <div class="skill-icon event">📅</div>
+        <div class="skill-name">事件数据查询</div>
+        <div class="skill-desc">查询个股业绩预告、增发、质押、解禁、机构调研、监管函等重大事件数据</div>
+        <div class="skill-tags">
+          <span class="skill-tag">A股</span>
+          <span class="skill-tag">事件驱动</span>
+          <span class="skill-tag">实时数据</span>
+        </div>
+      </div>
+
+      <!-- 技能2：基本资料查询 -->
+      <div class="skill-card" onclick="openChat('basic')">
+        <div class="skill-icon data">📊</div>
+        <div class="skill-name">基本资料查询</div>
+        <div class="skill-desc">查询股票、基金、期货、债券等全品类标的的基础信息、发行主体、费率等静态资料</div>
+        <div class="skill-tags">
+          <span class="skill-tag">全品类</span>
+          <span class="skill-tag">基础信息</span>
+          <span class="skill-tag">静态数据</span>
+        </div>
+      </div>
+
+      <!-- 技能3：财务数据查询 -->
+      <div class="skill-card" onclick="openChat('finance')">
+        <div class="skill-icon finance">💰</div>
+        <div class="skill-name">财务数据查询</div>
+        <div class="skill-desc">查询营业收入、净利润、ROE、负债率、现金流、毛利率等核心财务指标</div>
+        <div class="skill-tags">
+          <span class="skill-tag">财务报表</span>
+          <span class="skill-tag">估值分析</span>
+          <span class="skill-tag">基本面</span>
+        </div>
+      </div>
+
+      <!-- 技能4：股票大作手交易哲学 -->
+      <div class="skill-card" onclick="openChat('trading')">
+        <div class="skill-icon trade">📈</div>
+        <div class="skill-name">《股票大作手》交易哲学</div>
+        <div class="skill-desc">杰西·利弗莫尔的交易智慧：阻力最小方向、试仓验证、金字塔加码、移动止损</div>
+        <div class="skill-tags">
+          <span class="skill-tag">交易心理</span>
+          <span class="skill-tag">仓位管理</span>
+          <span class="skill-tag">趋势交易</span>
+        </div>
+      </div>
+
+      <!-- 技能5：公司画像页 -->
+      <div class="skill-card" onclick="openChat('company')">
+        <div class="skill-icon company">🏢</div>
+        <div class="skill-name">公司画像页</div>
+        <div class="skill-desc">为 pitch book、交易材料生成专业的投行 strip profile 公司画像页面</div>
+        <div class="skill-tags">
+          <span class="skill-tag">投行</span>
+          <span class="skill-tag">PPT生成</span>
+          <span class="skill-tag">公司研究</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modal" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div class="modal-icon" id="modal-icon">📅</div>
+        <div class="modal-title" id="modal-title">技能名称</div>
+        <div class="modal-subtitle" id="modal-subtitle">技能描述</div>
+      </div>
+      <div class="modal-body">
+        <div class="section">
+          <div class="section-title">功能说明</div>
+          <div class="section-content" id="modal-desc">详细功能描述...</div>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">使用示例</div>
+          <div class="example-box">
+            <div class="example-title">你可以这样问：</div>
+            <div class="example-text" id="modal-example">示例问题...</div>
+          </div>
+        </div>
+
+        <div class="note">
+          💡 提示：在对话中直接描述你的需求，系统会自动调用相应技能处理。
+        </div>
+
+        <button class="use-btn" onclick="useSkill()">开始使用</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const skills = {
+      event: {
+        icon: '📅',
+        title: '事件数据查询',
+        subtitle: '个股重大事件数据一站式查询',
+        desc: '支持查询 A 股上市公司的各类重大事件数据，包括：业绩预告（预增/预减/扭亏等）、增发配股（定增/公开增发）、股权质押、限售解禁、机构调研、监管函/问询函等。数据来源于同花顺，覆盖全市场。',
+        example: '"查询贵州茅台 2024 年的业绩预告"\n"宁德时代最近有哪些机构调研"\n"比亚迪 3 月份限售解禁情况"\n"查看隆基绿能收到的监管函"'
+      },
+      basic: {
+        icon: '📊',
+        title: '基本资料查询',
+        subtitle: '全品类标的基础信息查询',
+        desc: '查询股票、指数、基金、期货、期权、转债、债券、理财、保险等全品类标的的基础信息。包括发行主体、上市地点、上市日期、费率结构、合约规格等静态资料。',
+        example: '"查询 510300 基金的基本信息"\n"贵州茅台的上市日期和发行价格"\n"沪深 300 指数的成分股构成"\n"查询螺纹钢期货合约规格"'
+      },
+      finance: {
+        icon: '💰',
+        title: '财务数据查询',
+        subtitle: '核心财务指标深度分析',
+        desc: '查询全市场个股的财务报表数据，包括：营业收入、净利润、ROE（净资产收益率）、负债率、现金流、毛利率、净利率等核心指标。支持单季度、TTM、同比环比等多维度分析。',
+        example: '"对比茅台和五粮液的 ROE"\n"宁德时代近 5 年营收增长率"\n"查询高毛利率的白酒企业"\n"新能源板块负债率排名"'
+      },
+      trading: {
+        icon: '📈',
+        title: '《股票大作手》交易哲学',
+        subtitle: '百年交易智慧的现代应用',
+        desc: '基于杰西·利弗莫尔《股票大作手回忆录》的核心交易原则：识别阻力最小方向、20%试仓验证、金字塔加码策略、移动止损持有、避免频繁交易和向下摊平。帮助建立系统化的交易框架。',
+        example: '"现在适合进场吗？帮我分析趋势"\n"如何设置移动止损？"\n"金字塔加码具体怎么操作"\n"为什么不要向下摊平亏损？"'
+      },
+      company: {
+        icon: '🏢',
+        title: '公司画像页',
+        subtitle: '专业投行风格公司介绍页',
+        desc: '为 pitch book、交易材料、客户演示创建专业的投行 strip profile（公司画像）页面。生成 1-4 页高信息密度的幻灯片，包含象限布局、图表和表格，支持导出 PPT。',
+        example: '"为宁德时代制作公司画像页"\n"生成特斯拉的投行风格 profile"\n"制作一份对比两家公司的分析页"\n"给美团做一份 pitch book 介绍页"'
+      }
+    };
+
+    function openChat(skillId) {
+      window.location.href = 'skill-chat.html?skill=' + skillId;
+    }
+
+    function openModal(skillId) {
+      const skill = skills[skillId];
+      document.getElementById('modal-icon').textContent = skill.icon;
+      document.getElementById('modal-title').textContent = skill.title;
+      document.getElementById('modal-subtitle').textContent = skill.subtitle;
+      document.getElementById('modal-desc').textContent = skill.desc;
+      document.getElementById('modal-example').innerHTML = skill.example.replace(/\n/g, '<br>');
+      document.getElementById('modal').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(event) {
+      if (!event || event.target.id === 'modal' || event.target.classList.contains('modal-close')) {
+        document.getElementById('modal').classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    }
+
+    function useSkill() {
+      alert('请在 WorkBuddy 对话中直接描述你的需求，系统会自动调用相应技能。\n\n例如："查询贵州茅台的业绩预告"');
+      closeModal();
+    }
+
+    // ESC 关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+  </script>
+</body>
+</html>

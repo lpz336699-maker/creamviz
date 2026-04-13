@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>月度经营汇报 · 2025年3月</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
+body{font-family:'PingFang SC','Microsoft YaHei','Helvetica Neue',sans-serif;background:#1a1a2e;padding:40px 20px;display:flex;flex-direction:column;align-items:center;gap:28px}
+[contenteditable="true"]{outline:none;cursor:text;border-radius:3px;transition:background .15s;min-width:4px;min-height:1em;display:inline-block}
+[contenteditable="true"]:hover{background:rgba(30,111,255,0.1)!important}
+[contenteditable="true"]:focus{background:rgba(30,111,255,0.15)!important;box-shadow:0 0 0 2px rgba(30,111,255,0.35)}
+.ctrl-btn-edit{background:rgba(255,255,255,0.12);color:#fff;border:1px solid rgba(255,255,255,0.25);border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:.2s;margin-right:4px}
+.ctrl-btn-edit:hover{background:rgba(255,255,255,0.2)}
+.ctrl-btn-edit.on{background:#1B3F7A;border-color:#1B3F7A}
+.edit-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1B3F7A;color:#fff;padding:10px 22px;border-radius:8px;font-size:12px;font-family:'PingFang SC','Microsoft YaHei',sans-serif;box-shadow:0 4px 20px rgba(0,0,0,0.35);z-index:999;pointer-events:none;opacity:0;transition:opacity .3s}
+.edit-toast.show{opacity:1}
+
+/* 控制栏 */
+.ctrl{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:14px 24px;display:flex;align-items:center;gap:16px;width:960px;position:sticky;top:16px;z-index:100;backdrop-filter:blur(10px)}
+.ctrl-title{color:#fff;font-size:15px;font-weight:700;flex:1}
+.ctrl-info{color:rgba(255,255,255,0.5);font-size:12px}
+.ctrl-btn{background:#B8935A;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.ctrl-btn:hover{background:#D4AA7A}
+
+/* 幻灯片 */
+.slide{width:960px;position:relative;border-radius:12px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5);flex-shrink:0;page-break-after:always}
+.slide-num{color:rgba(255,255,255,0.25);font-size:11px;letter-spacing:2px;margin-top:6px;text-align:center;font-family:monospace}
+
+/* 通用 */
+.bg-page{background:#EEF2F8}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:16px 32px 13px;border-bottom:1px solid #D8E2EE;background:#EEF2F8}
+.ph-l{display:flex;align-items:center;gap:10px}
+.bar{width:4px;height:22px;background:#1B3F7A;border-radius:2px;flex-shrink:0}
+.ph-t{font-size:19px;font-weight:700;color:#1A2A3A}
+.wm{font-size:11px;color:#9CA8B4;letter-spacing:1px}
+.body{padding:20px 32px 24px;background:#EEF2F8}
+
+/* 卡片 */
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.06);padding:18px}
+.card-sm{background:#fff;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);padding:14px}
+
+/* 标签 */
+.tb{border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center}
+.tb-b{background:#E8EEFA;color:#1B3F7A;border:1px solid #C5D3EE}
+.tb-g{background:#F5ECD8;color:#8B6534;border:1px solid #DFC89A}
+.tb-gr{background:#E8F5E9;color:#2E7D32}
+.tb-r{background:#FFEBEE;color:#C62828}
+.tb-gy{background:#F1F4F8;color:#6B7B8D}
+
+/* 进度条 */
+.bar-wrap{height:7px;background:#EEF2F8;border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+
+/* check */
+.ci{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px}
+.cd{width:18px;height:18px;border-radius:50%;background:#1B3F7A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.cd-g{background:#B8935A}
+
+/* grid helpers */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+
+/* kpi big */
+.kpi-big{font-size:44px;font-weight:900;line-height:1}
+.kpi-unit{font-size:15px;color:#6B7B8D;font-weight:400}
+.kpi-label{font-size:11px;color:#6B7B8D;letter-spacing:1.5px;margin-bottom:8px}
+
+@media print{
+  body{background:#1a1a2e!important;padding:0;gap:0}
+  .ctrl,.edit-toast{display:none!important}
+  .slide{border-radius:0!important;box-shadow:none!important;page-break-after:always;break-after:page;width:100%!important}
+  .slide-num{display:none!important}
+  [contenteditable]{outline:none!important;box-shadow:none!important;background:transparent!important;cursor:default!important}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <div class="ctrl-title">📊 月度经营汇报 · 2025年3月 &nbsp;<span style="color:rgba(255,255,255,0.4);font-weight:400;font-size:13px">共12页</span></div>
+  <div class="ctrl-info" id="editInfo">浏览模式</div>
+  <div id="libStatus" style="color:#FFB74D;font-size:11px;margin-right:8px">库加载中...</div>
+  <button class="ctrl-btn-edit" id="editBtn" onclick="toggleEdit()">✏️ 编辑内容</button>
+  <button class="ctrl-btn" onclick="window.print()">⬇ 导出PDF</button>
+  <button class="ctrl-btn" style="background:#2B5FAD" onclick="exportPPTImage(event)">🖼 PPT(图片版)</button>
+  <button class="ctrl-btn" style="background:#6B5B8E" onclick="exportPPTText(event)">📝 PPT(可编辑)</button>
+</div>
+<div class="edit-toast" id="editToast"></div>
+<script src="https://cdn.bootcdn.net/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdn.bootcdn.net/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script>
+<script>
+// 国内CDN失败后回退到jsdelivr
+window.addEventListener('DOMContentLoaded', function(){
+  function loadScript(src, cb) {
+    var s = document.createElement('script');
+    s.src = src;
+    s.onload = cb;
+    s.onerror = function(){ cb(new Error('加载失败: '+src)); };
+    document.head.appendChild(s);
+  }
+
+  function updateStatus() {
+    var el = document.getElementById('libStatus');
+    if (!el) return;
+    var ok1 = typeof html2canvas !== 'undefined';
+    var ok2 = typeof PptxGenJS !== 'undefined';
+    if (ok1 && ok2) {
+      el.textContent = '✓ 就绪';
+      el.style.color = '#81C784';
+    } else if (!ok1 && !ok2) {
+      el.textContent = '✗ 库加载失败';
+      el.style.color = '#EF5350';
+    } else {
+      el.textContent = ok1 ? '部分就绪(缺PPT库)' : '部分就绪(缺截图库)';
+      el.style.color = '#FFB74D';
+    }
+  }
+
+  // 立即检查一次
+  updateStatus();
+
+  // 如果bootcdn失败,尝试jsdelivr
+  if (typeof html2canvas === 'undefined') {
+    loadScript('https://fastly.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js', updateStatus);
+  }
+  if (typeof PptxGenJS === 'undefined') {
+    loadScript('https://fastly.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js', updateStatus);
+  }
+
+  // 再过3秒检查一次,确保显示最新状态
+  setTimeout(updateStatus, 3000);
+});
+</script>
+
+<script>
+var editing = false;
+
+// 所有可编辑的文字元素选择器
+var EDITABLE = [
+  '.ph-t',            // 页面标题
+  '.kpi-big',         // 大数字
+  '.kpi-label',       // 指标名
+  '.kpi-unit',        // 单位
+  '.tb',              // 标签胶囊
+  '.ci span',         // 要点内容
+  'strong',           // 加粗文字
+  '.card > div',      // 卡片内div文字
+  '.card-sm > div',   // 小卡片文字
+  'h3, h4',
+].join(',');
+
+function toggleEdit() {
+  editing = !editing;
+  var btn = document.getElementById('editBtn');
+  var info = document.getElementById('editInfo');
+
+  if (editing) {
+    btn.textContent = '🔒 退出编辑';
+    btn.classList.add('on');
+    info.textContent = '编辑模式 · 点击文字即可修改';
+    // 给所有含直接文字的元素加 contenteditable（不止叶子节点）
+    var SKIP_CLASS = ['slide','body','ph','ph-l','card','card-sm','bar-wrap','bar-fill','bar','cd','g2','g3','g4'];
+    var SKIP_TAG = ['script','style','svg','path','button','table','thead','tbody','tr'];
+    document.querySelectorAll('.slide').forEach(function(slide) {
+      slide.querySelectorAll('*').forEach(function(el) {
+        var tag = el.tagName.toLowerCase();
+        if (SKIP_TAG.indexOf(tag) >= 0) return;
+        var skip = false;
+        SKIP_CLASS.forEach(function(c){ if (el.classList && el.classList.contains(c)) skip = true; });
+        if (skip) return;
+        var hasDirectText = false;
+        for (var i = 0; i < el.childNodes.length; i++) {
+          var n = el.childNodes[i];
+          if (n.nodeType === 3 && n.nodeValue.trim().length > 0) { hasDirectText = true; break; }
+        }
+        if (hasDirectText) {
+          el.setAttribute('contenteditable', 'true');
+        }
+      });
+    });
+    showToast('点击任意文字即可编辑，改完点击其他地方保存');
+  } else {
+    btn.textContent = '✏️ 编辑内容';
+    btn.classList.remove('on');
+    info.textContent = '浏览模式';
+    document.querySelectorAll('[contenteditable]').forEach(function(el) {
+      el.removeAttribute('contenteditable');
+    });
+    showToast('内容已保存');
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('editToast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+// 导出PDF时确保背景完整
+window.onbeforeprint = function() {
+  if (editing) toggleEdit(); // 退出编辑模式再打印
+};
+
+// ============ PPT导出：图片版 ============
+async function exportPPTImage(ev) {
+  // 库加载检查
+  if (typeof html2canvas === 'undefined') {
+    alert('截图库未加载成功\n\n可能原因:\n1. 网络访问不到CDN\n2. 浏览器拦截了脚本\n\n建议:检查网络,或换用Chrome/Edge浏览器');
+    return;
+  }
+  if (typeof PptxGenJS === 'undefined') {
+    alert('PPT库未加载成功\n\n请刷新页面重试,或检查网络连接');
+    return;
+  }
+  if (editing) toggleEdit();
+  var btn = (ev && ev.target) || document.querySelector('[onclick*="exportPPTImage"]');
+  var oldTxt = btn.textContent;
+  btn.disabled = true;
+  var slides = document.querySelectorAll('.slide');
+  var pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE';
+  pptx.title = '月度经营汇报 2025年3月';
+
+  // 让出主线程：等2帧，浏览器才能真正重绘+响应事件
+  function yieldToBrowser() {
+    return new Promise(function(resolve){
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          setTimeout(resolve, 0);
+        });
+      });
+    });
+  }
+
+  try {
+    for (var i = 0; i < slides.length; i++) {
+      btn.textContent = '截图中 ' + (i+1) + '/' + slides.length;
+      await yieldToBrowser();  // 关键:让浏览器喘气
+
+      // 滚到视口内,避免某些浏览器对视口外元素截图异常慢
+      slides[i].scrollIntoView({block:'center', behavior:'instant'});
+      await yieldToBrowser();
+
+      var canvas = await html2canvas(slides[i], {
+        scale: 1.5,
+        useCORS: true,
+        backgroundColor: '#EEF2F8',
+        logging: false,
+        imageTimeout: 0,
+        removeContainer: true,
+        foreignObjectRendering: false,  // 稳定路径,避免渐变/阴影卡顿
+        allowTaint: true
+      });
+
+      await yieldToBrowser();
+
+      var img = canvas.toDataURL('image/jpeg', 0.85);
+      var slide = pptx.addSlide();
+      slide.background = { color: 'EEF2F8' };
+      slide.addImage({ data: img, x: 0, y: 0, w: 13.333, h: 7.5 });
+
+      // 释放内存
+      canvas.width = canvas.height = 0;
+      canvas = null; img = null;
+    }
+
+    btn.textContent = '生成文件中...';
+    await yieldToBrowser();
+    await pptx.writeFile({ fileName: '月度经营汇报_2025年3月_图片版.pptx' });
+    showToast('图片版PPT已导出');
+  } catch (err) {
+    console.error(err);
+    showToast('导出失败: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = oldTxt;
+  }
+}
+
+// ============ PPT导出：可编辑文字版 ============
+async function exportPPTText(ev) {
+  if (typeof PptxGenJS === 'undefined') {
+    alert('PPT库未加载成功\n\n可能原因:\n1. 网络访问不到CDN (Cloudflare在国内不稳定)\n2. 浏览器拦截了脚本\n\n建议:刷新页面重试,或换用Chrome/Edge');
+    return;
+  }
+  if (editing) toggleEdit();
+  var btn = (ev && ev.target) || document.querySelector('[onclick*="exportPPTText"]');
+  var oldTxt = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '生成中...';
+
+  var pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE'; // 13.333 x 7.5 inch
+  pptx.title = '月度经营汇报 2025年3月';
+  var PW = 13.333, PH = 7.5;
+
+  var slides = document.querySelectorAll('.slide');
+
+  // 颜色转换：rgb(…) → hex
+  function rgb2hex(rgb) {
+    if (!rgb || rgb === 'transparent' || rgb.indexOf('rgba(0, 0, 0, 0)') >= 0) return null;
+    var m = rgb.match(/\d+/g);
+    if (!m || m.length < 3) return null;
+    return ('0'+parseInt(m[0]).toString(16)).slice(-2) +
+           ('0'+parseInt(m[1]).toString(16)).slice(-2) +
+           ('0'+parseInt(m[2]).toString(16)).slice(-2);
+  }
+
+  // 判断节点是否直接包含文字
+  function hasDirectText(el) {
+    for (var i=0; i<el.childNodes.length; i++) {
+      var n = el.childNodes[i];
+      if (n.nodeType === 3 && n.nodeValue.trim().length > 0) return true;
+    }
+    return false;
+  }
+
+  for (var si = 0; si < slides.length; si++) {
+    var slideEl = slides[si];
+    var rect = slideEl.getBoundingClientRect();
+    var sx = PW / rect.width;
+    var sy = PH / rect.height;
+
+    var pptSlide = pptx.addSlide();
+    // 背景色 = slide 的背景
+    var slideBg = rgb2hex(getComputedStyle(slideEl).backgroundColor) || 'EEF2F8';
+    pptSlide.background = { color: slideBg };
+
+    // 先加矩形背景（card 类块）作为视觉分区
+    slideEl.querySelectorAll('.card, .card-sm').forEach(function(el) {
+      var r = el.getBoundingClientRect();
+      var bg = rgb2hex(getComputedStyle(el).backgroundColor);
+      if (bg) {
+        pptSlide.addShape(pptx.ShapeType.roundRect, {
+          x: (r.left - rect.left) * sx,
+          y: (r.top - rect.top) * sy,
+          w: r.width * sx,
+          h: r.height * sy,
+          fill: { color: bg },
+          line: { color: 'E0E6EF', width: 0.5 },
+          rectRadius: 0.08
+        });
+      }
+    });
+
+    // 再加所有文字
+    slideEl.querySelectorAll('*').forEach(function(el) {
+      var tag = el.tagName.toLowerCase();
+      if (['script','style','svg','path'].indexOf(tag) >= 0) return;
+      if (!hasDirectText(el)) return;
+      var txt = '';
+      for (var i=0; i<el.childNodes.length; i++) {
+        if (el.childNodes[i].nodeType === 3) txt += el.childNodes[i].nodeValue;
+      }
+      txt = txt.replace(/\s+/g,' ').trim();
+      if (!txt) return;
+
+      var r = el.getBoundingClientRect();
+      if (r.width < 2 || r.height < 2) return;
+
+      var cs = getComputedStyle(el);
+      var color = rgb2hex(cs.color) || '1A2A3A';
+      var fs = parseFloat(cs.fontSize) || 14;
+      var fw = parseInt(cs.fontWeight) || 400;
+      var ta = cs.textAlign;
+      var align = (ta === 'center') ? 'center' : (ta === 'right' ? 'right' : 'left');
+
+      // px → pt：屏幕 px * (PPT英寸/屏幕px) * 72 pt/英寸
+      var ptSize = Math.max(6, fs * sx * 72);
+
+      pptSlide.addText(txt, {
+        x: (r.left - rect.left) * sx,
+        y: (r.top - rect.top) * sy,
+        w: Math.max(0.3, r.width * sx + 0.1),
+        h: Math.max(0.2, r.height * sy + 0.05),
+        fontSize: ptSize,
+        fontFace: 'Microsoft YaHei',
+        color: color,
+        bold: fw >= 600,
+        align: align,
+        valign: 'middle',
+        margin: 0,
+        isTextBox: true
+      });
+    });
+  }
+
+  await pptx.writeFile({ fileName: '月度经营汇报_2025年3月_可编辑版.pptx' });
+  btn.disabled = false;
+  btn.textContent = oldTxt;
+  showToast('可编辑PPT已导出，文字可在PPT中修改');
+}
+</script>
+
+<!-- ============================
+     第1页：封面
+============================= -->
+<div class="slide" style="background:linear-gradient(135deg,#0D2347 0%,#1B3F7A 55%,#2E5FAC 100%);min-height:540px;display:flex;flex-direction:column">
+  <!-- 装饰圆 -->
+  <div style="position:absolute;top:-80px;right:-80px;width:320px;height:320px;border-radius:50%;border:1px solid rgba(255,255,255,0.07)"></div>
+  <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(184,147,90,0.1)"></div>
+  <div style="position:absolute;bottom:60px;left:-60px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,0.05)"></div>
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8935A,#D4AA7A,#B8935A)"></div>
+
+  <!-- 主体内容 -->
+  <div style="flex:1;display:flex;padding:0 72px">
+    <!-- 左侧主内容 -->
+    <div style="flex:1;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1">
+      <div style="font-size:11px;letter-spacing:5px;color:rgba(184,147,90,0.85);margin-bottom:20px;font-weight:600">MONTHLY BUSINESS REPORT · 2025.03</div>
+      <div style="font-size:50px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:18px;letter-spacing:-1px">2025年3月<br>月度经营汇报</div>
+      <div style="width:72px;height:3px;background:#B8935A;border-radius:2px;margin-bottom:22px"></div>
+      <div style="font-size:15px;color:rgba(255,255,255,0.55);line-height:1.8">聚焦核心指标 · 洞察经营趋势 · 驱动决策优化</div>
+      <!-- 3个摘要数字 -->
+      <div style="display:flex;gap:32px;margin-top:36px">
+        <div>
+          <div style="font-size:32px;font-weight:900;color:#fff;line-height:1">543<span style="font-size:14px;color:rgba(255,255,255,0.5);font-weight:400">万</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px">月度营收</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.1)"></div>
+        <div>
+          <div style="font-size:32px;font-weight:900;color:#B8935A;line-height:1">+18.6<span style="font-size:14px;color:rgba(184,147,90,0.6);font-weight:400">%</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px">同比增长</div>
+        </div>
+        <div style="width:1px;background:rgba(255,255,255,0.1)"></div>
+        <div>
+          <div style="font-size:32px;font-weight:900;color:#fff;line-height:1">96.5<span style="font-size:14px;color:rgba(255,255,255,0.5);font-weight:400">%</span></div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-top:4px">客户满意度</div>
+        </div>
+      </div>
+    </div>
+    <!-- 右侧装饰信息块 -->
+    <div style="width:200px;display:flex;flex-direction:column;justify-content:center;gap:12px;position:relative;z-index:1;padding-left:32px;border-left:1px solid rgba(255,255,255,0.1);margin:60px 0">
+      <div style="font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:1px;margin-bottom:4px">汇报摘要</div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:4px">汇报范围</div>
+        <div style="font-size:13px;color:#fff;font-weight:600">2025.03.01—03.31</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.07);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:4px">汇报部门</div>
+        <div style="font-size:13px;color:#fff;font-weight:600">战略发展部</div>
+      </div>
+      <div style="background:rgba(184,147,90,0.15);border:1px solid rgba(184,147,90,0.3);border-radius:8px;padding:12px">
+        <div style="font-size:11px;color:rgba(184,147,90,0.7);margin-bottom:4px">整体评级</div>
+        <div style="font-size:13px;color:#D4AA7A;font-weight:700">超额完成目标 ↑</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 底部栏 -->
+  <div style="padding:16px 72px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1">
+    <div style="display:flex;gap:24px">
+      <span style="font-size:12px;color:rgba(255,255,255,0.35)">主汇报人：张明</span>
+      <span style="font-size:12px;color:rgba(255,255,255,0.35)">审核：李总</span>
+    </div>
+    <span style="font-size:12px;color:rgba(255,255,255,0.35)">2025年3月31日</span>
+  </div>
+</div>
+<div class="slide-num">01 / 12 &nbsp;封面</div>
+
+<!-- ============================
+     第2页：目录
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">汇报目录</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <div class="g2" style="gap:16px">
+      <!-- 左列 -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="display:flex;align-items:center;gap:16px;padding:18px 20px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#1B3F7A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0">01</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:4px">核心经营指标</div>
+            <div style="font-size:12px;color:#6B7B8D">营收 · 利润 · 客户数量 · 年度达成率</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="tb tb-b">P.03</span></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:16px;padding:18px 20px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#B8935A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0">02</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:4px">销售业绩分析</div>
+            <div style="font-size:12px;color:#6B7B8D">月度趋势 · 同比对比 · 渠道分布</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="tb tb-g">P.04-05</span></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:16px;padding:18px 20px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#2E5FAC;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0">03</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:4px">客户增长情况</div>
+            <div style="font-size:12px;color:#6B7B8D">新增 · 来源 · 留存率 · 满意度</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="tb tb-b">P.06</span></div>
+          </div>
+        </div>
+      </div>
+      <!-- 右列 -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="display:flex;align-items:center;gap:16px;padding:18px 20px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#4A7EC7;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0">04</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:4px">运营效率指标</div>
+            <div style="font-size:12px;color:#6B7B8D">成本控制 · 人效提升 · 质量管控</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="tb tb-b">P.07</span></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:16px;padding:18px 20px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#D4AA7A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0">05</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:4px">重点项目进展</div>
+            <div style="font-size:12px;color:#6B7B8D">里程碑 · 完成率 · 风险预警</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="tb tb-g">P.08</span></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:16px;padding:18px 20px">
+          <div style="width:52px;height:52px;border-radius:12px;background:#1A2A3A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px;font-weight:900;flex-shrink:0">06</div>
+          <div style="flex:1">
+            <div style="font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:4px">问题复盘与4月计划</div>
+            <div style="font-size:12px;color:#6B7B8D">挑战 · 改进措施 · 下月目标</div>
+            <div style="margin-top:6px;display:flex;gap:6px"><span class="tb tb-b">P.09-11</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 底部说明 -->
+    <div class="card-sm" style="margin-top:14px;display:flex;align-items:center;gap:12px;background:#1B3F7A">
+      <div style="width:3px;height:40px;background:#B8935A;border-radius:2px;flex-shrink:0"></div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.6">本报告数据截止2025年3月31日，所有财务数据均经财务部审核，经营数据来源于业务系统实时导出。</div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">02 / 12 &nbsp;目录</div>
+
+<!-- ============================
+     第3页：核心KPI
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">核心经营指标 · 2025年3月总览</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <!-- 顶部4个KPI -->
+    <div class="g4" style="margin-bottom:14px">
+      <div class="card" style="background:#1B3F7A;border-radius:12px;position:relative;overflow:hidden">
+        <div style="position:absolute;bottom:-10px;right:-10px;font-size:60px;font-weight:900;color:rgba(255,255,255,0.06);line-height:1">¥</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;margin-bottom:10px">月度营业收入</div>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px">
+          <span style="font-size:46px;font-weight:900;color:#fff;line-height:1">543</span>
+          <span style="font-size:14px;color:rgba(255,255,255,0.55)">万元</span>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><span class="tb tb-g">↑ 同比+18.6%</span><span style="background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">环比+8.3%</span></div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">净利润</div>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px">
+          <span class="kpi-big" style="color:#1A2A3A">98.7</span>
+          <span class="kpi-unit">万元</span>
+        </div>
+        <div style="margin-bottom:8px"><span class="tb tb-gr">↑ 利润率18.2%</span></div>
+        <div style="font-size:12px;color:#6B7B8D">较上月提升1.3个百分点</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">新增客户</div>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px">
+          <span class="kpi-big" style="color:#1A2A3A">156</span>
+          <span class="kpi-unit">家</span>
+        </div>
+        <div style="margin-bottom:8px"><span class="tb tb-b">↑ 环比+12.2%</span></div>
+        <div style="font-size:12px;color:#6B7B8D">超月度目标140家，完成率111%</div>
+      </div>
+      <div class="card">
+        <div class="kpi-label">客户满意度</div>
+        <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:10px">
+          <span class="kpi-big" style="color:#1A2A3A">96.5</span>
+          <span class="kpi-unit">%</span>
+        </div>
+        <div style="margin-bottom:8px"><span class="tb tb-gr">↑ 较上月+1.8pp</span></div>
+        <div style="font-size:12px;color:#6B7B8D">连续3个月稳步提升</div>
+      </div>
+    </div>
+    <!-- 中部3个辅助指标 -->
+    <div class="g3" style="margin-bottom:14px">
+      <div class="card" style="display:flex;align-items:center;gap:14px">
+        <div style="width:50px;height:50px;border-radius:12px;background:#E8EEFA;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="font-size:20px;font-weight:900;color:#1B3F7A">Q1</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#6B7B8D;margin-bottom:4px">Q1累计营收</div>
+          <div style="font-size:24px;font-weight:900;color:#1A2A3A">1,389<span style="font-size:13px;color:#6B7B8D;font-weight:400">万元</span></div>
+          <div style="font-size:12px;color:#2E7D32;margin-top:2px">同比增长21.4%</div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:14px">
+        <div style="width:50px;height:50px;border-radius:12px;background:#F5ECD8;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="font-size:20px;font-weight:900;color:#B8935A">目</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#6B7B8D;margin-bottom:4px">年度目标完成率</div>
+          <div style="font-size:24px;font-weight:900;color:#1A2A3A">23.2<span style="font-size:13px;color:#6B7B8D;font-weight:400">%</span></div>
+          <div class="bar-wrap" style="margin-top:6px;width:120px"><div class="bar-fill" style="width:23.2%;background:#B8935A"></div></div>
+        </div>
+      </div>
+      <div class="card" style="display:flex;align-items:center;gap:14px">
+        <div style="width:50px;height:50px;border-radius:12px;background:#E8F5E9;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="font-size:20px;font-weight:900;color:#2E7D32">毛</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#6B7B8D;margin-bottom:4px">毛利率</div>
+          <div style="font-size:24px;font-weight:900;color:#1A2A3A">43.8<span style="font-size:13px;color:#6B7B8D;font-weight:400">%</span></div>
+          <div style="font-size:12px;color:#2E7D32;margin-top:2px">同比提升2.1个百分点</div>
+        </div>
+      </div>
+    </div>
+    <!-- 底部亮点总结 -->
+    <div class="card-sm" style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0">
+      <div style="padding:4px 16px;text-align:center">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">本月最大亮点</div>
+        <div style="font-size:13px;font-weight:700;color:#1B3F7A">营收连续3个月突破500万</div>
+      </div>
+      <div style="background:#D8E2EE"></div>
+      <div style="padding:4px 16px;text-align:center">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">超预期项</div>
+        <div style="font-size:13px;font-weight:700;color:#B8935A">新客数量超目标111%</div>
+      </div>
+      <div style="background:#D8E2EE"></div>
+      <div style="padding:4px 16px;text-align:center">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">需关注</div>
+        <div style="font-size:13px;font-weight:700;color:#C62828">获客成本环比上涨22%</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">03 / 12 &nbsp;核心经营指标</div>
+
+<!-- ============================
+     第4页：销售趋势对比
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">销售业绩 · 月度营收趋势对比（万元）</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <div style="display:grid;grid-template-columns:150px 1fr 140px;gap:16px;margin-bottom:14px">
+      <!-- 左：2024年卡片 -->
+      <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;text-align:center">
+        <div>
+          <div style="font-size:11px;color:#6B7B8D;margin-bottom:6px">2024全年销售额</div>
+          <div style="font-size:38px;font-weight:900;color:#1B3F7A;line-height:1">6.5</div>
+          <div style="font-size:13px;color:#6B7B8D;margin-bottom:10px">亿元</div>
+          <div style="width:100%;height:1px;background:#D8E2EE;margin-bottom:10px"></div>
+          <div style="font-size:11px;color:#6B7B8D;line-height:1.6">利润2.5亿<br>利润率25%</div>
+        </div>
+        <div style="font-size:32px;font-weight:900;color:#1B3F7A;opacity:0.08;letter-spacing:-2px;margin-top:10px">2024</div>
+      </div>
+      <!-- 中：对比图 -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div style="font-size:13px;font-weight:700;color:#1A2A3A">月度销售额对比</div>
+          <div style="display:flex;gap:14px">
+            <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:5px;border-radius:3px;background:#1B3F7A"></div><span style="font-size:11px;color:#6B7B8D">2024年</span></div>
+            <div style="display:flex;align-items:center;gap:5px"><div style="width:12px;height:5px;border-radius:3px;background:#B8935A"></div><span style="font-size:11px;color:#6B7B8D">2025年</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <!-- 每月数据行 -->
+          <div style="display:grid;grid-template-columns:22px 1fr 36px 22px 1fr 36px;align-items:center;gap:5px">
+            <span style="font-size:10px;color:#6B7B8D;text-align:center">1月</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:61%;background:#1B3F7A"></div></div>
+            <span style="font-size:10px;color:#6B7B8D">3870</span>
+            <span style="font-size:10px;color:#B8935A;text-align:center">1月</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:72%;background:#B8935A"></div></div>
+            <span style="font-size:10px;color:#B8935A">4586</span>
+          </div>
+          <div style="display:grid;grid-template-columns:22px 1fr 36px 22px 1fr 36px;align-items:center;gap:5px">
+            <span style="font-size:10px;color:#6B7B8D;text-align:center">2月</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:53%;background:#1B3F7A"></div></div>
+            <span style="font-size:10px;color:#6B7B8D">3360</span>
+            <span style="font-size:10px;color:#B8935A;text-align:center">2月</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:63%;background:#B8935A"></div></div>
+            <span style="font-size:10px;color:#B8935A">4010</span>
+          </div>
+          <div style="display:grid;grid-template-columns:22px 1fr 36px 22px 1fr 36px;align-items:center;gap:5px">
+            <span style="font-size:10px;color:#6B7B8D;text-align:center">3月</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:72%;background:#1B3F7A"></div></div>
+            <span style="font-size:10px;color:#6B7B8D">4576</span>
+            <span style="font-size:10px;color:#B8935A;font-weight:700;text-align:center">3月</span>
+            <div class="bar-wrap" style="border:1.5px solid #B8935A"><div class="bar-fill" style="width:86%;background:#B8935A"></div></div>
+            <span style="font-size:10px;color:#B8935A;font-weight:700">5430</span>
+          </div>
+          <div style="height:1px;background:#EEF2F8;margin:2px 0"></div>
+          <div style="display:grid;grid-template-columns:22px 1fr 36px 22px 1fr 36px;align-items:center;gap:5px">
+            <span style="font-size:10px;color:#9CA8B4;text-align:center">4月</span>
+            <div class="bar-wrap"><div class="bar-fill" style="width:65%;background:#1B3F7A;opacity:0.5"></div></div>
+            <span style="font-size:10px;color:#9CA8B4">4120</span>
+            <span style="font-size:10px;color:#9CA8B4;text-align:center;font-style:italic">预</span>
+            <div class="bar-wrap" style="border:1px dashed #D8E2EE"></div>
+            <span style="font-size:10px;color:#9CA8B4">6000</span>
+          </div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:center;gap:16px">
+          <span style="font-size:11px;color:#6B7B8D">Q1同比增长</span>
+          <span style="font-size:11px;font-weight:700;color:#2E7D32">+21.4%</span>
+          <span style="font-size:11px;color:#6B7B8D">3月环比</span>
+          <span style="font-size:11px;font-weight:700;color:#2E7D32">+8.3%</span>
+        </div>
+      </div>
+      <!-- 右：2025年卡片 -->
+      <div class="card" style="display:flex;flex-direction:column;justify-content:space-between;text-align:center">
+        <div>
+          <div style="font-size:11px;color:#6B7B8D;margin-bottom:6px">2025年3月销售额</div>
+          <div style="font-size:38px;font-weight:900;color:#B8935A;line-height:1">543</div>
+          <div style="font-size:13px;color:#6B7B8D;margin-bottom:10px">万元</div>
+          <div style="width:100%;height:1px;background:#D8E2EE;margin-bottom:10px"></div>
+          <span class="tb tb-gr">↑ 同比+18.6%</span>
+          <div style="margin-top:8px;font-size:11px;color:#6B7B8D;line-height:1.6">占48%比重<br>同比+5%</div>
+        </div>
+        <div style="font-size:32px;font-weight:900;color:#B8935A;opacity:0.1;letter-spacing:-2px;margin-top:10px">2025</div>
+      </div>
+    </div>
+    <!-- 底部问题与改进 -->
+    <div class="g2" style="gap:12px">
+      <div class="card-sm" style="border-left:3px solid #C62828">
+        <div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:6px">问题分析</div>
+        <div class="ci" style="margin-bottom:4px"><div class="cd" style="background:#C62828;font-size:12px">→</div><span style="font-size:12px;color:#374151">销售团队培训不够，产品知识掌握参差不齐</span></div>
+        <div class="ci"><div class="cd" style="background:#C62828;font-size:12px">→</div><span style="font-size:12px;color:#374151">4月有节假日，需提前做好销售节奏安排</span></div>
+      </div>
+      <div class="card-sm" style="border-left:3px solid #2E7D32">
+        <div style="font-size:12px;font-weight:700;color:#2E7D32;margin-bottom:6px">改进措施</div>
+        <div class="ci" style="margin-bottom:4px"><div class="cd" style="background:#2E7D32;font-size:12px">✓</div><span style="font-size:12px;color:#374151">新用户转化流程优化，新增渠道合作提升转化</span></div>
+        <div class="ci"><div class="cd" style="background:#2E7D32;font-size:12px">✓</div><span style="font-size:12px;color:#374151">5.1大促方案已就绪，预计4月末拉动增量</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">04 / 12 &nbsp;销售趋势</div>
+
+<!-- ============================
+     第5页：渠道分析
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">销售渠道分析 · 各渠道业绩表现</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <div class="g4" style="margin-bottom:14px">
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="background:#1B3F7A;padding:13px 16px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:14px;font-weight:700;color:#fff">直销团队</div>
+          <span class="tb tb-gr" style="font-size:10px;padding:2px 8px">↑ 主力</span>
+        </div>
+        <div style="padding:14px 16px">
+          <div style="font-size:34px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:4px">218<span style="font-size:14px;color:#6B7B8D;font-weight:400">万</span></div>
+          <span class="tb tb-b" style="margin-bottom:10px;display:inline-block">占比40.1%</span>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">大客户签约5单</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">新开发客户32家</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">成单周期缩短18%</span></div>
+          <div style="background:#E8EEFA;border-radius:6px;padding:7px 10px;margin-top:8px">
+            <div style="font-size:11px;color:#1B3F7A;font-weight:600">转化率提升15%</div>
+            <div class="bar-wrap" style="margin-top:4px"><div class="bar-fill" style="width:80%;background:#1B3F7A"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="background:#B8935A;padding:13px 16px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:14px;font-weight:700;color:#fff">电商平台</div>
+          <span class="tb tb-gr" style="font-size:10px;padding:2px 8px">↑ 最快</span>
+        </div>
+        <div style="padding:14px 16px">
+          <div style="font-size:34px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:4px">163<span style="font-size:14px;color:#6B7B8D;font-weight:400">万</span></div>
+          <span class="tb tb-g" style="margin-bottom:10px;display:inline-block">占比30.0%</span>
+          <div class="ci"><div class="cd cd-g" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">大促GMV+30%</span></div>
+          <div class="ci"><div class="cd cd-g" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">复购率达58%</span></div>
+          <div class="ci"><div class="cd cd-g" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">退款率降至1.2%</span></div>
+          <div style="background:#F5ECD8;border-radius:6px;padding:7px 10px;margin-top:8px">
+            <div style="font-size:11px;color:#8B6534;font-weight:600">媒体曝光1.2亿次</div>
+            <div class="bar-wrap" style="margin-top:4px"><div class="bar-fill" style="width:65%;background:#B8935A"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="background:#2E5FAC;padding:13px 16px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:14px;font-weight:700;color:#fff">代理渠道</div>
+          <span class="tb tb-g" style="font-size:10px;padding:2px 8px">稳增长</span>
+        </div>
+        <div style="padding:14px 16px">
+          <div style="font-size:34px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:4px">109<span style="font-size:14px;color:#6B7B8D;font-weight:400">万</span></div>
+          <span class="tb tb-b" style="margin-bottom:10px;display:inline-block">占比20.1%</span>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">新增代理商5家</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">区域覆盖率+12%</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">县域市场新突破</span></div>
+          <div style="background:#E8EEFA;border-radius:6px;padding:7px 10px;margin-top:8px">
+            <div style="font-size:11px;color:#1B3F7A;font-weight:600">下沉市场布局中</div>
+            <div class="bar-wrap" style="margin-top:4px"><div class="bar-fill" style="width:50%;background:#2E5FAC"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div style="background:#4A7EC7;padding:13px 16px;display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:14px;font-weight:700;color:#fff">其他渠道</div>
+          <span class="tb tb-gy" style="font-size:10px;padding:2px 8px">待挖掘</span>
+        </div>
+        <div style="padding:14px 16px">
+          <div style="font-size:34px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:4px">53<span style="font-size:14px;color:#6B7B8D;font-weight:400">万</span></div>
+          <span class="tb tb-b" style="margin-bottom:10px;display:inline-block">占比9.8%</span>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">行业展会2场</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">✓</div><span style="font-size:11px;color:#374151">内容营销转化+20%</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">KOL合作筹备中</span></div>
+          <div style="background:#E8EEFA;border-radius:6px;padding:7px 10px;margin-top:8px">
+            <div style="font-size:11px;color:#1B3F7A;font-weight:600">预计4月提升至12%</div>
+            <div class="bar-wrap" style="margin-top:4px"><div class="bar-fill" style="width:30%;background:#4A7EC7"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- 底部策略建议 -->
+    <div class="card-sm" style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0">
+      <div style="padding:6px 16px;text-align:center">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">核心策略</div>
+        <div style="font-size:13px;font-weight:700;color:#1B3F7A">持续做大直销+电商</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-top:3px">两者合计占比70%，重点投入</div>
+      </div>
+      <div style="background:#D8E2EE"></div>
+      <div style="padding:6px 16px;text-align:center">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">增长机会</div>
+        <div style="font-size:13px;font-weight:700;color:#B8935A">代理渠道下沉市场</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-top:3px">县域城市增量空间显著</div>
+      </div>
+      <div style="background:#D8E2EE"></div>
+      <div style="padding:6px 16px;text-align:center">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">重点跟进</div>
+        <div style="font-size:13px;font-weight:700;color:#2E5FAC">其他渠道KOL合作</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-top:3px">4月上线，预计带动增量</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">05 / 12 &nbsp;渠道分析</div>
+
+<!-- ============================
+     第6页：客户增长
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">客户增长情况 · 3月新增与留存分析</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <div class="g2" style="margin-bottom:14px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="display:flex;gap:0">
+          <div style="flex:1;text-align:center;padding:16px;border-right:1px solid #D8E2EE">
+            <div style="font-size:11px;color:#6B7B8D;margin-bottom:6px">本月新增客户</div>
+            <div style="font-size:44px;font-weight:900;color:#1B3F7A;line-height:1">156</div>
+            <div style="font-size:12px;color:#6B7B8D;margin-bottom:8px">家</div>
+            <span class="tb tb-gr">↑ 环比+12.2%</span>
+          </div>
+          <div style="flex:1;text-align:center;padding:16px">
+            <div style="font-size:11px;color:#6B7B8D;margin-bottom:6px">累计客户总数</div>
+            <div style="font-size:44px;font-weight:900;color:#B8935A;line-height:1">1,847</div>
+            <div style="font-size:12px;color:#6B7B8D;margin-bottom:8px">家</div>
+            <span class="tb tb-g">同比+28%</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:#1A2A3A;margin-bottom:12px">客户来源分布</div>
+          <div style="display:flex;flex-direction:column;gap:9px">
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#374151">自然搜索/口碑</span><span style="font-size:12px;font-weight:700;color:#1B3F7A">38%&nbsp;&nbsp;59家</span></div><div class="bar-wrap"><div class="bar-fill" style="width:38%;background:#1B3F7A"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#374151">老客户转介绍</span><span style="font-size:12px;font-weight:700;color:#B8935A">30%&nbsp;&nbsp;47家</span></div><div class="bar-wrap"><div class="bar-fill" style="width:30%;background:#B8935A"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#374151">广告投放</span><span style="font-size:12px;font-weight:700;color:#2E5FAC">22%&nbsp;&nbsp;34家</span></div><div class="bar-wrap"><div class="bar-fill" style="width:22%;background:#2E5FAC"></div></div></div>
+            <div><div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:12px;color:#374151">渠道合作</span><span style="font-size:12px;font-weight:700;color:#6B7B8D">10%&nbsp;&nbsp;16家</span></div><div class="bar-wrap"><div class="bar-fill" style="width:10%;background:#9CA8B4"></div></div></div>
+          </div>
+          <div style="margin-top:10px;background:#F5ECD8;border-radius:8px;padding:8px 12px">
+            <div style="font-size:11px;font-weight:700;color:#8B6534">亮点：老客转介绍创历史新高（30%），口碑飞轮效应显现</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:#1A2A3A;margin-bottom:12px">满意度与留存指标</div>
+          <div class="g2" style="gap:10px;margin-bottom:12px">
+            <div style="background:#E8EEFA;border-radius:10px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:900;color:#1B3F7A;line-height:1">96.5%</div>
+              <div style="font-size:11px;color:#6B7B8D;margin-top:4px">客户满意度</div>
+              <div style="font-size:11px;color:#2E7D32;margin-top:2px">↑ 较上月+1.8pp</div>
+            </div>
+            <div style="background:#F5ECD8;border-radius:10px;padding:14px;text-align:center">
+              <div style="font-size:30px;font-weight:900;color:#B8935A;line-height:1">91.3%</div>
+              <div style="font-size:11px;color:#6B7B8D;margin-top:4px">客户留存率</div>
+              <div style="font-size:11px;color:#2E7D32;margin-top:2px">↑ 较上月+0.9pp</div>
+            </div>
+          </div>
+          <div class="ci"><div class="cd">✓</div><span style="font-size:12px;color:#374151">NPS净推荐值68分，行业Top10%</span></div>
+          <div class="ci"><div class="cd">✓</div><span style="font-size:12px;color:#374151">客诉24h处理率98.2%，解决率100%</span></div>
+          <div class="ci"><div class="cd cd-g">✓</div><span style="font-size:12px;color:#374151">VIP客户复购率同比提升8pp</span></div>
+          <div class="ci"><div class="cd cd-g">✓</div><span style="font-size:12px;color:#374151">流失客户召回率42%，行业良好水平</span></div>
+        </div>
+        <div class="card-sm" style="background:#1B3F7A">
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:6px">3月客户增长核心结论</div>
+          <div style="font-size:13px;color:#fff;font-weight:600;line-height:1.7">老客转介绍占比首次突破30%，标志着产品口碑积累已形成正向增长飞轮。建议4月加大转介绍激励预算，将此优势进一步放大。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">06 / 12 &nbsp;客户增长</div>
+
+<!-- ============================
+     第7页：运营效率
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">运营效率指标 · 目标完成情况</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <div class="g2" style="margin-bottom:14px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:68px;text-align:center;flex-shrink:0;padding:10px;background:#E8EEFA;border-radius:10px">
+            <div style="font-size:26px;font-weight:900;color:#1B3F7A;line-height:1">20%</div>
+            <div style="font-size:10px;color:#6B7B8D;margin-top:2px">效率提升</div>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:14px;font-weight:700;color:#1A2A3A">流程自动化改造</span><span class="tb tb-gr">已完成</span><span class="tb tb-b">目标20%</span></div>
+            <div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:6px">引入RPA工具，财务报销与采购审批实现自动化，处理时间缩短65%，人力成本降低30%。</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:#1B3F7A"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:11px;color:#2E7D32">完成率 100%</span><span style="font-size:11px;color:#6B7B8D">目标20% · 实际20%</span></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:68px;text-align:center;flex-shrink:0;padding:10px;background:#F5ECD8;border-radius:10px">
+            <div style="font-size:26px;font-weight:900;color:#B8935A;line-height:1">87%</div>
+            <div style="font-size:10px;color:#6B7B8D;margin-top:2px">员工满意</div>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:14px;font-weight:700;color:#1A2A3A">团队建设与培养</span><span class="tb tb-g">超目标85%</span></div>
+            <div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:6px">改进工作环境与激励机制，员工满意度达87%，人才流失率控制在4%以内，超额完成目标。</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:87%;background:#B8935A"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:11px;color:#2E7D32">完成率 102.4%</span><span style="font-size:11px;color:#6B7B8D">目标85% · 实际87%</span></div>
+          </div>
+        </div>
+        <div class="card" style="display:flex;align-items:center;gap:14px">
+          <div style="width:68px;text-align:center;flex-shrink:0;padding:10px;background:#E8F5E9;border-radius:10px">
+            <div style="font-size:26px;font-weight:900;color:#2E7D32;line-height:1">98%</div>
+            <div style="font-size:10px;color:#6B7B8D;margin-top:2px">质量合格</div>
+          </div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:14px;font-weight:700;color:#1A2A3A">质量管控升级</span><span class="tb tb-gr">达成目标98%</span></div>
+            <div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:6px">引入自动化检测系统，产品合格率稳定在98%以上，达到行业最高标准水准。</div>
+            <div class="bar-wrap"><div class="bar-fill" style="width:98%;background:#2E7D32"></div></div>
+            <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="font-size:11px;color:#2E7D32">完成率 100%</span><span style="font-size:11px;color:#6B7B8D">目标98% · 实际98.2%</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:#1A2A3A;margin-bottom:12px">人效与成本核心数据</div>
+          <div class="g2" style="gap:10px;margin-bottom:12px">
+            <div style="background:#EEF2F8;border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#1B3F7A;line-height:1">-15%</div>
+              <div style="font-size:11px;color:#6B7B8D;margin-top:4px">运营总成本</div>
+            </div>
+            <div style="background:#EEF2F8;border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#B8935A;line-height:1">+30%</div>
+              <div style="font-size:11px;color:#6B7B8D;margin-top:4px">人均产出</div>
+            </div>
+            <div style="background:#EEF2F8;border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#2E5FAC;line-height:1">18天</div>
+              <div style="font-size:11px;color:#6B7B8D;margin-top:4px">库存周转天数</div>
+            </div>
+            <div style="background:#EEF2F8;border-radius:8px;padding:12px;text-align:center">
+              <div style="font-size:26px;font-weight:900;color:#2E7D32;line-height:1">4.2%</div>
+              <div style="font-size:11px;color:#6B7B8D;margin-top:4px">人才流失率</div>
+            </div>
+          </div>
+          <div class="ci"><div class="cd">✓</div><span style="font-size:12px;color:#374151">供应链优化：采购成本降低12%</span></div>
+          <div class="ci"><div class="cd">✓</div><span style="font-size:12px;color:#374151">共享服务中心建设完成，协作效率+50%</span></div>
+          <div class="ci"><div class="cd cd-g">✓</div><span style="font-size:12px;color:#374151">数字化工具覆盖率85%，同比提升20pp</span></div>
+        </div>
+        <div class="card-sm" style="background:#1B3F7A">
+          <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:4px">运营效率月度小结</div>
+          <div style="font-size:13px;color:#fff;font-weight:600;line-height:1.7">本月3项效率目标全部达成或超额，自动化改造成效显著，为4月冲刺600万目标提供了有力的成本空间。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">07 / 12 &nbsp;运营效率</div>
+
+<!-- ============================
+     第8页：重点项目进展
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">重点项目进展 · Q1执行情况回顾</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <!-- 顶部进度总览 -->
+    <div class="card" style="margin-bottom:14px;padding:14px 20px">
+      <div style="text-align:center;font-size:15px;font-weight:700;color:#1A2A3A;margin-bottom:14px">重点工作完成进度总览</div>
+      <div class="g4" style="gap:0;border:1px solid #D8E2EE;border-radius:10px;overflow:hidden">
+        <div style="padding:14px;text-align:center;border-right:1px solid #D8E2EE">
+          <div style="font-size:32px;font-weight:900;color:#1B3F7A;line-height:1">+30%</div>
+          <div style="font-size:11px;color:#6B7B8D;margin-top:4px">团队效率提升</div>
+        </div>
+        <div style="padding:14px;text-align:center;border-right:1px solid #D8E2EE">
+          <div style="font-size:32px;font-weight:900;color:#B8935A;line-height:1">200万</div>
+          <div style="font-size:11px;color:#6B7B8D;margin-top:4px">CRM上线客户数据</div>
+        </div>
+        <div style="padding:14px;text-align:center;border-right:1px solid #D8E2EE">
+          <div style="font-size:32px;font-weight:900;color:#2E5FAC;line-height:1">47家</div>
+          <div style="font-size:11px;color:#6B7B8D;margin-top:4px">华东区域新客</div>
+        </div>
+        <div style="padding:14px;text-align:center">
+          <div style="font-size:32px;font-weight:900;color:#2E7D32;line-height:1">96.5%</div>
+          <div style="font-size:11px;color:#6B7B8D;margin-top:4px">客户满意度</div>
+        </div>
+      </div>
+    </div>
+    <!-- 3个项目卡片 -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="card" style="display:grid;grid-template-columns:60px 1fr 160px;gap:16px;align-items:center;padding:16px 20px">
+        <div style="text-align:center"><div style="width:52px;height:52px;border-radius:50%;background:#1B3F7A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;line-height:1.3;text-align:center">CRM<br>上线</div></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:15px;font-weight:700;color:#1A2A3A">新CRM系统全面上线</span><span class="tb tb-gr">已完成</span><span class="tb tb-b">数字化</span></div>
+          <div style="font-size:12px;color:#374151;line-height:1.6">完成全公司CRM系统迁移，客户数据统一管理，历史数据完整迁移99.8%，销售跟进效率提升40%，成单周期缩短18%。</div>
+          <div class="bar-wrap" style="margin-top:8px;max-width:300px"><div class="bar-fill" style="width:100%;background:#1B3F7A"></div></div>
+        </div>
+        <div style="text-align:center;background:#E8F5E9;border-radius:10px;padding:12px">
+          <div style="font-size:28px;font-weight:900;color:#2E7D32">100%</div>
+          <div style="font-size:11px;color:#6B7B8D">完成率</div>
+          <div style="font-size:11px;color:#2E7D32;margin-top:4px">按时交付</div>
+        </div>
+      </div>
+      <div class="card" style="display:grid;grid-template-columns:60px 1fr 160px;gap:16px;align-items:center;padding:16px 20px">
+        <div style="text-align:center"><div style="width:52px;height:52px;border-radius:50%;background:#B8935A;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;line-height:1.3;text-align:center">华东<br>拓展</div></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:15px;font-weight:700;color:#1A2A3A">华东区域市场拓展</span><span class="tb tb-g">进行中</span><span class="tb tb-g">市场拓展</span></div>
+          <div style="font-size:12px;color:#374151;line-height:1.6">上海、杭州、南京三地团队组建完成，已开拓客户47家，季度目标60家，4月将加速推进，核心骨干驻场支持。</div>
+          <div class="bar-wrap" style="margin-top:8px;max-width:300px"><div class="bar-fill" style="width:78%;background:#B8935A"></div></div>
+        </div>
+        <div style="text-align:center;background:#F5ECD8;border-radius:10px;padding:12px">
+          <div style="font-size:28px;font-weight:900;color:#B8935A">78%</div>
+          <div style="font-size:11px;color:#6B7B8D">完成率</div>
+          <div style="font-size:11px;color:#B8935A;margin-top:4px">4月达成100%</div>
+        </div>
+      </div>
+      <div class="card" style="display:grid;grid-template-columns:60px 1fr 160px;gap:16px;align-items:center;padding:16px 20px">
+        <div style="text-align:center"><div style="width:52px;height:52px;border-radius:50%;background:#4A7EC7;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;line-height:1.3;text-align:center">V3.0<br>研发</div></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px"><span style="font-size:15px;font-weight:700;color:#1A2A3A">产品迭代V3.0研发</span><span class="tb tb-b">计划中</span><span class="tb tb-b">产品研发</span></div>
+          <div style="font-size:12px;color:#374151;line-height:1.6">用户需求调研完成，功能设计稿已评审通过，开发工作4月正式启动，预计Q2末发布Beta版本，Q3全量上线。</div>
+          <div class="bar-wrap" style="margin-top:8px;max-width:300px"><div class="bar-fill" style="width:35%;background:#4A7EC7"></div></div>
+        </div>
+        <div style="text-align:center;background:#E8EEFA;border-radius:10px;padding:12px">
+          <div style="font-size:28px;font-weight:900;color:#2E5FAC">35%</div>
+          <div style="font-size:11px;color:#6B7B8D">完成率</div>
+          <div style="font-size:11px;color:#2E5FAC;margin-top:4px">按计划推进</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">08 / 12 &nbsp;重点项目</div>
+
+<!-- ============================
+     第9页：问题复盘
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">工作挑战与解决方案 · 3月问题复盘</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <!-- 顶部3个问题 -->
+    <div class="g3" style="margin-bottom:14px">
+      <div class="card" style="padding:0;overflow:hidden;border-top:3px solid #C62828">
+        <div style="padding:14px 16px 10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#FFEBEE;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#C62828;flex-shrink:0">!</div>
+            <span style="font-size:14px;font-weight:700;color:#1A2A3A">获客成本偏高</span>
+          </div>
+          <div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:10px">3月单客获客成本较2月上涨22%，广告平台竞价加剧，ROI下滑明显，需调整投放策略降本增效。</div>
+          <div style="height:1px;background:#EEF2F8;margin-bottom:10px"></div>
+          <div style="font-size:11px;font-weight:700;color:#C62828;margin-bottom:6px">改进措施</div>
+          <div class="ci" style="margin-bottom:5px"><div class="cd" style="background:#C62828;width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">聚焦高转化渠道，暂停低效投放</span></div>
+          <div class="ci" style="margin-bottom:5px"><div class="cd" style="background:#C62828;width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">加大转介绍激励，降低获客成本</span></div>
+          <div class="ci"><div class="cd" style="background:#C62828;width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">4月目标：获客成本降低15%</span></div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;border-top:3px solid #B8935A">
+        <div style="padding:14px 16px 10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#F5ECD8;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#B8935A;flex-shrink:0">!</div>
+            <span style="font-size:14px;font-weight:700;color:#1A2A3A">华东拓展滞后</span>
+          </div>
+          <div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:10px">区域团队招聘进度落后，华东季度目标仅完成78%，销售管理经验输出不足影响新团队战斗力。</div>
+          <div style="height:1px;background:#EEF2F8;margin-bottom:10px"></div>
+          <div style="font-size:11px;font-weight:700;color:#B8935A;margin-bottom:6px">改进措施</div>
+          <div class="ci" style="margin-bottom:5px"><div class="cd cd-g" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">4月引入猎头合作加快招聘</span></div>
+          <div class="ci" style="margin-bottom:5px"><div class="cd cd-g" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">总部骨干驻场支持满3个月</span></div>
+          <div class="ci"><div class="cd cd-g" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">4月目标：补齐剩余22%缺口</span></div>
+        </div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden;border-top:3px solid #2E5FAC">
+        <div style="padding:14px 16px 10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <div style="width:28px;height:28px;border-radius:50%;background:#E8EEFA;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#2E5FAC;flex-shrink:0">!</div>
+            <span style="font-size:14px;font-weight:700;color:#1A2A3A">交付周期延长</span>
+          </div>
+          <div style="font-size:12px;color:#374151;line-height:1.6;margin-bottom:10px">Q1末订单暴增导致积压，部分大客户交付周期从7天延至12天，引发3起客诉，需立即解决。</div>
+          <div style="height:1px;background:#EEF2F8;margin-bottom:10px"></div>
+          <div style="font-size:11px;font-weight:700;color:#2E5FAC;margin-bottom:6px">改进措施</div>
+          <div class="ci" style="margin-bottom:5px"><div class="cd" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">增加临时产能，部分品类外包</span></div>
+          <div class="ci" style="margin-bottom:5px"><div class="cd" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">VIP客户优先交付绿色通道</span></div>
+          <div class="ci"><div class="cd" style="width:16px;height:16px;font-size:9px">→</div><span style="font-size:11px;color:#374151">4月目标：恢复7天交付</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- 问题vs方案对比 -->
+    <div class="card" style="padding:14px 20px">
+      <div style="display:grid;grid-template-columns:auto 1fr auto 1fr;gap:12px;align-items:center">
+        <div style="font-size:12px;font-weight:700;color:#C62828;padding:6px 10px;background:#FFEBEE;border-radius:6px">问题汇总</div>
+        <div style="font-size:12px;color:#374151;line-height:1.5">本月共识别<strong style="color:#C62828">3大核心问题</strong>，涉及获客、拓展、交付三个维度，均属于增长过快带来的典型阵痛期问题，可控可解决。</div>
+        <div style="font-size:12px;font-weight:700;color:#2E7D32;padding:6px 10px;background:#E8F5E9;border-radius:6px">整体评估</div>
+        <div style="font-size:12px;color:#374151;line-height:1.5">所有问题已制定<strong style="color:#2E7D32">专项改进计划</strong>，责任人明确，4月周例会逐一跟踪，月底闭环复盘，预计可全部解决。</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">09 / 12 &nbsp;问题复盘</div>
+
+<!-- ============================
+     第10页：4月计划
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">4月工作计划 · 目标分解与任务安排</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <div class="g2" style="margin-bottom:14px">
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card" style="background:#1B3F7A;border-radius:12px">
+          <div style="font-size:11px;color:rgba(255,255,255,0.55);letter-spacing:1.5px;margin-bottom:8px">4月营收目标</div>
+          <div style="display:flex;align-items:baseline;gap:5px;margin-bottom:10px">
+            <span style="font-size:48px;font-weight:900;color:#fff;line-height:1">600</span>
+            <span style="font-size:15px;color:rgba(255,255,255,0.55)">万元</span>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span class="tb tb-g">较3月+10.5%</span>
+            <span style="background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.75);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">年度达成率29%</span>
+          </div>
+        </div>
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:#1A2A3A;margin-bottom:10px">4月核心目标分解</div>
+          <div class="ci"><div class="cd">1</div><span style="font-size:12px;color:#374151">新增客户目标<strong style="color:#1B3F7A"> 180家</strong>，重点攻华东区域</span></div>
+          <div class="ci"><div class="cd cd-g">2</div><span style="font-size:12px;color:#374151">电商渠道GMV突破<strong style="color:#B8935A"> 200万</strong>，备战5.1大促</span></div>
+          <div class="ci"><div class="cd">3</div><span style="font-size:12px;color:#374151">交付周期恢复<strong style="color:#1B3F7A"> 7天内</strong>，客诉率降至2%以下</span></div>
+          <div class="ci"><div class="cd">4</div><span style="font-size:12px;color:#374151">产品V3.0开发正式启动，完成技术架构设计</span></div>
+          <div class="ci"><div class="cd cd-g">5</div><span style="font-size:12px;color:#374151">获客成本降低<strong style="color:#B8935A"> 15%</strong>，优化投放结构</span></div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card">
+          <div style="font-size:13px;font-weight:700;color:#1A2A3A;margin-bottom:10px">重点工作周次安排</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="display:flex;gap:10px;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid #EEF2F8">
+              <div style="background:#1B3F7A;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap">第1-2周</div>
+              <div><div style="font-size:13px;font-weight:600;color:#1A2A3A">大促备货与渠道准备</div><div style="font-size:11px;color:#6B7B8D;margin-top:2px">完成5.1备货方案，与供应商锁定产能，搭建5.1专项促销页面</div></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid #EEF2F8">
+              <div style="background:#B8935A;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap">第2-3周</div>
+              <div><div style="font-size:13px;font-weight:600;color:#1A2A3A">华东团队到位与培训</div><div style="font-size:11px;color:#6B7B8D;margin-top:2px">完成剩余招聘，总部骨干下沉驻场，启动新团队销售培训</div></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid #EEF2F8">
+              <div style="background:#2E5FAC;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap">第3-4周</div>
+              <div><div style="font-size:13px;font-weight:600;color:#1A2A3A">5.1大促正式启动</div><div style="font-size:11px;color:#6B7B8D;margin-top:2px">全渠道同步大促，实时监控数据，灵活调整投放策略</div></div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start">
+              <div style="background:#1A2A3A;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;flex-shrink:0;margin-top:2px;white-space:nowrap">月底复盘</div>
+              <div><div style="font-size:13px;font-weight:600;color:#1A2A3A">月度复盘与Q2规划</div><div style="font-size:11px;color:#6B7B8D;margin-top:2px">全员月度复盘，锁定Q2核心目标，制定半年度战略</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="card-sm" style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr;gap:0">
+          <div style="text-align:center;padding:4px 8px"><div style="font-size:11px;color:#6B7B8D">新增预算</div><div style="font-size:22px;font-weight:900;color:#1B3F7A">+50万</div></div>
+          <div style="background:#D8E2EE"></div>
+          <div style="text-align:center;padding:4px 8px"><div style="font-size:11px;color:#6B7B8D">预期毛利率</div><div style="font-size:22px;font-weight:900;color:#B8935A">45%</div></div>
+          <div style="background:#D8E2EE"></div>
+          <div style="text-align:center;padding:4px 8px"><div style="font-size:11px;color:#6B7B8D">新增人员</div><div style="font-size:22px;font-weight:900;color:#2E5FAC">12人</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">10 / 12 &nbsp;4月计划</div>
+
+<!-- ============================
+     第11页：年度进展
+============================= -->
+<div class="slide bg-page" style="min-height:540px">
+  <div class="ph"><div class="ph-l"><div class="bar"></div><div class="ph-t">年度进展总览 · Q1完成与全年展望</div></div><div class="wm">POWERPOINT TEMPLATE</div></div>
+  <div class="body">
+    <!-- Q1-Q4进度卡 -->
+    <div class="g4" style="margin-bottom:14px">
+      <div class="card" style="text-align:center;border-top:3px solid #1B3F7A">
+        <div style="font-size:22px;font-weight:900;color:#1B3F7A;margin-bottom:6px">Q1</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">1月—3月</div>
+        <div style="font-size:30px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:6px">1,389<span style="font-size:13px;color:#6B7B8D;font-weight:400">万</span></div>
+        <div class="bar-wrap" style="margin-bottom:6px"><div class="bar-fill" style="width:100%;background:#1B3F7A"></div></div>
+        <span class="tb tb-gr">完成率100%</span>
+        <div style="margin-top:8px;font-size:11px;color:#6B7B8D">已完成，同比+21.4%</div>
+      </div>
+      <div class="card" style="text-align:center;border-top:3px solid #B8935A">
+        <div style="font-size:22px;font-weight:900;color:#B8935A;margin-bottom:6px">Q2</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">4月—6月</div>
+        <div style="font-size:30px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:6px">1,800<span style="font-size:13px;color:#6B7B8D;font-weight:400">万</span></div>
+        <div class="bar-wrap" style="margin-bottom:6px"><div class="bar-fill" style="width:10%;background:#B8935A"></div></div>
+        <span class="tb tb-g">进行中</span>
+        <div style="margin-top:8px;font-size:11px;color:#6B7B8D">目标，4月已启动冲刺</div>
+      </div>
+      <div class="card" style="text-align:center;border-top:3px solid #4A7EC7">
+        <div style="font-size:22px;font-weight:900;color:#4A7EC7;margin-bottom:6px">Q3</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">7月—9月</div>
+        <div style="font-size:30px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:6px">2,100<span style="font-size:13px;color:#6B7B8D;font-weight:400">万</span></div>
+        <div class="bar-wrap" style="margin-bottom:6px"></div>
+        <span class="tb tb-gy">待启动</span>
+        <div style="margin-top:8px;font-size:11px;color:#6B7B8D">规划中，V3.0将助力</div>
+      </div>
+      <div class="card" style="text-align:center;border-top:3px solid #9CA8B4">
+        <div style="font-size:22px;font-weight:900;color:#9CA8B4;margin-bottom:6px">Q4</div>
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">10月—12月</div>
+        <div style="font-size:30px;font-weight:900;color:#1A2A3A;line-height:1;margin-bottom:6px">2,711<span style="font-size:13px;color:#6B7B8D;font-weight:400">万</span></div>
+        <div class="bar-wrap" style="margin-bottom:6px"></div>
+        <span class="tb tb-gy">规划中</span>
+        <div style="margin-top:8px;font-size:11px;color:#6B7B8D">冲刺年度目标关键期</div>
+      </div>
+    </div>
+    <!-- 全年汇总 -->
+    <div class="card" style="margin-bottom:12px;padding:16px 24px">
+      <div style="display:grid;grid-template-columns:1fr 1px 1fr 1px 1fr 1px 1fr;gap:0">
+        <div style="text-align:center;padding:6px 12px">
+          <div style="font-size:11px;color:#6B7B8D;margin-bottom:5px">全年营收目标</div>
+          <div style="font-size:30px;font-weight:900;color:#1B3F7A;line-height:1">8,000<span style="font-size:13px;color:#6B7B8D;font-weight:400">万元</span></div>
+        </div>
+        <div style="background:#D8E2EE"></div>
+        <div style="text-align:center;padding:6px 12px">
+          <div style="font-size:11px;color:#6B7B8D;margin-bottom:5px">当前累计完成</div>
+          <div style="font-size:30px;font-weight:900;color:#B8935A;line-height:1">17.4<span style="font-size:13px;color:#6B7B8D;font-weight:400">%</span></div>
+        </div>
+        <div style="background:#D8E2EE"></div>
+        <div style="text-align:center;padding:6px 12px">
+          <div style="font-size:11px;color:#6B7B8D;margin-bottom:5px">预计全年完成率</div>
+          <div style="font-size:30px;font-weight:900;color:#2E7D32;line-height:1">105<span style="font-size:13px;color:#6B7B8D;font-weight:400">%</span></div>
+        </div>
+        <div style="background:#D8E2EE"></div>
+        <div style="text-align:center;padding:6px 12px">
+          <div style="font-size:11px;color:#6B7B8D;margin-bottom:5px">预计超额完成</div>
+          <div style="font-size:30px;font-weight:900;color:#2E7D32;line-height:1">+400<span style="font-size:13px;color:#6B7B8D;font-weight:400">万元</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- 关键里程碑 -->
+    <div class="card-sm" style="display:flex;gap:0;border:1px solid #D8E2EE;border-radius:10px;overflow:hidden">
+      <div style="flex:1;padding:12px 16px;border-right:1px solid #D8E2EE">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">4月 关键节点</div>
+        <div style="font-size:13px;font-weight:700;color:#1A2A3A">5.1大促启动，预计带动单月增量80万</div>
+      </div>
+      <div style="flex:1;padding:12px 16px;border-right:1px solid #D8E2EE">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">Q2末 关键节点</div>
+        <div style="font-size:13px;font-weight:700;color:#B8935A">产品V3.0 Beta上线，开启产品增长第二曲线</div>
+      </div>
+      <div style="flex:1;padding:12px 16px">
+        <div style="font-size:11px;color:#6B7B8D;margin-bottom:4px">Q3 关键节点</div>
+        <div style="font-size:13px;font-weight:700;color:#2E5FAC">华东区域月度贡献超100万，跻身主力渠道</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="slide-num">11 / 12 &nbsp;年度进展</div>
+
+<!-- ============================
+     第12页：结尾
+============================= -->
+<div class="slide" style="background:linear-gradient(135deg,#0D2347 0%,#1B3F7A 55%,#2E5FAC 100%);min-height:480px;display:flex;flex-direction:column">
+  <div style="position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,#B8935A,#D4AA7A,#B8935A)"></div>
+  <div style="position:absolute;bottom:40px;right:40px;width:200px;height:200px;border-radius:50%;border:1px solid rgba(255,255,255,0.06)"></div>
+  <div style="position:absolute;top:40px;left:40px;width:120px;height:120px;border-radius:50%;border:1px solid rgba(184,147,90,0.1)"></div>
+  <!-- 主内容居中 -->
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;position:relative;z-index:1;padding:40px">
+    <div style="font-size:12px;letter-spacing:5px;color:rgba(184,147,90,0.8);margin-bottom:20px">THANK YOU</div>
+    <div style="font-size:56px;font-weight:900;color:#fff;letter-spacing:5px;margin-bottom:18px">感谢聆听</div>
+    <div style="width:80px;height:3px;background:#B8935A;border-radius:2px;margin-bottom:24px"></div>
+    <div style="font-size:16px;color:rgba(255,255,255,0.5);line-height:1.8;margin-bottom:32px">欢迎提问与讨论<br>期待与各位共同推进4月目标达成</div>
+    <!-- 3个联系/下步 -->
+    <div style="display:flex;gap:20px">
+      <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:16px 24px;text-align:center">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">下次汇报</div>
+        <div style="font-size:14px;font-weight:700;color:#fff">2025年4月30日</div>
+      </div>
+      <div style="background:rgba(184,147,90,0.15);border:1px solid rgba(184,147,90,0.3);border-radius:10px;padding:16px 24px;text-align:center">
+        <div style="font-size:11px;color:rgba(184,147,90,0.6);margin-bottom:4px">4月目标</div>
+        <div style="font-size:14px;font-weight:700;color:#D4AA7A">营收600万元</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:16px 24px;text-align:center">
+        <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:4px">汇报人</div>
+        <div style="font-size:14px;font-weight:700;color:#fff">战略发展部 张明</div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:16px 64px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;position:relative;z-index:1">
+    <span style="font-size:12px;color:rgba(255,255,255,0.3)">月度经营汇报 · 2025年3月</span>
+    <span style="font-size:12px;color:rgba(255,255,255,0.3)">战略发展部 · 2025.03.31</span>
+  </div>
+</div>
+<div class="slide-num">12 / 12 &nbsp;结尾</div>
+
+</body>
+</html>

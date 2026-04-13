@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>CreamData · HR 智慧看板 V9.8</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+/* ══ 主题D · 马卡龙奶油 ══ */
+:root{
+  --bg-page:#EAECF0;--bg:#FFFFFF;
+  --sh-up:0 2px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
+  --sh-sm:0 1px 4px rgba(0,0,0,.10);
+  --sh-in:inset 0 1px 4px rgba(0,0,0,.08);
+  --sh-deep:0 4px 24px rgba(0,0,0,.12),0 1px 6px rgba(0,0,0,.07);
+  --shadow:#D0D5DD;
+  --t1:#0D1117;--t2:#1F2937;--tm:#4B5563;--t3:#9CA3AF;
+  --accent:#5470c6;--accent-light:rgba(84,112,198,.12);
+  --accent-grad:linear-gradient(135deg,#5470c6 0%,#7bc6e6 100%);
+  --red:#ee6666;--red-light:rgba(238,102,102,.12);
+  --amber:#fac858;--amber-light:rgba(250,200,88,.18);
+  --c1:#7bc6e6;--c2:#fac858;--c3:#9a60b4;--c4:#5470c6;--c5:#ff9f7f;--c6:#ee6666;--c7:#ef65ce;
+  --gap-md:16px;--gap-sm:12px;
+  --r-sm:12px;--r-md:18px;--r-lg:24px;--r-xl:30px;
+  --font-d:'Nunito',sans-serif;--font-b:'Noto Sans SC',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{overflow-x:auto;}
+body{font-family:var(--font-b);background:var(--bg-page);display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 0 60px;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility;min-width:1560px;}
+.wrap,.global-nav,.ptab-row,.page-canvas{width:1520px;}
+.wrap{display:flex;flex-direction:column;gap:14px;}
+
+/* ── Nav ── */
+.global-nav{height:62px;padding:0 24px;display:flex;justify-content:space-between;align-items:center;background:var(--bg);border-radius:var(--r-lg);box-shadow:var(--sh-up);}
+.logo-name{font-family:var(--font-d);font-size:18px;font-weight:900;color:var(--t1);}
+.logo-name em{color:var(--accent);font-style:normal;}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.nbtn{padding:7px 16px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:13px;cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);}
+.nbtn.active{color:var(--accent);box-shadow:var(--sh-in);}
+.nbtn-save{background:var(--accent);color:#fff;}
+.nbtn-saveas{background:#374151;color:#fff;}
+.save-st{font-size:11px;font-weight:700;color:var(--tm);}
+
+/* ── Page Tab ── */
+.ptab-row{display:flex;gap:var(--gap-sm);align-items:center;}
+.ptab{padding:6px 20px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:13px;cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);transition:.18s;font-family:var(--font-b);}
+.ptab.active{color:var(--accent);box-shadow:var(--sh-in);font-weight:900;}
+
+/* ── Page Canvas ── */
+.page-canvas{display:none;flex-direction:column;gap:var(--gap-md);min-height:855px;height:auto;padding:18px 18px 22px;overflow:visible;background:var(--bg);border-radius:var(--r-xl);box-shadow:var(--sh-deep);}
+.page-canvas.active{display:flex;}
+.view{display:none;}.view.active{display:block;}
+
+/* ── Page Header ── */
+.ph{display:flex;justify-content:space-between;align-items:center;flex-shrink:0;flex-wrap:wrap;gap:10px;}
+.ph-title{font-family:var(--font-d);font-size:17px;font-weight:900;color:var(--t1);}
+.ph-title em{color:var(--accent);font-style:normal;}
+.ph-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+/* ── Year-Month Picker ── */
+.ym-wrap{position:relative;display:inline-block;}
+.ym-input{display:flex;align-items:center;gap:8px;padding:5px 14px;border:1.5px solid var(--shadow);border-radius:var(--r-sm);cursor:pointer;background:var(--bg);font-size:13px;font-weight:700;color:var(--accent);min-width:130px;justify-content:space-between;box-shadow:var(--sh-sm);}
+.ym-input:hover{border-color:var(--accent);}
+.ym-panel{position:absolute;top:calc(100% + 6px);left:0;z-index:9999;background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-deep);padding:14px;min-width:230px;display:none;}
+.ym-years{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #f0f0f0;}
+.ym-year-btn{padding:4px 14px;border:1.5px solid var(--shadow);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;background:var(--bg);color:var(--t2);font-family:var(--font-b);}
+.ym-year-btn.active{border-color:var(--accent);background:var(--accent-light);color:var(--accent);}
+.ym-months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.ym-month-btn{padding:7px 0;border:1.5px solid var(--shadow);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);color:var(--t2);text-align:center;font-family:var(--font-b);}
+.ym-month-btn:hover{background:var(--accent-light);color:var(--accent);border-color:var(--accent);}
+.ym-month-btn.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+.ym-footer{display:flex;justify-content:space-between;}
+.ym-footer button{padding:4px 12px;border:1.5px solid var(--shadow);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;background:var(--bg);color:var(--tm);font-family:var(--font-b);}
+
+/* ── Card ── */
+.card{background:var(--bg);box-shadow:var(--sh-up);border-radius:var(--r-md);padding:14px 16px;height:auto;overflow:visible;}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-shrink:0;}
+.ct{font-size:14px;font-weight:900;color:var(--t1);display:flex;align-items:center;gap:7px;}
+.ct::before{content:'';width:3px;height:14px;border-radius:2px;flex-shrink:0;background:var(--accent-grad);display:inline-block;}
+
+/* ── KPI ── */
+.kpi-card{background:var(--bg);box-shadow:var(--sh-up);border-radius:var(--r-md);padding:18px 20px;position:relative;overflow:visible;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--r-md) var(--r-md) 0 0;}
+.kc1::before{background:linear-gradient(90deg,#5470c6,#8fa3df);}
+.kc2::before{background:linear-gradient(90deg,#ee6666,#f5a0a0);}
+.kc3::before{background:linear-gradient(90deg,#fac858,#fde09a);}
+.kc4::before{background:linear-gradient(90deg,#7bc6e6,#b8e4f5);}
+.kl{font-size:12px;font-weight:700;color:var(--tm);margin-top:4px;}
+.kn{font-family:var(--font-d);font-size:2.4rem;font-weight:800;line-height:1.1;margin:8px 0 4px;}
+.ki{position:absolute;top:18px;right:18px;font-size:2rem;opacity:.7;}
+
+/* ── Grids ── */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--gap-md);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:var(--gap-md);}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--gap-md);}
+.g64{display:grid;grid-template-columns:6fr 4fr;gap:var(--gap-md);}
+.g73{display:grid;grid-template-columns:7fr 3fr;gap:var(--gap-md);}
+
+/* ── Table ── */
+.dtable{width:100%;border-collapse:collapse;}
+.dtable th{font-size:12px;font-weight:900;color:var(--tm);padding:9px 12px;border-bottom:2px solid var(--shadow);text-align:left;white-space:nowrap;}
+.dtable td{font-size:13px;font-weight:700;color:var(--t2);padding:10px 12px;border-bottom:1px solid rgba(208,213,221,.5);vertical-align:middle;}
+.dtable tr:last-child td{border-bottom:none;}
+.dtable tr:hover td{background:rgba(84,112,198,.03);}
+.rk{width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;color:#fff;font-weight:900;flex-shrink:0;}
+.rkg{background:linear-gradient(135deg,#FFD700,#B8860B);}
+.rks{background:linear-gradient(135deg,#C0C0C0,#909090);}
+.rkb{background:linear-gradient(135deg,#CD7F32,#8B4513);}
+.rkn{background:var(--shadow);color:var(--tm);}
+
+/* ── Badge / Progress ── */
+.badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;display:inline-block;}
+.bb{background:var(--accent-light);color:var(--accent);}
+.br{background:var(--red-light);color:var(--red);}
+.ba{background:var(--amber-light);color:#b06000;}
+.bg2{background:rgba(123,198,230,.15);color:#1a6a8a;}
+.pbar-wrap{height:7px;border-radius:4px;background:#e9ecef;overflow:hidden;flex:1;}
+.pbar-fill{height:100%;border-radius:4px;transition:.3s;}
+.change-up{color:var(--accent);font-size:11px;font-weight:700;}
+.change-dn{color:var(--red);font-size:11px;font-weight:700;}
+
+/* ── Editable ── */
+[contenteditable="true"]{cursor:text;outline:none;border-radius:4px;transition:background .15s;}
+[contenteditable="true"]:hover{background:rgba(84,112,198,.06);}
+[contenteditable="true"]:focus{background:rgba(84,112,198,.1);box-shadow:0 0 0 2px rgba(84,112,198,.2);padding:1px 4px;}
+
+/* ── Data Center ── */
+.dc-tab-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.dc-tab{padding:6px 16px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:12px;cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);font-family:var(--font-b);transition:.18s;}
+.dc-tab.active{color:var(--accent);box-shadow:var(--sh-in);}
+.dc-page{display:none;}.dc-page.active{display:block;}
+.dc-section{background:var(--bg);box-shadow:var(--sh-up);border-radius:var(--r-md);padding:18px;margin-bottom:14px;}
+.dc-section h3{font-size:13px;font-weight:900;color:var(--t1);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.dc-section h3::before{content:'';width:3px;height:13px;border-radius:2px;background:var(--accent-grad);display:inline-block;flex-shrink:0;}
+.dc-hint{font-size:12px;color:var(--tm);margin-bottom:12px;line-height:1.6;}
+.dc-tbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;}
+.dc-tbar-btns{display:flex;gap:7px;flex-wrap:wrap;}
+.dc-btn-out{padding:5px 12px;border:1.5px solid var(--shadow);border-radius:8px;font-size:12px;font-weight:700;color:var(--tm);cursor:pointer;background:var(--bg);font-family:var(--font-b);}
+.dc-btn{padding:7px 16px;border:none;border-radius:var(--r-sm);font-weight:800;font-size:12px;cursor:pointer;background:var(--accent);color:#fff;font-family:var(--font-b);}
+.dc-wrap{overflow-x:auto;max-height:480px;overflow-y:auto;}
+.dc-tbl{width:100%;border-collapse:collapse;}
+.dc-tbl th{font-size:12px;font-weight:900;color:var(--tm);padding:7px 10px;border-bottom:2px solid var(--shadow);text-align:left;position:sticky;top:0;background:var(--bg);z-index:1;white-space:nowrap;}
+.dc-tbl td{font-size:12px;font-weight:700;color:var(--t2);padding:5px 8px;border-bottom:1px solid rgba(208,213,221,.4);vertical-align:middle;}
+.dc-tbl tr:hover td{background:rgba(84,112,198,.03);}
+.ci{border:1px solid transparent;background:none;font-size:12px;font-weight:700;color:var(--t2);outline:none;font-family:var(--font-b);width:100%;padding:3px 5px;border-radius:4px;}
+.ci:focus{background:#f0f6ff;border-color:var(--accent);}
+.del-btn{border:none;background:none;cursor:pointer;color:var(--red);font-size:14px;padding:2px 6px;border-radius:4px;}
+.del-btn:hover{background:var(--red-light);}
+.filter-bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
+.fsel{padding:5px 10px;border:1.5px solid var(--shadow);border-radius:8px;font-size:12px;font-weight:700;color:var(--t2);background:var(--bg);font-family:var(--font-b);outline:none;cursor:pointer;}
+.fsel:focus{border-color:var(--accent);}
+.bot-bar{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ════ NAV ════ -->
+<nav class="global-nav">
+  <div>
+    <div class="logo-name">Cream<em>Data.</em></div>
+    <div style="font-size:11px;font-weight:700;color:var(--tm);margin-top:2px;" id="meta-co" contenteditable="true">HR 智慧看板 · 某科技集团</div>
+  </div>
+  <div class="nav-r">
+    <button class="nbtn active" id="b-db" onclick="switchView('db')">📊 可视化看板</button>
+    <button class="nbtn" id="b-dc" onclick="switchView('dc')">📋 数据中心</button>
+    <button class="nbtn" onclick="exportPNG()">🖼 导出PNG</button>
+    <button class="nbtn nbtn-save" onclick="saveLocal()">💾 保存</button>
+    <button class="nbtn nbtn-saveas" onclick="saveAs()">📥 另存为</button>
+    <span class="save-st" id="save-st"></span>
+  </div>
+</nav>
+
+<!-- ════ PAGE TABS ════ -->
+<div class="ptab-row">
+  <button class="ptab active" id="pt-1" onclick="switchPage(1)">P1 · 人力总览</button>
+  <button class="ptab" id="pt-2" onclick="switchPage(2)">P2 · 招聘管理</button>
+  <button class="ptab" id="pt-3" onclick="switchPage(3)">P3 · 薪酬绩效</button>
+  <button class="ptab" id="pt-4" onclick="switchPage(4)">P4 · 培训发展</button>
+  <button class="ptab" id="pt-5" onclick="switchPage(5)">P5 · 年度对比</button>
+</div>
+
+<!-- ════ DASHBOARD ════ -->
+<div class="view active" id="view-db">
+
+<!-- P1 人力总览 -->
+<div class="page-canvas active" id="page-1">
+  <div class="ph">
+    <div class="ph-title" id="p1h">👥 人力资源总览</div>
+    <div class="ph-r">
+      <div class="ym-wrap" id="ym-p1">
+        <div class="ym-input" onclick="toggleYm('p1')">
+          <span id="ym-p1-disp">—</span><span style="color:var(--tm);font-size:11px;">▼</span>
+        </div>
+        <div class="ym-panel" id="ym-p1-panel">
+          <div class="ym-years" id="ym-p1-years"></div>
+          <div class="ym-months" id="ym-p1-months"></div>
+          <div class="ym-footer">
+            <button onclick="closeYm()">关闭</button>
+            <button onclick="setYmNow('p1')">本月</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--tm);" id="p1d" contenteditable="true">人数单位：人</div>
+    </div>
+  </div>
+  <!-- 4个 gauge 完成率 -->
+  <div class="g4">
+    <div class="kpi-card kc1"><div class="ki">👥</div><div class="kl" id="kl1" contenteditable="true">员工总人数</div><div class="kn" style="color:var(--accent)" id="kv1">—</div></div>
+    <div class="kpi-card kc2"><div class="ki">📥</div><div class="kl" id="kl2" contenteditable="true">本月入职</div><div class="kn" style="color:var(--red)" id="kv2">—</div></div>
+    <div class="kpi-card kc3"><div class="ki">📤</div><div class="kl" id="kl3" contenteditable="true">本月离职</div><div class="kn" style="color:#b06000" id="kv3">—</div></div>
+    <div class="kpi-card kc4"><div class="ki">📉</div><div class="kl" id="kl4" contenteditable="true">月度流失率</div><div class="kn" style="color:var(--c1)" id="kv4">—</div></div>
+  </div>
+  <!-- 雷达图（员工结构多维） + 部门横柱 + 学历圆环 -->
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-radar" contenteditable="true">员工结构多维雷达</div></div>
+      <div id="ch-radar" style="height:250px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-dept" contenteditable="true">部门人员分布</div></div>
+      <div id="ch-dept" style="height:250px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-edu" contenteditable="true">学历结构分布</div></div>
+      <div id="ch-edu" style="height:250px;width:100%;"></div>
+    </div>
+  </div>
+  <!-- 年龄竖柱 + 司龄横柱 + 入离职折线趋势 -->
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-age" contenteditable="true">年龄结构分布</div></div>
+      <div id="ch-age" style="height:195px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-tenure" contenteditable="true">司龄分布</div></div>
+      <div id="ch-tenure" style="height:195px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-inout" contenteditable="true">入离职趋势</div></div>
+      <div id="ch-inout" style="height:195px;width:100%;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- P2 招聘管理 -->
+<div class="page-canvas" id="page-2">
+  <div class="ph">
+    <div class="ph-title" id="p2h">🎯 招聘管理</div>
+    <div class="ph-r">
+      <div class="ym-wrap" id="ym-p2">
+        <div class="ym-input" onclick="toggleYm('p2')">
+          <span id="ym-p2-disp">—</span><span style="color:var(--tm);font-size:11px;">▼</span>
+        </div>
+        <div class="ym-panel" id="ym-p2-panel">
+          <div class="ym-years" id="ym-p2-years"></div>
+          <div class="ym-months" id="ym-p2-months"></div>
+          <div class="ym-footer">
+            <button onclick="closeYm()">关闭</button>
+            <button onclick="setYmNow('p2')">本月</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--tm);" id="p2d" contenteditable="true">招聘数据当月统计</div>
+    </div>
+  </div>
+  <div class="g4">
+    <div class="kpi-card kc1"><div class="ki">📋</div><div class="kl" id="kl5" contenteditable="true">在招职位数</div><div class="kn" style="color:var(--accent)" id="kv5">—</div></div>
+    <div class="kpi-card kc4"><div class="ki">📨</div><div class="kl" id="kl6" contenteditable="true">简历投递量</div><div class="kn" style="color:var(--c1)" id="kv6">—</div></div>
+    <div class="kpi-card kc3"><div class="ki">✅</div><div class="kl" id="kl7" contenteditable="true">面试通过率</div><div class="kn" style="color:#b06000" id="kv7">—</div></div>
+    <div class="kpi-card kc2"><div class="ki">⏱</div><div class="kl" id="kl8" contenteditable="true">平均到岗天数</div><div class="kn" style="color:var(--red)" id="kv8">—</div></div>
+  </div>
+  <div class="g64">
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-funnel" contenteditable="true">招聘转化漏斗</div></div>
+      <div id="ch-funnel" style="height:300px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-source" contenteditable="true">招聘渠道来源</div></div>
+      <div id="ch-source" style="height:300px;width:100%;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct" id="t-recruit-trend" contenteditable="true">月度招聘计划达成</div></div>
+    <div id="ch-recruit-trend" style="height:200px;width:100%;"></div>
+  </div>
+</div>
+
+<!-- P3 薪酬绩效 -->
+<div class="page-canvas" id="page-3">
+  <div class="ph">
+    <div class="ph-title" id="p3h">💰 薪酬绩效</div>
+    <div class="ph-r">
+      <div class="ym-wrap" id="ym-p3">
+        <div class="ym-input" onclick="toggleYm('p3')">
+          <span id="ym-p3-disp">—</span><span style="color:var(--tm);font-size:11px;">▼</span>
+        </div>
+        <div class="ym-panel" id="ym-p3-panel">
+          <div class="ym-years" id="ym-p3-years"></div>
+          <div class="ym-months" id="ym-p3-months"></div>
+          <div class="ym-footer">
+            <button onclick="closeYm()">关闭</button>
+            <button onclick="setYmNow('p3')">本月</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--tm);" id="p3d" contenteditable="true">薪酬单位：万元</div>
+    </div>
+  </div>
+  <div class="g4">
+    <div class="kpi-card kc1"><div class="ki">💵</div><div class="kl" id="kl9" contenteditable="true">月度薪酬总支出(万)</div><div class="kn" style="color:var(--accent)" id="kv9">—</div></div>
+    <div class="kpi-card kc4"><div class="ki">👤</div><div class="kl" id="kl10" contenteditable="true">人均月薪(元)</div><div class="kn" style="color:var(--c1)" id="kv10">—</div></div>
+    <div class="kpi-card kc3"><div class="ki">📊</div><div class="kl" id="kl11" contenteditable="true">预算执行率</div><div class="kn" style="color:#b06000" id="kv11">—</div></div>
+    <div class="kpi-card kc2"><div class="ki">🏆</div><div class="kl" id="kl12" contenteditable="true">绩效优秀率</div><div class="kn" style="color:var(--red)" id="kv12">—</div></div>
+  </div>
+  <!-- gauge仪表盘 × 2 + 绩效圆环 + 部门薪酬横柱 -->
+  <div class="g4">
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div id="ch-gauge-budget" style="height:190px;width:100%;"></div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+      <div id="ch-gauge-perf" style="height:190px;width:100%;"></div>
+    </div>
+    <div class="card" style="grid-column:span 2;">
+      <div class="ch"><div class="ct" id="t-perf" contenteditable="true">绩效评级分布</div></div>
+      <div id="ch-perf" style="height:190px;width:100%;"></div>
+    </div>
+  </div>
+  <!-- 薪酬堆叠柱 + 部门薪酬横柱 -->
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-sal-trend" contenteditable="true">薪酬构成趋势（万元）</div></div>
+      <div id="ch-sal-trend" style="height:215px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-dept-sal" contenteditable="true">各部门人均薪酬对比（元）</div></div>
+      <div id="ch-dept-sal" style="height:215px;width:100%;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- P4 培训发展 -->
+<div class="page-canvas" id="page-4">
+  <div class="ph">
+    <div class="ph-title" id="p4h">📚 培训发展</div>
+    <div class="ph-r">
+      <div class="ym-wrap" id="ym-p4">
+        <div class="ym-input" onclick="toggleYm('p4')">
+          <span id="ym-p4-disp">—</span><span style="color:var(--tm);font-size:11px;">▼</span>
+        </div>
+        <div class="ym-panel" id="ym-p4-panel">
+          <div class="ym-years" id="ym-p4-years"></div>
+          <div class="ym-months" id="ym-p4-months"></div>
+          <div class="ym-footer">
+            <button onclick="closeYm()">关闭</button>
+            <button onclick="setYmNow('p4')">本月</button>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--tm);" id="p4d" contenteditable="true">培训数据当月统计</div>
+    </div>
+  </div>
+  <div class="g4">
+    <div class="kpi-card kc1"><div class="ki">🎓</div><div class="kl" id="kl13" contenteditable="true">月度培训课时</div><div class="kn" style="color:var(--accent)" id="kv13">—</div></div>
+    <div class="kpi-card kc4"><div class="ki">⏰</div><div class="kl" id="kl14" contenteditable="true">人均培训时长(h)</div><div class="kn" style="color:var(--c1)" id="kv14">—</div></div>
+    <div class="kpi-card kc3"><div class="ki">💰</div><div class="kl" id="kl15" contenteditable="true">培训预算(万)</div><div class="kn" style="color:#b06000" id="kv15">—</div></div>
+    <div class="kpi-card kc2"><div class="ki">🚀</div><div class="kl" id="kl16" contenteditable="true">晋升人数</div><div class="kn" style="color:var(--red)" id="kv16">—</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-train-trend" contenteditable="true">培训参与趋势（人次）</div></div>
+      <div id="ch-train-trend" style="height:260px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-train-type" contenteditable="true">培训类型分布</div></div>
+      <div id="ch-train-type" style="height:260px;width:100%;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct" id="t-train-dept" contenteditable="true">各部门培训参与率（%）</div></div>
+    <div id="ch-train-dept" style="height:195px;width:100%;"></div>
+  </div>
+</div>
+
+<!-- P5 年度对比 -->
+<div class="page-canvas" id="page-5">
+  <div class="ph">
+    <div class="ph-title" id="p5h">📅 年度月度 <em>对比分析</em></div>
+    <div class="ph-r">
+      <div class="filter-bar" style="margin:0;">
+        <span style="font-size:12px;font-weight:700;color:var(--tm);">选择年份：</span>
+        <select class="fsel" id="p5-year-sel" onchange="onP5YearChange()"></select>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--tm);" id="p5d" contenteditable="true">各月HR数据横向对比</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct" id="t-annual-hc" contenteditable="true">月度人员变动趋势（入职/离职/总人数）</div></div>
+    <div id="ch-annual-hc" style="height:230px;width:100%;"></div>
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-annual-turn" contenteditable="true">月度流失率趋势（%）</div></div>
+      <div id="ch-annual-turn" style="height:200px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-annual-sal" contenteditable="true">月度薪酬支出趋势（万元）</div></div>
+      <div id="ch-annual-sal" style="height:200px;width:100%;"></div>
+    </div>
+    <div class="card">
+      <div class="ch"><div class="ct" id="t-annual-train" contenteditable="true">月度培训课时趋势</div></div>
+      <div id="ch-annual-train" style="height:200px;width:100%;"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ch"><div class="ct" id="t-annual-tbl" contenteditable="true">月度HR数据汇总表</div></div>
+    <table class="dtable"><thead><tr>
+      <th contenteditable="true">年月</th>
+      <th contenteditable="true">员工总数</th><th contenteditable="true">入职</th><th contenteditable="true">离职</th>
+      <th contenteditable="true">流失率</th><th contenteditable="true">薪酬总支出(万)</th>
+      <th contenteditable="true">人均月薪(元)</th><th contenteditable="true">培训课时</th><th contenteditable="true">晋升人数</th>
+    </tr></thead><tbody id="tb-annual"></tbody></table>
+  </div>
+</div>
+
+</div><!-- /view-db -->
+
+<!-- ════ DATA CENTER ════ -->
+<div class="view" id="view-dc">
+  <div class="dc-tab-row">
+    <button class="dc-tab active" id="dct-1" onclick="switchDcTab(1)">👥 人力KPI</button>
+    <button class="dc-tab" id="dct-2" onclick="switchDcTab(2)">🏢 部门/结构</button>
+    <button class="dc-tab" id="dct-3" onclick="switchDcTab(3)">🎯 招聘数据</button>
+    <button class="dc-tab" id="dct-4" onclick="switchDcTab(4)">💰 薪酬绩效</button>
+    <button class="dc-tab" id="dct-5" onclick="switchDcTab(5)">📚 培训发展</button>
+  </div>
+  <div class="dc-page active" id="dcp-1">
+    <div class="dc-section"><h3>月度HR核心KPI</h3>
+      <p class="dc-hint">字段：年份 / 月份 / 员工总数 / 入职 / 离职 / 流失率(%) / 薪酬支出(万) / 人均月薪(元) / 培训课时 / 晋升人数。<br>月份格式支持 "1月"/"01"/"1" 均可自动识别。</p>
+      <div id="dc1-tbar"></div>
+      <div class="dc-wrap"><table class="dc-tbl" id="dc1-tbl"></table></div>
+      <div class="bot-bar">
+        <button class="dc-btn-out" onclick="addRow('kpi')">+ 新增一行</button>
+        <button class="dc-btn-out" style="color:var(--red);border-color:var(--red);" onclick="batchDel('kpi','ck1',()=>buildDc1())">🗑 删除选中</button>
+      </div>
+    </div>
+  </div>
+  <div class="dc-page" id="dcp-2">
+    <div class="dc-section"><h3>部门及结构数据</h3>
+      <p class="dc-hint">字段：年份 / 月份 / 类型(dept部门/age年龄/edu学历/tenure司龄) / 名称 / 人数。</p>
+      <div class="filter-bar">
+        <span style="font-size:12px;font-weight:700;color:var(--tm);">筛选：</span>
+        <select class="fsel" id="f2-year" onchange="buildDc2()"><option value="">全部年份</option></select>
+        <select class="fsel" id="f2-month" onchange="buildDc2()"><option value="">全部月份</option></select>
+        <select class="fsel" id="f2-type" onchange="buildDc2()"><option value="">全部类型</option><option value="dept">部门</option><option value="age">年龄</option><option value="edu">学历</option><option value="tenure">司龄</option></select>
+        <button class="dc-btn-out" onclick="clearFilter(2)">清除</button>
+      </div>
+      <div id="dc2-tbar"></div>
+      <div class="dc-wrap"><table class="dc-tbl" id="dc2-tbl"></table></div>
+      <div class="bot-bar">
+        <button class="dc-btn-out" onclick="addRow('structure')">+ 新增一行</button>
+        <button class="dc-btn-out" style="color:var(--red);border-color:var(--red);" onclick="batchDel('structure','ck2',()=>buildDc2())">🗑 删除选中</button>
+      </div>
+    </div>
+  </div>
+  <div class="dc-page" id="dcp-3">
+    <div class="dc-section"><h3>招聘数据</h3>
+      <p class="dc-hint">字段：年份 / 月份 / 在招职位 / 简历量 / 面试通过率 / 平均到岗天数 / 漏斗阶段1-5数量 / 渠道名称（可多行）。</p>
+      <div class="filter-bar">
+        <span style="font-size:12px;font-weight:700;color:var(--tm);">筛选：</span>
+        <select class="fsel" id="f3-year" onchange="buildDc3()"><option value="">全部年份</option></select>
+        <select class="fsel" id="f3-month" onchange="buildDc3()"><option value="">全部月份</option></select>
+        <button class="dc-btn-out" onclick="clearFilter(3)">清除</button>
+      </div>
+      <div id="dc3-tbar"></div>
+      <div class="dc-wrap"><table class="dc-tbl" id="dc3-tbl"></table></div>
+      <div class="bot-bar">
+        <button class="dc-btn-out" onclick="addRow('recruit')">+ 新增一行</button>
+        <button class="dc-btn-out" style="color:var(--red);border-color:var(--red);" onclick="batchDel('recruit','ck3',()=>buildDc3())">🗑 删除选中</button>
+      </div>
+    </div>
+  </div>
+  <div class="dc-page" id="dcp-4">
+    <div class="dc-section"><h3>薪酬绩效数据</h3>
+      <p class="dc-hint">字段：年份 / 月份 / 类型(sal薪酬构成/perf绩效/dept_sal部门薪酬) / 名称 / 数值。</p>
+      <div class="filter-bar">
+        <span style="font-size:12px;font-weight:700;color:var(--tm);">筛选：</span>
+        <select class="fsel" id="f4-year" onchange="buildDc4()"><option value="">全部年份</option></select>
+        <select class="fsel" id="f4-month" onchange="buildDc4()"><option value="">全部月份</option></select>
+        <button class="dc-btn-out" onclick="clearFilter(4)">清除</button>
+      </div>
+      <div id="dc4-tbar"></div>
+      <div class="dc-wrap"><table class="dc-tbl" id="dc4-tbl"></table></div>
+      <div class="bot-bar">
+        <button class="dc-btn-out" onclick="addRow('salary')">+ 新增一行</button>
+        <button class="dc-btn-out" style="color:var(--red);border-color:var(--red);" onclick="batchDel('salary','ck4',()=>buildDc4())">🗑 删除选中</button>
+      </div>
+    </div>
+  </div>
+  <div class="dc-page" id="dcp-5">
+    <div class="dc-section"><h3>培训发展数据</h3>
+      <p class="dc-hint">字段：年份 / 月份 / 类型(trend趋势/type培训类型/dept_rate部门参与率) / 名称 / 数值。</p>
+      <div class="filter-bar">
+        <span style="font-size:12px;font-weight:700;color:var(--tm);">筛选：</span>
+        <select class="fsel" id="f5-year" onchange="buildDc5()"><option value="">全部年份</option></select>
+        <select class="fsel" id="f5-month" onchange="buildDc5()"><option value="">全部月份</option></select>
+        <button class="dc-btn-out" onclick="clearFilter(5)">清除</button>
+      </div>
+      <div id="dc5-tbar"></div>
+      <div class="dc-wrap"><table class="dc-tbl" id="dc5-tbl"></table></div>
+      <div class="bot-bar">
+        <button class="dc-btn-out" onclick="addRow('training')">+ 新增一行</button>
+        <button class="dc-btn-out" style="color:var(--red);border-color:var(--red);" onclick="batchDel('training','ck5',()=>buildDc5())">🗑 删除选中</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+<script>
+// ★ 数据胶囊
+const APP_STATE = {
+  meta:{fileId:'hr_v2_2026',company:'某科技集团',version:'V9.8',savedAt:''},
+  activeYear:'2026', activeMonth:'01',
+  // ── 月度KPI（平铺大表，含year+month）
+  kpi:[
+    {year:'2026',month:'01',headcount:3542,join:128,leave:24,turnover:'6.8',salTotal:'2160',avgSal:'18600',trainHours:480,promoted:12,budgetExec:'88',perfExc:'18'},
+    {year:'2026',month:'02',headcount:3618,join:98, leave:22,turnover:'6.1',salTotal:'2180',avgSal:'18800',trainHours:420,promoted:8, budgetExec:'91',perfExc:'19'},
+    {year:'2026',month:'03',headcount:3690,join:110,leave:38,turnover:'7.2',salTotal:'2210',avgSal:'18900',trainHours:560,promoted:15,budgetExec:'93',perfExc:'21'},
+    {year:'2026',month:'04',headcount:3745,join:95, leave:40,turnover:'7.5',salTotal:'2240',avgSal:'19100',trainHours:490,promoted:10,budgetExec:'89',perfExc:'20'},
+    {year:'2026',month:'05',headcount:3802,join:105,leave:48,turnover:'8.1',salTotal:'2260',avgSal:'19200',trainHours:510,promoted:11,budgetExec:'92',perfExc:'22'},
+    {year:'2026',month:'06',headcount:3830,join:88, leave:60,turnover:'8.8',salTotal:'2300',avgSal:'19500',trainHours:620,promoted:18,budgetExec:'95',perfExc:'23'}
+  ],
+  // ── 部门/年龄/学历/司龄结构（1-6月完整数据）
+  structure:[
+    // 1月
+    {year:'2026',month:'01',type:'dept',name:'研发中心',val:1416},{year:'2026',month:'01',type:'dept',name:'营销中心',val:885},{year:'2026',month:'01',type:'dept',name:'职能部门',val:708},{year:'2026',month:'01',type:'dept',name:'产品设计',val:533},
+    {year:'2026',month:'01',type:'age',name:'<25岁',val:420},{year:'2026',month:'01',type:'age',name:'25-30岁',val:980},{year:'2026',month:'01',type:'age',name:'31-35岁',val:1100},{year:'2026',month:'01',type:'age',name:'36-40岁',val:720},{year:'2026',month:'01',type:'age',name:'>40岁',val:322},
+    {year:'2026',month:'01',type:'edu',name:'博士',val:120},{year:'2026',month:'01',type:'edu',name:'硕士',val:680},{year:'2026',month:'01',type:'edu',name:'本科',val:1820},{year:'2026',month:'01',type:'edu',name:'大专',val:680},{year:'2026',month:'01',type:'edu',name:'其他',val:242},
+    {year:'2026',month:'01',type:'tenure',name:'1年以下',val:580},{year:'2026',month:'01',type:'tenure',name:'1-3年',val:1200},{year:'2026',month:'01',type:'tenure',name:'3-5年',val:820},{year:'2026',month:'01',type:'tenure',name:'5-10年',val:680},{year:'2026',month:'01',type:'tenure',name:'10年+',val:262},
+    // 2月
+    {year:'2026',month:'02',type:'dept',name:'研发中心',val:1456},{year:'2026',month:'02',type:'dept',name:'营销中心',val:902},{year:'2026',month:'02',type:'dept',name:'职能部门',val:720},{year:'2026',month:'02',type:'dept',name:'产品设计',val:540},
+    {year:'2026',month:'02',type:'age',name:'<25岁',val:438},{year:'2026',month:'02',type:'age',name:'25-30岁',val:998},{year:'2026',month:'02',type:'age',name:'31-35岁',val:1122},{year:'2026',month:'02',type:'age',name:'36-40岁',val:730},{year:'2026',month:'02',type:'age',name:'>40岁',val:330},
+    {year:'2026',month:'02',type:'edu',name:'博士',val:124},{year:'2026',month:'02',type:'edu',name:'硕士',val:698},{year:'2026',month:'02',type:'edu',name:'本科',val:1862},{year:'2026',month:'02',type:'edu',name:'大专',val:692},{year:'2026',month:'02',type:'edu',name:'其他',val:242},
+    {year:'2026',month:'02',type:'tenure',name:'1年以下',val:610},{year:'2026',month:'02',type:'tenure',name:'1-3年',val:1220},{year:'2026',month:'02',type:'tenure',name:'3-5年',val:828},{year:'2026',month:'02',type:'tenure',name:'5-10年',val:686},{year:'2026',month:'02',type:'tenure',name:'10年+',val:274},
+    // 3月
+    {year:'2026',month:'03',type:'dept',name:'研发中心',val:1498},{year:'2026',month:'03',type:'dept',name:'营销中心',val:918},{year:'2026',month:'03',type:'dept',name:'职能部门',val:732},{year:'2026',month:'03',type:'dept',name:'产品设计',val:542},
+    {year:'2026',month:'03',type:'age',name:'<25岁',val:452},{year:'2026',month:'03',type:'age',name:'25-30岁',val:1010},{year:'2026',month:'03',type:'age',name:'31-35岁',val:1138},{year:'2026',month:'03',type:'age',name:'36-40岁',val:742},{year:'2026',month:'03',type:'age',name:'>40岁',val:348},
+    {year:'2026',month:'03',type:'edu',name:'博士',val:128},{year:'2026',month:'03',type:'edu',name:'硕士',val:712},{year:'2026',month:'03',type:'edu',name:'本科',val:1892},{year:'2026',month:'03',type:'edu',name:'大专',val:704},{year:'2026',month:'03',type:'edu',name:'其他',val:254},
+    {year:'2026',month:'03',type:'tenure',name:'1年以下',val:638},{year:'2026',month:'03',type:'tenure',name:'1-3年',val:1238},{year:'2026',month:'03',type:'tenure',name:'3-5年',val:836},{year:'2026',month:'03',type:'tenure',name:'5-10年',val:692},{year:'2026',month:'03',type:'tenure',name:'10年+',val:286},
+    // 4月
+    {year:'2026',month:'04',type:'dept',name:'研发中心',val:1528},{year:'2026',month:'04',type:'dept',name:'营销中心',val:938},{year:'2026',month:'04',type:'dept',name:'职能部门',val:742},{year:'2026',month:'04',type:'dept',name:'产品设计',val:537},
+    {year:'2026',month:'04',type:'age',name:'<25岁',val:460},{year:'2026',month:'04',type:'age',name:'25-30岁',val:1022},{year:'2026',month:'04',type:'age',name:'31-35岁',val:1150},{year:'2026',month:'04',type:'age',name:'36-40岁',val:755},{year:'2026',month:'04',type:'age',name:'>40岁',val:358},
+    {year:'2026',month:'04',type:'edu',name:'博士',val:132},{year:'2026',month:'04',type:'edu',name:'硕士',val:722},{year:'2026',month:'04',type:'edu',name:'本科',val:1920},{year:'2026',month:'04',type:'edu',name:'大专',val:712},{year:'2026',month:'04',type:'edu',name:'其他',val:259},
+    {year:'2026',month:'04',type:'tenure',name:'1年以下',val:652},{year:'2026',month:'04',type:'tenure',name:'1-3年',val:1252},{year:'2026',month:'04',type:'tenure',name:'3-5年',val:842},{year:'2026',month:'04',type:'tenure',name:'5-10年',val:698},{year:'2026',month:'04',type:'tenure',name:'10年+',val:301},
+    // 5月
+    {year:'2026',month:'05',type:'dept',name:'研发中心',val:1562},{year:'2026',month:'05',type:'dept',name:'营销中心',val:952},{year:'2026',month:'05',type:'dept',name:'职能部门',val:754},{year:'2026',month:'05',type:'dept',name:'产品设计',val:534},
+    {year:'2026',month:'05',type:'age',name:'<25岁',val:472},{year:'2026',month:'05',type:'age',name:'25-30岁',val:1038},{year:'2026',month:'05',type:'age',name:'31-35岁',val:1162},{year:'2026',month:'05',type:'age',name:'36-40岁',val:768},{year:'2026',month:'05',type:'age',name:'>40岁',val:362},
+    {year:'2026',month:'05',type:'edu',name:'博士',val:136},{year:'2026',month:'05',type:'edu',name:'硕士',val:734},{year:'2026',month:'05',type:'edu',name:'本科',val:1948},{year:'2026',month:'05',type:'edu',name:'大专',val:720},{year:'2026',month:'05',type:'edu',name:'其他',val:264},
+    {year:'2026',month:'05',type:'tenure',name:'1年以下',val:668},{year:'2026',month:'05',type:'tenure',name:'1-3年',val:1268},{year:'2026',month:'05',type:'tenure',name:'3-5年',val:848},{year:'2026',month:'05',type:'tenure',name:'5-10年',val:706},{year:'2026',month:'05',type:'tenure',name:'10年+',val:312},
+    // 6月
+    {year:'2026',month:'06',type:'dept',name:'研发中心',val:1582},{year:'2026',month:'06',type:'dept',name:'营销中心',val:960},{year:'2026',month:'06',type:'dept',name:'职能部门',val:760},{year:'2026',month:'06',type:'dept',name:'产品设计',val:528},
+    {year:'2026',month:'06',type:'age',name:'<25岁',val:480},{year:'2026',month:'06',type:'age',name:'25-30岁',val:1050},{year:'2026',month:'06',type:'age',name:'31-35岁',val:1172},{year:'2026',month:'06',type:'age',name:'36-40岁',val:778},{year:'2026',month:'06',type:'age',name:'>40岁',val:370},
+    {year:'2026',month:'06',type:'edu',name:'博士',val:140},{year:'2026',month:'06',type:'edu',name:'硕士',val:742},{year:'2026',month:'06',type:'edu',name:'本科',val:1968},{year:'2026',month:'06',type:'edu',name:'大专',val:728},{year:'2026',month:'06',type:'edu',name:'其他',val:252},
+    {year:'2026',month:'06',type:'tenure',name:'1年以下',val:680},{year:'2026',month:'06',type:'tenure',name:'1-3年',val:1280},{year:'2026',month:'06',type:'tenure',name:'3-5年',val:852},{year:'2026',month:'06',type:'tenure',name:'5-10年',val:712},{year:'2026',month:'06',type:'tenure',name:'10年+',val:306}
+  ],
+  // ── 招聘数据（1-6月完整）
+  recruit:[
+    {year:'2026',month:'01',openPos:32,resume:1458,interviewPass:'24.8',hireDays:18,f1:2400,f2:840,f3:288,f4:72,f5:50},
+    {year:'2026',month:'01',type:'source',name:'智联招聘',val:45},{year:'2026',month:'01',type:'source',name:'猎聘网',val:30},{year:'2026',month:'01',type:'source',name:'内部推荐',val:15},{year:'2026',month:'01',type:'source',name:'BOSS直聘',val:7},{year:'2026',month:'01',type:'source',name:'其他',val:3},
+    {year:'2026',month:'02',openPos:28,resume:1320,interviewPass:'26.1',hireDays:16,f1:2200,f2:780,f3:260,f4:68,f5:46},
+    {year:'2026',month:'02',type:'source',name:'智联招聘',val:42},{year:'2026',month:'02',type:'source',name:'猎聘网',val:28},{year:'2026',month:'02',type:'source',name:'内部推荐',val:18},{year:'2026',month:'02',type:'source',name:'BOSS直聘',val:9},{year:'2026',month:'02',type:'source',name:'其他',val:3},
+    {year:'2026',month:'03',openPos:35,resume:1680,interviewPass:'22.6',hireDays:20,f1:2800,f2:950,f3:320,f4:80,f5:58},
+    {year:'2026',month:'03',type:'source',name:'智联招聘',val:40},{year:'2026',month:'03',type:'source',name:'猎聘网',val:32},{year:'2026',month:'03',type:'source',name:'内部推荐',val:16},{year:'2026',month:'03',type:'source',name:'BOSS直聘',val:8},{year:'2026',month:'03',type:'source',name:'其他',val:4},
+    {year:'2026',month:'04',openPos:30,resume:1520,interviewPass:'25.0',hireDays:17,f1:2500,f2:860,f3:295,f4:74,f5:52},
+    {year:'2026',month:'04',type:'source',name:'智联招聘',val:43},{year:'2026',month:'04',type:'source',name:'猎聘网',val:29},{year:'2026',month:'04',type:'source',name:'内部推荐',val:17},{year:'2026',month:'04',type:'source',name:'BOSS直聘',val:8},{year:'2026',month:'04',type:'source',name:'其他',val:3},
+    {year:'2026',month:'05',openPos:33,resume:1600,interviewPass:'23.8',hireDays:19,f1:2650,f2:900,f3:305,f4:76,f5:54},
+    {year:'2026',month:'05',type:'source',name:'智联招聘',val:41},{year:'2026',month:'05',type:'source',name:'猎聘网',val:31},{year:'2026',month:'05',type:'source',name:'内部推荐',val:17},{year:'2026',month:'05',type:'source',name:'BOSS直聘',val:8},{year:'2026',month:'05',type:'source',name:'其他',val:3},
+    {year:'2026',month:'06',openPos:38,resume:1750,interviewPass:'21.9',hireDays:22,f1:2900,f2:980,f3:335,f4:84,f5:60},
+    {year:'2026',month:'06',type:'source',name:'智联招聘',val:38},{year:'2026',month:'06',type:'source',name:'猎聘网',val:33},{year:'2026',month:'06',type:'source',name:'内部推荐',val:19},{year:'2026',month:'06',type:'source',name:'BOSS直聘',val:7},{year:'2026',month:'06',type:'source',name:'其他',val:3}
+  ],
+  // ── 薪酬绩效数据（1-6月完整）
+  salary:[
+    // 1月
+    {year:'2026',month:'01',type:'sal',name:'基本薪资',val:1560},{year:'2026',month:'01',type:'sal',name:'绩效奖金',val:420},{year:'2026',month:'01',type:'sal',name:'津贴补贴',val:180},
+    {year:'2026',month:'01',type:'perf',name:'S优秀',val:180},{year:'2026',month:'01',type:'perf',name:'A良好',val:890},{year:'2026',month:'01',type:'perf',name:'B达标',val:1960},{year:'2026',month:'01',type:'perf',name:'C待改进',val:420},{year:'2026',month:'01',type:'perf',name:'D不达标',val:92},
+    {year:'2026',month:'01',type:'dept_sal',name:'研发中心',val:24800},{year:'2026',month:'01',type:'dept_sal',name:'营销中心',val:18600},{year:'2026',month:'01',type:'dept_sal',name:'职能部门',val:15200},{year:'2026',month:'01',type:'dept_sal',name:'产品设计',val:21500},
+    // 2月
+    {year:'2026',month:'02',type:'sal',name:'基本薪资',val:1580},{year:'2026',month:'02',type:'sal',name:'绩效奖金',val:430},{year:'2026',month:'02',type:'sal',name:'津贴补贴',val:170},
+    {year:'2026',month:'02',type:'perf',name:'S优秀',val:188},{year:'2026',month:'02',type:'perf',name:'A良好',val:910},{year:'2026',month:'02',type:'perf',name:'B达标',val:2000},{year:'2026',month:'02',type:'perf',name:'C待改进',val:428},{year:'2026',month:'02',type:'perf',name:'D不达标',val:92},
+    {year:'2026',month:'02',type:'dept_sal',name:'研发中心',val:25200},{year:'2026',month:'02',type:'dept_sal',name:'营销中心',val:18900},{year:'2026',month:'02',type:'dept_sal',name:'职能部门',val:15400},{year:'2026',month:'02',type:'dept_sal',name:'产品设计',val:21800},
+    // 3月
+    {year:'2026',month:'03',type:'sal',name:'基本薪资',val:1598},{year:'2026',month:'03',type:'sal',name:'绩效奖金',val:448},{year:'2026',month:'03',type:'sal',name:'津贴补贴',val:164},
+    {year:'2026',month:'03',type:'perf',name:'S优秀',val:196},{year:'2026',month:'03',type:'perf',name:'A良好',val:928},{year:'2026',month:'03',type:'perf',name:'B达标',val:2038},{year:'2026',month:'03',type:'perf',name:'C待改进',val:436},{year:'2026',month:'03',type:'perf',name:'D不达标',val:92},
+    {year:'2026',month:'03',type:'dept_sal',name:'研发中心',val:25500},{year:'2026',month:'03',type:'dept_sal',name:'营销中心',val:19100},{year:'2026',month:'03',type:'dept_sal',name:'职能部门',val:15600},{year:'2026',month:'03',type:'dept_sal',name:'产品设计',val:22100},
+    // 4月
+    {year:'2026',month:'04',type:'sal',name:'基本薪资',val:1615},{year:'2026',month:'04',type:'sal',name:'绩效奖金',val:460},{year:'2026',month:'04',type:'sal',name:'津贴补贴',val:165},
+    {year:'2026',month:'04',type:'perf',name:'S优秀',val:200},{year:'2026',month:'04',type:'perf',name:'A良好',val:942},{year:'2026',month:'04',type:'perf',name:'B达标',val:2074},{year:'2026',month:'04',type:'perf',name:'C待改进',val:440},{year:'2026',month:'04',type:'perf',name:'D不达标',val:89},
+    {year:'2026',month:'04',type:'dept_sal',name:'研发中心',val:25800},{year:'2026',month:'04',type:'dept_sal',name:'营销中心',val:19300},{year:'2026',month:'04',type:'dept_sal',name:'职能部门',val:15700},{year:'2026',month:'04',type:'dept_sal',name:'产品设计',val:22400},
+    // 5月
+    {year:'2026',month:'05',type:'sal',name:'基本薪资',val:1630},{year:'2026',month:'05',type:'sal',name:'绩效奖金',val:468},{year:'2026',month:'05',type:'sal',name:'津贴补贴',val:162},
+    {year:'2026',month:'05',type:'perf',name:'S优秀',val:208},{year:'2026',month:'05',type:'perf',name:'A良好',val:958},{year:'2026',month:'05',type:'perf',name:'B达标',val:2104},{year:'2026',month:'05',type:'perf',name:'C待改进',val:448},{year:'2026',month:'05',type:'perf',name:'D不达标',val:84},
+    {year:'2026',month:'05',type:'dept_sal',name:'研发中心',val:26100},{year:'2026',month:'05',type:'dept_sal',name:'营销中心',val:19500},{year:'2026',month:'05',type:'dept_sal',name:'职能部门',val:15900},{year:'2026',month:'05',type:'dept_sal',name:'产品设计',val:22600},
+    // 6月
+    {year:'2026',month:'06',type:'sal',name:'基本薪资',val:1658},{year:'2026',month:'06',type:'sal',name:'绩效奖金',val:482},{year:'2026',month:'06',type:'sal',name:'津贴补贴',val:160},
+    {year:'2026',month:'06',type:'perf',name:'S优秀',val:218},{year:'2026',month:'06',type:'perf',name:'A良好',val:972},{year:'2026',month:'06',type:'perf',name:'B达标',val:2128},{year:'2026',month:'06',type:'perf',name:'C待改进',val:452},{year:'2026',month:'06',type:'perf',name:'D不达标',val:80},
+    {year:'2026',month:'06',type:'dept_sal',name:'研发中心',val:26400},{year:'2026',month:'06',type:'dept_sal',name:'营销中心',val:19800},{year:'2026',month:'06',type:'dept_sal',name:'职能部门',val:16100},{year:'2026',month:'06',type:'dept_sal',name:'产品设计',val:22900}
+  ],
+  // ── 培训发展数据（1-6月完整）
+  training:[
+    // 1月
+    {year:'2026',month:'01',type:'trend',name:'线上',val:280},{year:'2026',month:'01',type:'trend',name:'线下',val:200},
+    {year:'2026',month:'01',type:'type',name:'技术技能',val:35},{year:'2026',month:'01',type:'type',name:'管理能力',val:25},{year:'2026',month:'01',type:'type',name:'通用素养',val:20},{year:'2026',month:'01',type:'type',name:'合规安全',val:20},
+    {year:'2026',month:'01',type:'dept_rate',name:'研发中心',val:92},{year:'2026',month:'01',type:'dept_rate',name:'营销中心',val:88},{year:'2026',month:'01',type:'dept_rate',name:'职能部门',val:78},{year:'2026',month:'01',type:'dept_rate',name:'产品设计',val:85},
+    // 2月
+    {year:'2026',month:'02',type:'trend',name:'线上',val:260},{year:'2026',month:'02',type:'trend',name:'线下',val:160},
+    {year:'2026',month:'02',type:'type',name:'技术技能',val:38},{year:'2026',month:'02',type:'type',name:'管理能力',val:22},{year:'2026',month:'02',type:'type',name:'通用素养',val:22},{year:'2026',month:'02',type:'type',name:'合规安全',val:18},
+    {year:'2026',month:'02',type:'dept_rate',name:'研发中心',val:88},{year:'2026',month:'02',type:'dept_rate',name:'营销中心',val:82},{year:'2026',month:'02',type:'dept_rate',name:'职能部门',val:74},{year:'2026',month:'02',type:'dept_rate',name:'产品设计',val:80},
+    // 3月
+    {year:'2026',month:'03',type:'trend',name:'线上',val:320},{year:'2026',month:'03',type:'trend',name:'线下',val:240},
+    {year:'2026',month:'03',type:'type',name:'技术技能',val:36},{year:'2026',month:'03',type:'type',name:'管理能力',val:26},{year:'2026',month:'03',type:'type',name:'通用素养',val:20},{year:'2026',month:'03',type:'type',name:'合规安全',val:18},
+    {year:'2026',month:'03',type:'dept_rate',name:'研发中心',val:94},{year:'2026',month:'03',type:'dept_rate',name:'营销中心',val:90},{year:'2026',month:'03',type:'dept_rate',name:'职能部门',val:82},{year:'2026',month:'03',type:'dept_rate',name:'产品设计',val:88},
+    // 4月
+    {year:'2026',month:'04',type:'trend',name:'线上',val:295},{year:'2026',month:'04',type:'trend',name:'线下',val:195},
+    {year:'2026',month:'04',type:'type',name:'技术技能',val:34},{year:'2026',month:'04',type:'type',name:'管理能力',val:28},{year:'2026',month:'04',type:'type',name:'通用素养',val:20},{year:'2026',month:'04',type:'type',name:'合规安全',val:18},
+    {year:'2026',month:'04',type:'dept_rate',name:'研发中心',val:90},{year:'2026',month:'04',type:'dept_rate',name:'营销中心',val:86},{year:'2026',month:'04',type:'dept_rate',name:'职能部门',val:78},{year:'2026',month:'04',type:'dept_rate',name:'产品设计',val:83},
+    // 5月
+    {year:'2026',month:'05',type:'trend',name:'线上',val:310},{year:'2026',month:'05',type:'trend',name:'线下',val:200},
+    {year:'2026',month:'05',type:'type',name:'技术技能',val:35},{year:'2026',month:'05',type:'type',name:'管理能力',val:27},{year:'2026',month:'05',type:'type',name:'通用素养',val:21},{year:'2026',month:'05',type:'type',name:'合规安全',val:17},
+    {year:'2026',month:'05',type:'dept_rate',name:'研发中心',val:91},{year:'2026',month:'05',type:'dept_rate',name:'营销中心',val:87},{year:'2026',month:'05',type:'dept_rate',name:'职能部门',val:80},{year:'2026',month:'05',type:'dept_rate',name:'产品设计',val:84},
+    // 6月
+    {year:'2026',month:'06',type:'trend',name:'线上',val:360},{year:'2026',month:'06',type:'trend',name:'线下',val:260},
+    {year:'2026',month:'06',type:'type',name:'技术技能',val:33},{year:'2026',month:'06',type:'type',name:'管理能力',val:30},{year:'2026',month:'06',type:'type',name:'通用素养',val:22},{year:'2026',month:'06',type:'type',name:'合规安全',val:15},
+    {year:'2026',month:'06',type:'dept_rate',name:'研发中心',val:95},{year:'2026',month:'06',type:'dept_rate',name:'营销中心',val:92},{year:'2026',month:'06',type:'dept_rate',name:'职能部门',val:85},{year:'2026',month:'06',type:'dept_rate',name:'产品设计',val:90}
+  ],
+  ui:{titles:{}}
+};
+// 运行时可变副本
+let state;
+
+// ★ localStorage key
+const LS_KEY = 'creamdata_hr_v2';
+
+// ★ 动态字段集合（随月份变化，不存 ui.titles，不被 restoreEditable 覆盖）
+const DYNAMIC_IDS = new Set(['p1h','p2h','p3h','p4h',
+  'ym-p1-disp','ym-p2-disp','ym-p3-disp','ym-p4-disp',
+  'kv1','kv2','kv3','kv4','kv1c','kv2c','kv3c','kv4c',
+  'kv5','kv6','kv7','kv8','kv9','kv10','kv11','kv12',
+  'kv13','kv14','kv15','kv16']);
+
+// ★ initState：优先读缓存
+function initState(){
+  try{
+    const c=localStorage.getItem(LS_KEY);
+    if(c){
+      const p=JSON.parse(c);
+      if(p.meta?.fileId===APP_STATE.meta.fileId){state=p;return;}
+    }
+  }catch(e){}
+  state=JSON.parse(JSON.stringify(APP_STATE));
+}
+
+// ══ 常量
+const COLORS=['#7bc6e6','#fac858','#9a60b4','#5470c6','#ff9f7f','#ee6666','#ef65ce'];
+const ML={'01':'1月','02':'2月','03':'3月','04':'4月','05':'5月','06':'6月','07':'7月','08':'8月','09':'9月','10':'10月','11':'11月','12':'12月'};
+const TT={backgroundColor:'rgba(13,17,23,.92)',borderColor:'transparent',textStyle:{color:'#fff',fontSize:13,fontWeight:700},padding:[8,14]};
+const TBC='#FFFFFF';
+
+// ★ 月份标准化
+function normMonth(v){const s=String(v||'').trim().replace('月','');const n=parseInt(s);return(n>=1&&n<=12)?String(n).padStart(2,'0'):'01';}
+
+// ══ Chart pool · SVG渲染
+const CI=[];
+function destroyPool(p){p.forEach(c=>{try{c&&c.dispose();}catch(e){}});p.length=0;}
+function mkC(id,opt){const el=document.getElementById(id);if(!el||el.offsetWidth===0)return null;const c=echarts.init(el,null,{renderer:'svg'});c.setOption(opt);CI.push(c);return c;}
+let rsT;window.addEventListener('resize',()=>{clearTimeout(rsT);rsT=setTimeout(()=>CI.forEach(c=>{if(c&&!c.isDisposed())c.resize();}),150);});
+
+// ══ 数据查询
+function getYears(){return[...new Set([...state.kpi,...state.structure,...state.recruit,...state.salary,...state.training].map(r=>r.year))].sort();}
+function getKpi(y,m){return state.kpi.find(r=>r.year===y&&r.month===m)||null;}
+function getStruct(y,m,type){return state.structure.filter(r=>r.year===y&&r.month===m&&r.type===type);}
+function getRecruit(y,m){return state.recruit.find(r=>r.year===y&&r.month===m&&!r.type)||null;}
+function getSource(y,m){return state.recruit.filter(r=>r.year===y&&r.month===m&&r.type==='source');}
+function getSal(y,m,type){return state.salary.filter(r=>r.year===y&&r.month===m&&r.type===type);}
+function getTrain(y,m,type){return state.training.filter(r=>r.year===y&&r.month===m&&r.type===type);}
+// 近6月数据
+// ★ 取当年所有有数据的月份（不限6个，有几个显示几个）
+function getYearMonths(arrFn){
+  const mNums=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const y=state.activeYear;
+  return mNums
+    .map(m=>({lbl:ML[m],m,data:arrFn(y,m)}))
+    .filter(d=>{
+      const v=d.data;
+      if(!v) return false;
+      if(Array.isArray(v)) return v.length>0;
+      return Object.keys(v).length>0;
+    });
+}
+
+// ══ Year-Month Picker
+let ymOpen=null;
+function toggleYm(pid){
+  if(ymOpen===pid){closeYm();return;}
+  closeYm();ymOpen=pid;
+  buildYmPanel(pid);
+  document.getElementById('ym-'+pid+'-panel').style.display='block';
+}
+function closeYm(){
+  if(ymOpen){const p=document.getElementById('ym-'+ymOpen+'-panel');if(p)p.style.display='none';}
+  ymOpen=null;
+}
+function buildYmPanel(pid){
+  const years=getYears();
+  document.getElementById('ym-'+pid+'-years').innerHTML=years.map(y=>
+    `<button class="ym-year-btn${y===state.activeYear?' active':''}" onclick="selYmYear('${pid}','${y}')">${y}年</button>`
+  ).join('');
+  buildYmMonths(pid,state.activeYear);
+}
+function buildYmMonths(pid,year){
+  const mNums=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  document.getElementById('ym-'+pid+'-months').innerHTML=mNums.map(m=>
+    `<button class="ym-month-btn${m===state.activeMonth&&year===state.activeYear?' active':''}" onclick="selYmMonth('${pid}','${year}','${m}')">${parseInt(m)}月</button>`
+  ).join('');
+}
+function selYmYear(pid,year){
+  document.querySelectorAll(`#ym-${pid}-years .ym-year-btn`).forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  buildYmMonths(pid,year);
+}
+function selYmMonth(pid,year,month){
+  state.activeYear=year;state.activeMonth=month;
+  closeYm();
+  updatePickers();
+  destroyPool(CI);renderPage(curPage);
+}
+function setYmNow(pid){
+  const now=new Date();
+  selYmMonth(pid,String(now.getFullYear()),String(now.getMonth()+1).padStart(2,'0'));
+}
+document.addEventListener('click',e=>{if(ymOpen&&!e.target.closest('.ym-wrap'))closeYm();});
+
+// ══ View/Page switch
+let curPage=1,curDcTab=1;
+function switchView(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.querySelectorAll('.nbtn[id^="b-"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  document.getElementById('b-'+v).classList.add('active');
+  if(v==='db') setTimeout(()=>{destroyPool(CI);renderPage(curPage);},100);
+  if(v==='dc') buildDcTab(curDcTab);
+}
+function switchPage(n){
+  curPage=n;
+  document.querySelectorAll('.page-canvas').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+n)?.classList.add('active');
+  document.getElementById('pt-'+n)?.classList.add('active');
+  setTimeout(()=>{destroyPool(CI);renderPage(n);},100);
+}
+function renderPage(n){
+  updatePickers();
+  if(n===1)renderP1();else if(n===2)renderP2();else if(n===3)renderP3();
+  else if(n===4)renderP4();else if(n===5)renderP5();
+  restoreEditable();
+}
+
+// ★ updatePickers：所有动态显示集中在此，选了月份就全部联动
+function updatePickers(){
+  const y=state.activeYear,m=state.activeMonth;
+  const lbl=`${y}年${ML[m]||m}`;
+  // picker 显示
+  ['p1','p2','p3','p4'].forEach(pid=>{
+    const el=document.getElementById('ym-'+pid+'-disp');if(el)el.textContent=lbl;
+  });
+  // ★ 页面标题动态更新
+  const titles={p1h:`👥 人力资源总览 · <em>${lbl}</em>`,p2h:`🎯 招聘管理 · <em>${lbl}</em>`,p3h:`💰 薪酬绩效 · <em>${lbl}</em>`,p4h:`📚 培训发展 · <em>${lbl}</em>`};
+  Object.entries(titles).forEach(([id,html])=>{const el=document.getElementById(id);if(el)el.innerHTML=html;});
+  // P5 年份选择
+  const p5sel=document.getElementById('p5-year-sel');
+  if(p5sel){const years=getYears();const cv=p5sel.value||y;p5sel.innerHTML=years.map(yr=>`<option value="${yr}"${yr===cv?' selected':''}>${yr}年</option>`).join('');}
+  // DC筛选下拉
+  [2,3,4,5].forEach(n=>fillFS(n));
+}
+
+// ★ restoreEditable：排除动态字段
+function restoreEditable(){
+  const t=state.ui?.titles||{};
+  Object.entries(t).forEach(([id,txt])=>{
+    if(DYNAMIC_IDS.has(id))return;
+    const el=document.getElementById(id);if(el)el.innerText=txt;
+  });
+}
+
+// ══ Chart helpers
+function barHOpt(cats,vals,unit=''){
+  return{tooltip:{trigger:'axis',...TT},grid:{left:'1%',right:'14%',top:'3%',bottom:'3%',containLabel:true},
+    xAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(208,213,221,.5)',type:'dashed'}}},
+    yAxis:{type:'category',data:cats,axisLabel:{fontWeight:700,fontSize:12,color:'#1F2937'},axisTick:{show:false},axisLine:{show:false}},
+    series:[{type:'bar',barMaxWidth:20,data:vals.map((v,i)=>({value:v,itemStyle:{color:COLORS[i%COLORS.length],borderRadius:[0,8,8,0]}})),
+      label:{show:true,position:'right',formatter:p=>p.value!=null?`${p.value}${unit}`:'',fontSize:12,fontWeight:900,color:'#1F2937',textBorderWidth:2,textBorderColor:TBC}}]};
+}
+function barVOpt(cats,vals,colors,unit=''){
+  return{tooltip:{trigger:'axis',...TT},grid:{left:'2%',right:'2%',top:'10%',bottom:'4%',containLabel:true},
+    xAxis:{type:'category',data:cats,axisLabel:{fontWeight:700,fontSize:11,color:'#1F2937'},axisTick:{show:false},axisLine:{lineStyle:{color:'#D0D5DD'}}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(208,213,221,.5)',type:'dashed'}}},
+    series:[{type:'bar',barMaxWidth:38,data:vals.map((v,i)=>({value:v,itemStyle:{color:(colors&&colors[i])||COLORS[i%COLORS.length],borderRadius:[6,6,0,0]}})),
+      label:{show:true,position:'top',formatter:p=>p.value!=null?`${p.value}${unit}`:'',fontSize:11,fontWeight:900,color:'#1F2937',textBorderWidth:2,textBorderColor:TBC}}]};
+}
+function barStackOpt(cats,series,unit=''){
+  return{tooltip:{trigger:'axis',axisPointer:{type:'shadow'},...TT},
+    legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#4B5563'},icon:'rect',itemWidth:10,itemHeight:8},
+    grid:{left:'1%',right:'1%',top:'28px',bottom:'3%',containLabel:true},
+    xAxis:{type:'category',data:cats,axisLabel:{fontWeight:700,fontSize:11,color:'#1F2937'},axisTick:{show:false},axisLine:{lineStyle:{color:'#D0D5DD'}}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(208,213,221,.5)',type:'dashed'}}},
+    series:series.map((s,i)=>({name:s.name,type:'bar',stack:'t',barMaxWidth:50,data:s.data,
+      itemStyle:{color:COLORS[i],borderRadius:i===series.length-1?[4,4,0,0]:[0,0,0,0]},
+      label:{show:true,formatter:p=>p.value>50?`${p.value}${unit}`:'',fontSize:10,fontWeight:900,color:'#fff'}}))};
+}
+function donutOpt(data,unit=''){
+  return{tooltip:{trigger:'item',formatter:p=>`${p.name}<br/>${p.value}${unit}（${p.percent.toFixed(1)}%）`,...TT},
+    series:[{type:'pie',radius:['35%','58%'],center:['50%','52%'],
+      data:data.map((d,i)=>({name:d.name,value:d.value,itemStyle:{color:COLORS[i%COLORS.length],borderRadius:6,borderColor:'#FFFFFF',borderWidth:2}})),
+      label:{show:true,position:'outside',formatter:p=>`${p.name}\n${p.value}${unit}\n${p.percent.toFixed(1)}%`,fontSize:11,fontWeight:900,color:'#1F2937',lineHeight:15,textBorderWidth:2,textBorderColor:TBC,alignTo:'labelLine',bleedMargin:5},
+      labelLine:{show:true,length:12,length2:8,smooth:true},emphasis:{scale:true,scaleSize:4}}]};
+}
+function lineOpt(xData,series){
+  return{tooltip:{trigger:'axis',...TT},
+    legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#4B5563'},icon:'circle',itemWidth:8,itemHeight:8},
+    grid:{left:'1%',right:'1%',top:'28px',bottom:'3%',containLabel:true},
+    xAxis:{type:'category',data:xData,axisLabel:{fontWeight:700,fontSize:11,color:'#1F2937'},axisLine:{lineStyle:{color:'#D0D5DD'}},axisTick:{show:false}},
+    yAxis:{type:'value',axisLine:{show:false},splitLine:{lineStyle:{color:'rgba(208,213,221,.5)',type:'dashed'}}},
+    series:series.map((s,i)=>({name:s.name,type:'line',data:s.data,smooth:true,connectNulls:false,
+      lineStyle:{width:2.5,color:COLORS[i]},itemStyle:{color:COLORS[i]},
+      areaStyle:{color:{type:'linear',x:0,y:0,x2:0,y2:1,colorStops:[{offset:0,color:COLORS[i]+'22'},{offset:1,color:COLORS[i]+'03'}]}},
+      label:{show:true,formatter:p=>p.value!=null&&p.value!==''?String(p.value):'',position:i%2===0?'top':'bottom',fontSize:10,fontWeight:900,color:COLORS[i],textBorderWidth:2,textBorderColor:TBC}}))};
+}
+// ★ 仪表盘 gauge（完成率/达成率）
+function gaugeOpt(value,name,color){
+  color=color||'#5470c6';
+  return{series:[{type:'gauge',startAngle:200,endAngle:-20,min:0,max:100,
+    pointer:{show:false},
+    progress:{show:true,width:16,itemStyle:{color}},
+    axisLine:{lineStyle:{width:16,color:[[1,'#e9ecef']]}},
+    axisTick:{show:false},splitLine:{show:false},axisLabel:{show:false},anchor:{show:false},
+    detail:{valueAnimation:true,formatter:`{value}%`,fontSize:20,fontWeight:900,color,offsetCenter:[0,'10%'],fontFamily:"'Nunito',sans-serif"},
+    title:{text:name,offsetCenter:[0,'42%'],fontSize:12,fontWeight:700,color:'#4B5563'},
+    data:[{value,name}]
+  }]};
+}
+// ★ 雷达图（多维评分）
+function radarOpt(indicators,seriesList){
+  return{tooltip:{trigger:'item',...TT},
+    legend:{top:0,right:0,textStyle:{fontSize:11,fontWeight:700,color:'#4B5563'}},
+    radar:{indicator:indicators,shape:'polygon',splitNum:4,
+      axisName:{fontSize:12,fontWeight:700,color:'#4B5563'},
+      splitLine:{lineStyle:{color:'rgba(208,213,221,.5)'}},
+      splitArea:{show:false},axisLine:{lineStyle:{color:'rgba(208,213,221,.4)'}}},
+    series:[{type:'radar',data:seriesList.map((s,i)=>({name:s.name,value:s.data,
+      lineStyle:{color:COLORS[i],width:2},itemStyle:{color:COLORS[i]},areaStyle:{color:COLORS[i]+'22'}}))}]};
+}
+// ★ 漏斗图
+function funnelOpt(data){
+  return{tooltip:{trigger:'item',formatter:'{b}: {c}人',...TT},
+    series:[{type:'funnel',left:'10%',right:'10%',top:'5%',bottom:'5%',width:'80%',
+      data:data.map((d,i)=>({name:d.name,value:d.value,itemStyle:{color:COLORS[i]}})),
+      label:{position:'inside',formatter:'{b}\n{c}人',fontWeight:900,fontSize:12,color:'#fff',textBorderWidth:0},
+      emphasis:{label:{fontSize:13}}}]};
+}
+
+// ══ P1 人力总览
+function renderP1(){
+  const y=state.activeYear,m=state.activeMonth;
+  const k=getKpi(y,m);
+  document.getElementById('kv1').textContent=k?.headcount||'—';
+  document.getElementById('kv2').textContent=k?.join||'—';
+  document.getElementById('kv3').textContent=k?.leave||'—';
+  document.getElementById('kv4').textContent=k?.turnover?k.turnover+'%':'—';
+
+  // ★ 雷达图：员工结构多维（部门集中度/年龄活力/学历层次/司龄稳定性/培训覆盖）
+  const dept=getStruct(y,m,'dept');const age=getStruct(y,m,'age');
+  const edu=getStruct(y,m,'edu');const tenure=getStruct(y,m,'tenure');
+  if(k){
+    const hc=k.headcount||1;
+    const deptScore=dept.length?Math.min(100,Math.round((dept.reduce((s,d)=>s+(d.val/hc<0.5?d.val/hc*100:50),0)/dept.length)*2)):50;
+    const ageScore=age.length?Math.round(age.filter(a=>['25-30岁','31-35岁'].includes(a.name)).reduce((s,d)=>s+d.val,0)/hc*100):60;
+    const eduScore=edu.length?Math.round(edu.filter(e=>['硕士','博士'].includes(e.name)).reduce((s,d)=>s+d.val,0)/hc*100+50):65;
+    const tenureScore=tenure.length?Math.round(tenure.filter(t=>['3-5年','5-10年','10年+'].includes(t.name)).reduce((s,d)=>s+d.val,0)/hc*100):55;
+    const trainScore=Math.min(100,Math.round((k.trainHours||0)/hc*20));
+    mkC('ch-radar',radarOpt(
+      [{name:'部门均衡',max:100},{name:'年龄活力',max:100},{name:'学历层次',max:100},{name:'司龄稳定',max:100},{name:'培训覆盖',max:100}],
+      [{name:ML[m]+'人力指数',data:[deptScore,ageScore,Math.min(100,eduScore),tenureScore,Math.min(100,trainScore)]}]
+    ));
+  }
+
+  // 部门横柱图
+  if(dept.length) mkC('ch-dept',barHOpt(dept.map(d=>d.name),dept.map(d=>d.val),'人'));
+
+  // 学历圆环
+  if(edu.length) mkC('ch-edu',donutOpt(edu.map(d=>({name:d.name,value:d.val})),'人'));
+
+  // 年龄竖柱图
+  if(age.length) mkC('ch-age',barVOpt(age.map(d=>d.name),age.map(d=>d.val),null,'人'));
+
+  // 司龄横柱
+  if(tenure.length) mkC('ch-tenure',barHOpt(tenure.map(d=>d.name),tenure.map(d=>d.val),'人'));
+
+  // 入离职趋势折线
+  const last6=getYearMonths((ly,lm)=>getKpi(ly,lm));
+  mkC('ch-inout',lineOpt(last6.map(d=>d.lbl),[
+    {name:'入职',data:last6.map(d=>d.data?.join??null)},
+    {name:'离职',data:last6.map(d=>d.data?.leave??null)}
+  ]));
+}
+
+// ══ P2 招聘管理
+function renderP2(){
+  const y=state.activeYear,m=state.activeMonth;
+  const r=getRecruit(y,m);
+  document.getElementById('kv5').textContent=r?.openPos||'—';
+  document.getElementById('kv6').textContent=r?.resume||'—';
+  document.getElementById('kv7').textContent=r?.interviewPass?r.interviewPass+'%':'—';
+  document.getElementById('kv8').textContent=r?.hireDays?r.hireDays+'天':'—';
+  // 漏斗
+  if(r){
+    const funnelData=[{name:'简历筛选',value:r.f1||0},{name:'初步面试',value:r.f2||0},{name:'深度面试',value:r.f3||0},{name:'offer发放',value:r.f4||0},{name:'正式入职',value:r.f5||0}];
+    mkC('ch-funnel',{tooltip:{trigger:'item',formatter:'{b}: {c}人',...TT},
+      series:[{type:'funnel',left:'10%',right:'10%',top:'5%',bottom:'5%',width:'80%',
+        data:funnelData.map((d,i)=>({name:d.name,value:d.value,itemStyle:{color:COLORS[i]}})),
+        label:{position:'inside',formatter:'{b}\n{c}人',fontWeight:900,fontSize:12,color:'#fff'},
+        emphasis:{label:{fontSize:14}}}]});
+  }
+  // 渠道来源圆环
+  const src=getSource(y,m);
+  if(src.length) mkC('ch-source',donutOpt(src.map(d=>({name:d.name,value:d.val})),'%'));
+  // 招聘达成趋势
+  const last6=getYearMonths((ly,lm)=>getRecruit(ly,lm));
+  mkC('ch-recruit-trend',lineOpt(last6.map(d=>d.lbl),[
+    {name:'简历量',data:last6.map(d=>d.data?.resume??null)},
+    {name:'入职人数',data:last6.map(d=>d.data?.f5??null)}
+  ]));
+}
+
+// ══ P3 薪酬绩效
+function renderP3(){
+  const y=state.activeYear,m=state.activeMonth;
+  const k=getKpi(y,m);
+  document.getElementById('kv9').textContent=k?.salTotal||'—';
+  document.getElementById('kv10').textContent=k?.avgSal||'—';
+  document.getElementById('kv11').textContent=k?.budgetExec?k.budgetExec+'%':'—';
+  document.getElementById('kv12').textContent=k?.perfExc?k.perfExc+'%':'—';
+
+  // ★ gauge：预算执行率
+  const budgetVal=parseFloat(k?.budgetExec)||0;
+  mkC('ch-gauge-budget',gaugeOpt(budgetVal,'预算执行率','#5470c6'));
+  // ★ gauge：绩效优秀率
+  const perfVal=parseFloat(k?.perfExc)||0;
+  mkC('ch-gauge-perf',gaugeOpt(perfVal,'绩效优秀率','#fac858'));
+
+  // 绩效圆环
+  const perf=getSal(y,m,'perf');
+  if(perf.length) mkC('ch-perf',donutOpt(perf.map(d=>({name:d.name,value:d.val})),'人'));
+
+  // ★ 薪酬构成堆叠柱
+  const last6=getYearMonths((ly,lm)=>getSal(ly,lm,'sal'));
+  const salNames=[...new Set(state.salary.filter(r=>r.type==='sal').map(r=>r.name))];
+  mkC('ch-sal-trend',barStackOpt(last6.map(d=>d.lbl),salNames.map((name,i)=>({
+    name,data:last6.map(d=>{const item=d.data.find(r=>r.name===name);return item?.val??null;})
+  })),'万'));
+
+  // 部门薪酬横柱
+  const deptSal=getSal(y,m,'dept_sal');
+  if(deptSal.length) mkC('ch-dept-sal',barHOpt(deptSal.map(d=>d.name),deptSal.map(d=>d.val),'元'));
+}
+
+// ══ P4 培训发展
+function renderP4(){
+  const y=state.activeYear,m=state.activeMonth;
+  const k=getKpi(y,m);
+  document.getElementById('kv13').textContent=k?.trainHours?k.trainHours+'h':'—';
+  document.getElementById('kv14').textContent=k?.trainHours&&k?.headcount?(k.trainHours/k.headcount*10).toFixed(1)+'h':'—';
+  document.getElementById('kv15').textContent=k?.trainBudget?k.trainBudget+'万':'—';
+  document.getElementById('kv16').textContent=k?.promoted||'—';
+  // 培训趋势近6月
+  const last6=getYearMonths((ly,lm)=>getTrain(ly,lm,'trend'));
+  const tNames=[...new Set(state.training.filter(r=>r.type==='trend').map(r=>r.name))];
+  mkC('ch-train-trend',lineOpt(last6.map(d=>d.lbl),tNames.map((name,i)=>({
+    name,data:last6.map(d=>{const item=d.data.find(r=>r.name===name);return item?.val??null;})}))));
+  // 培训类型圆环
+  const tType=getTrain(y,m,'type');
+  if(tType.length) mkC('ch-train-type',donutOpt(tType.map(d=>({name:d.name,value:d.val})),'%'));
+  // 部门参与率横柱
+  const deptRate=getTrain(y,m,'dept_rate');
+  if(deptRate.length) mkC('ch-train-dept',barHOpt(deptRate.map(d=>d.name),deptRate.map(d=>d.val),'%'));
+}
+
+// ══ P5 年度对比
+function renderP5(){
+  const year=document.getElementById('p5-year-sel')?.value||state.activeYear;
+  const mNums=['01','02','03','04','05','06','07','08','09','10','11','12'];
+  const active=mNums.filter(m=>getKpi(year,m));
+  const lbls=active.map(m=>ML[m]);
+  const hcD=active.map(m=>getKpi(year,m)?.headcount??null);
+  const joinD=active.map(m=>getKpi(year,m)?.join??null);
+  const leaveD=active.map(m=>getKpi(year,m)?.leave??null);
+  mkC('ch-annual-hc',lineOpt(lbls,[{name:'总人数',data:hcD},{name:'入职',data:joinD},{name:'离职',data:leaveD}]));
+  mkC('ch-annual-turn',barVOpt(lbls,active.map(m=>getKpi(year,m)?.turnover??null),null,'%'));
+  mkC('ch-annual-sal',barVOpt(lbls,active.map(m=>getKpi(year,m)?.salTotal??null),null,'万'));
+  mkC('ch-annual-train',barVOpt(lbls,active.map(m=>getKpi(year,m)?.trainHours??null),null,'h'));
+  document.getElementById('tb-annual').innerHTML=active.map(m=>{
+    const k=getKpi(year,m);
+    return`<tr><td style="font-weight:900;">${year}年${ML[m]}</td>
+      <td>${k?.headcount||'—'}</td><td>${k?.join||'—'}</td><td>${k?.leave||'—'}</td>
+      <td>${k?.turnover?k.turnover+'%':'—'}</td><td>${k?.salTotal||'—'}</td>
+      <td>${k?.avgSal||'—'}</td><td>${k?.trainHours||'—'}</td><td>${k?.promoted||'—'}</td></tr>`;
+  }).join('')||`<tr><td colspan="9" style="text-align:center;color:var(--tm);padding:20px;">${year}年暂无数据</td></tr>`;
+}
+function onP5YearChange(){destroyPool(CI);renderP5();}
+
+// ══ 回调注册表
+const _cb={};let _ci=0;
+function reg(fn){const k='_cb'+(++_ci);_cb[k]=fn;return k;}
+function _run(k,...a){if(_cb[k])_cb[k](...a);}
+
+// ══ Toolbar
+function toolbar(onFile,onPaste,onExport,onApply){
+  const fk=reg(onFile),pk=reg(onPaste),ek=reg(onExport),ak=reg(onApply);
+  return`<div class="dc-tbar"><div class="dc-tbar-btns">
+    <label class="dc-btn-out">📂 导入Excel/CSV<input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="_run('${fk}',this)"></label>
+    <button class="dc-btn-out" onclick="_run('${pk}')">📋 粘贴导入</button>
+    <button class="dc-btn-out" onclick="_run('${ek}')">⬇ 导出CSV</button>
+    <button class="dc-btn" onclick="_run('${ak}')">✓ 应用刷新</button>
+  </div></div>`;
+}
+
+// ══ Paste dialog
+function showPaste(title,hint,onData){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;padding:28px;width:600px;box-shadow:0 24px 64px rgba(0,0,0,.2);">
+    <div style="font-size:15px;font-weight:900;color:#0D1117;margin-bottom:5px;">${title}</div>
+    <div style="font-size:12px;color:#5470c6;font-weight:700;background:#f0f6ff;padding:8px 10px;border-radius:6px;margin-bottom:12px;">📋 ${hint}</div>
+    <textarea id="paste-area" style="width:100%;height:200px;border:1.5px solid #E5E7EB;border-radius:10px;padding:10px;font-size:13px;font-family:monospace;resize:vertical;outline:none;box-sizing:border-box;" placeholder="在此粘贴..."></textarea>
+    <div style="display:flex;gap:10px;margin-top:16px;justify-content:flex-end;">
+      <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 18px;border:1.5px solid #E5E7EB;border-radius:8px;background:#fff;font-weight:700;font-size:13px;cursor:pointer;">取消</button>
+      <button id="paste-ok" style="padding:8px 20px;border:none;border-radius:8px;background:#5470c6;color:#fff;font-weight:700;font-size:13px;cursor:pointer;">确认导入</button>
+    </div></div>`;
+  document.body.appendChild(ov);
+  ov.querySelector('#paste-ok').onclick=()=>{
+    const raw=ov.querySelector('#paste-area').value.trim();if(!raw)return;
+    const sep=raw.includes('\t')?'\t':',';
+    const rows=raw.split('\n').map(r=>r.split(sep).map(c=>c.trim().replace(/^"|"$/g,'')));
+    ov.remove();onData(rows);
+  };
+  ov.addEventListener('click',e=>{if(e.target===ov)ov.remove();});
+}
+
+// ══ File import
+async function parseFile(file,onData){
+  const ext=file.name.split('.').pop().toLowerCase();
+  if(ext==='xlsx'||ext==='xls'){
+    const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array'});
+    const ws=wb.Sheets[wb.SheetNames[0]];
+    onData(XLSX.utils.sheet_to_json(ws,{header:1,defval:''}).map(r=>r.map(c=>String(c).trim())));
+  }else{
+    const buf=await file.arrayBuffer();
+    let text=new TextDecoder('utf-8').decode(buf);
+    if(text.includes('\ufffd'))text=new TextDecoder('gbk').decode(buf);
+    onData(text.trim().split('\n').map(r=>r.split(',').map(c=>c.trim().replace(/^"|"$/g,''))));
+  }
+}
+function onFI(inp,fn){if(inp.files[0])parseFile(inp.files[0],fn);inp.value='';}
+function rowsToArr(rows){return rows.slice(1).filter(r=>r.some(c=>c!==''&&c!=null));}
+function expCSV(headers,rows,fn){
+  const csv='\uFEFF'+headers.join(',')+'\n'+rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=fn+'.csv';a.click();
+}
+
+// ══ 填充筛选下拉
+function fillFS(n){
+  const years=getYears();
+  const ysel=document.getElementById('f'+n+'-year');
+  if(ysel){const cv=ysel.value;ysel.innerHTML='<option value="">全部年份</option>'+years.map(y=>`<option value="${y}">${y}年</option>`).join('');if(cv)ysel.value=cv;}
+  const allM=[...new Set([...state.kpi,...state.structure,...state.recruit,...state.salary,...state.training].map(r=>r.month))].sort();
+  const msel=document.getElementById('f'+n+'-month');
+  if(msel){const cv=msel.value;msel.innerHTML='<option value="">全部月份</option>'+allM.map(m=>`<option value="${m}">${ML[m]||m}</option>`).join('');if(cv)msel.value=cv;}
+}
+function clearFilter(n){
+  document.getElementById('f'+n+'-year').value='';
+  document.getElementById('f'+n+'-month').value='';
+  const tf=document.getElementById('f'+n+'-type');if(tf)tf.value='';
+  buildDcTab(n);
+}
+
+// ══ DC switch
+function switchDcTab(n){
+  curDcTab=n;
+  document.querySelectorAll('.dc-page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.dc-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('dcp-'+n)?.classList.add('active');
+  document.getElementById('dct-'+n)?.classList.add('active');
+  buildDcTab(n);
+}
+function buildDcTab(n){
+  if(n===1)buildDc1();else if(n===2)buildDc2();else if(n===3)buildDc3();
+  else if(n===4)buildDc4();else if(n===5)buildDc5();
+}
+
+// ★ applyDc：统一用扫描DOM id的方式读取真实索引，防止筛选后索引错位
+function ci(val,id,w){return`<input class="ci" value="${val??''}" id="${id}"${w?` style="width:${w}"`:''}>`;}
+function thRow(cols){return`<thead><tr><th><input type="checkbox" onchange="toggleAll(this,'ck${curDcTab}')" title="全选"></th>${cols.map(c=>`<th contenteditable="true">${c}</th>`).join('')}<th></th></tr></thead>`;}
+
+// DC1 KPI
+function buildDc1(){
+  fillFS(1);
+  document.getElementById('dc1-tbar').innerHTML=toolbar(
+    el=>onFI(el,rows=>{const d=rowsToArr(rows);if(!d.length)return;
+      state.kpi=[...state.kpi.filter(r=>!(r.year===d[0][0]&&r.month===normMonth(d[0][1]))),...d.map(r=>({year:r[0],month:normMonth(r[1]),headcount:+r[2]||0,join:+r[3]||0,leave:+r[4]||0,turnover:r[5]||'',salTotal:r[6]||'',avgSal:r[7]||'',trainHours:+r[8]||0,promoted:+r[9]||0}))];
+      buildDc1();refreshAll();showToast('✅ KPI数据已导入');}),
+    ()=>showPaste('粘贴HR月度KPI','表头：年份|月份|员工总数|入职|离职|流失率|薪酬总支出(万)|人均月薪(元)|培训课时|晋升人数',rows=>{const d=rowsToArr(rows);if(!d.length)return;
+      state.kpi=[...state.kpi.filter(r=>!(r.year===d[0][0]&&r.month===normMonth(d[0][1]))),...d.map(r=>({year:r[0],month:normMonth(r[1]),headcount:+r[2]||0,join:+r[3]||0,leave:+r[4]||0,turnover:r[5]||'',salTotal:r[6]||'',avgSal:r[7]||'',trainHours:+r[8]||0,promoted:+r[9]||0}))];
+      buildDc1();refreshAll();showToast('✅ KPI数据已导入');}),
+    ()=>expCSV(['年份','月份','员工总数','入职','离职','流失率','薪酬支出(万)','人均月薪(元)','培训课时','晋升人数'],state.kpi.map(r=>[r.year,r.month,r.headcount,r.join,r.leave,r.turnover,r.salTotal,r.avgSal,r.trainHours,r.promoted]),'HR_月度KPI'),
+    ()=>applyByPrefix('kpi',['ky','km','khc','kj','kl','kt','ks','ka','kth','kpr'],
+      ['year','month','headcount','join','leave','turnover','salTotal','avgSal','trainHours','promoted'],
+      [null,normMonth,Number,Number,Number,null,null,null,Number,Number],
+      r=>r.year&&r.month,()=>buildDc1())
+  );
+  document.getElementById('dc1-tbl').innerHTML=
+    thRow(['年份','月份','员工总数','入职','离职','流失率%','薪酬支出万','人均月薪','培训课时','晋升'])+
+    `<tbody>${state.kpi.map((r,i)=>`<tr>
+      <td><input type="checkbox" class="ck1" data-i="${i}"></td>
+      <td>${ci(r.year,'ky'+i,'52px')}</td><td>${ci(r.month,'km'+i,'38px')}</td>
+      <td>${ci(r.headcount,'khc'+i,'60px')}</td><td>${ci(r.join,'kj'+i,'50px')}</td>
+      <td>${ci(r.leave,'kl'+i,'50px')}</td><td>${ci(r.turnover,'kt'+i,'55px')}</td>
+      <td>${ci(r.salTotal,'ks'+i,'60px')}</td><td>${ci(r.avgSal,'ka'+i,'70px')}</td>
+      <td>${ci(r.trainHours,'kth'+i,'55px')}</td><td>${ci(r.promoted,'kpr'+i,'45px')}</td>
+      <td><button class="del-btn" onclick="state.kpi.splice(${i},1);buildDc1();refreshAll();">🗑</button></td>
+    </tr>`).join('')}</tbody>`;
+}
+function addRow(arr){
+  const defaults={kpi:{year:'2026',month:'01',headcount:0,join:0,leave:0,turnover:'',salTotal:'',avgSal:'',trainHours:0,promoted:0},
+    structure:{year:'2026',month:'01',type:'dept',name:'',val:0},
+    recruit:{year:'2026',month:'01',openPos:0,resume:0,interviewPass:'',hireDays:0,f1:0,f2:0,f3:0,f4:0,f5:0},
+    salary:{year:'2026',month:'01',type:'sal',name:'',val:0},
+    training:{year:'2026',month:'01',type:'trend',name:'',val:0}};
+  state[arr].push({...defaults[arr]});buildDcTab(curDcTab);
+}
+
+// DC2 部门结构
+function buildDc2(){
+  fillFS(2);
+  const fy=document.getElementById('f2-year')?.value||'';
+  const fm=document.getElementById('f2-month')?.value||'';
+  const ft=document.getElementById('f2-type')?.value||'';
+  const filtered=state.structure.filter(r=>(!fy||r.year===fy)&&(!fm||r.month===fm)&&(!ft||r.type===ft));
+  document.getElementById('dc2-tbar').innerHTML=toolbar(
+    el=>onFI(el,rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>({year:r[0],month:normMonth(r[1]),type:r[2]||'dept',name:r[3]||'',val:+r[4]||0}));
+      if(nr[0].year&&nr[0].month){state.structure=state.structure.filter(r=>!(r.year===nr[0].year&&r.month===nr[0].month&&r.type===nr[0].type));state.structure.push(...nr);}
+      buildDc2();refreshAll();showToast('✅ 结构数据已导入');}),
+    ()=>showPaste('粘贴部门结构数据','表头：年份|月份|类型(dept/age/edu/tenure)|名称|人数',rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>({year:r[0],month:normMonth(r[1]),type:r[2]||'dept',name:r[3]||'',val:+r[4]||0}));
+      if(nr[0].year&&nr[0].month){state.structure=state.structure.filter(r=>!(r.year===nr[0].year&&r.month===nr[0].month&&r.type===nr[0].type));state.structure.push(...nr);}
+      buildDc2();refreshAll();showToast('✅ 结构数据已导入');}),
+    ()=>expCSV(['年份','月份','类型','名称','数值'],state.structure.map(r=>[r.year,r.month,r.type,r.name,r.val]),'HR_部门结构'),
+    ()=>applyByPrefix('structure',['s2y','s2m','s2tp','s2n','s2v'],['year','month','type','name','val'],[null,normMonth,null,null,Number],r=>r.name,()=>buildDc2())
+  );
+  document.getElementById('dc2-tbl').innerHTML=
+    thRow(['年份','月份','类型','名称','数值'])+
+    `<tbody>${filtered.length?filtered.map(r=>{const i=state.structure.indexOf(r);return`<tr>
+      <td><input type="checkbox" class="ck2" data-i="${i}"></td>
+      <td>${ci(r.year,'s2y'+i,'52px')}</td><td>${ci(r.month,'s2m'+i,'38px')}</td>
+      <td>${ci(r.type,'s2tp'+i,'60px')}</td><td>${ci(r.name,'s2n'+i)}</td><td>${ci(r.val,'s2v'+i,'60px')}</td>
+      <td><button class="del-btn" onclick="state.structure.splice(${i},1);buildDc2();refreshAll();">🗑</button></td>
+    </tr>`}).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--tm);padding:16px;">无数据</td></tr>'}</tbody>`;
+}
+
+// DC3 招聘
+function buildDc3(){
+  fillFS(3);
+  const fy=document.getElementById('f3-year')?.value||'';
+  const fm=document.getElementById('f3-month')?.value||'';
+  const filtered=state.recruit.filter(r=>(!fy||r.year===fy)&&(!fm||r.month===fm));
+  document.getElementById('dc3-tbar').innerHTML=toolbar(
+    el=>onFI(el,rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>r[2]==='source'?{year:r[0],month:normMonth(r[1]),type:'source',name:r[3]||'',val:+r[4]||0}:{year:r[0],month:normMonth(r[1]),openPos:+r[2]||0,resume:+r[3]||0,interviewPass:r[4]||'',hireDays:+r[5]||0,f1:+r[6]||0,f2:+r[7]||0,f3:+r[8]||0,f4:+r[9]||0,f5:+r[10]||0});buildDc3();refreshAll();showToast('✅ 招聘数据已导入');}),
+    ()=>showPaste('粘贴招聘数据','表头：年份|月份|在招职位|简历量|面试通过率|到岗天数|漏斗1|2|3|4|5（渠道行：年份|月份|source|名称|占比）',rows=>{const d=rowsToArr(rows);if(!d.length)return;state.recruit.push(...d.map(r=>r[2]==='source'?{year:r[0],month:normMonth(r[1]),type:'source',name:r[3]||'',val:+r[4]||0}:{year:r[0],month:normMonth(r[1]),openPos:+r[2]||0,resume:+r[3]||0,interviewPass:r[4]||'',hireDays:+r[5]||0,f1:+r[6]||0,f2:+r[7]||0,f3:+r[8]||0,f4:+r[9]||0,f5:+r[10]||0}));buildDc3();refreshAll();showToast('✅ 招聘数据已导入');}),
+    ()=>expCSV(['年份','月份','在招职位/source','简历/名称','面试通过率/占比','到岗天数','漏斗1','2','3','4','5'],state.recruit.map(r=>r.type==='source'?[r.year,r.month,'source',r.name,r.val,'','','','','','']:[r.year,r.month,r.openPos,r.resume,r.interviewPass,r.hireDays,r.f1,r.f2,r.f3,r.f4,r.f5]),'HR_招聘数据'),
+    ()=>{state.recruit.forEach((r,i)=>{r.year=document.getElementById('r3y'+i)?.value||r.year;r.month=normMonth(document.getElementById('r3m'+i)?.value||r.month);});refreshAll();showToast('✅ 招聘数据已更新');}
+  );
+  document.getElementById('dc3-tbl').innerHTML=
+    thRow(['年份','月份','在招职位','简历量','面试通过率','到岗天数','漏斗1-5/渠道名','占比/数量'])+
+    `<tbody>${filtered.length?filtered.map(r=>{const i=state.recruit.indexOf(r);
+      const isSource=r.type==='source';
+      return`<tr>
+        <td><input type="checkbox" class="ck3" data-i="${i}"></td>
+        <td>${ci(r.year,'r3y'+i,'52px')}</td><td>${ci(r.month,'r3m'+i,'38px')}</td>
+        ${isSource?`<td colspan="4" style="color:var(--tm);font-size:11px;">渠道来源</td><td>${ci(r.name,'r3n'+i)}</td><td>${ci(r.val,'r3v'+i,'60px')}</td>`
+        :`<td>${ci(r.openPos,'r3op'+i,'45px')}</td><td>${ci(r.resume,'r3rs'+i,'55px')}</td><td>${ci(r.interviewPass,'r3ip'+i,'55px')}</td><td>${ci(r.hireDays,'r3hd'+i,'45px')}</td><td style="font-size:11px;color:var(--tm);">${r.f1}→${r.f2}→${r.f3}→${r.f4}→${r.f5}</td><td></td>`}
+        <td><button class="del-btn" onclick="state.recruit.splice(${i},1);buildDc3();refreshAll();">🗑</button></td>
+      </tr>`}).join(''):'<tr><td colspan="9" style="text-align:center;color:var(--tm);padding:16px;">无数据</td></tr>'}</tbody>`;
+}
+
+// DC4 薪酬
+function buildDc4(){
+  fillFS(4);
+  const fy=document.getElementById('f4-year')?.value||'';
+  const fm=document.getElementById('f4-month')?.value||'';
+  const filtered=state.salary.filter(r=>(!fy||r.year===fy)&&(!fm||r.month===fm));
+  document.getElementById('dc4-tbar').innerHTML=toolbar(
+    el=>onFI(el,rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>({year:r[0],month:normMonth(r[1]),type:r[2]||'sal',name:r[3]||'',val:+r[4]||0}));
+      if(nr[0].year&&nr[0].month){state.salary=state.salary.filter(r=>!(r.year===nr[0].year&&r.month===nr[0].month&&r.type===nr[0].type));state.salary.push(...nr);}
+      buildDc4();refreshAll();showToast('✅ 薪酬数据已导入');}),
+    ()=>showPaste('粘贴薪酬绩效数据','表头：年份|月份|类型(sal薪酬/perf绩效/dept_sal部门薪酬)|名称|数值',rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>({year:r[0],month:normMonth(r[1]),type:r[2]||'sal',name:r[3]||'',val:+r[4]||0}));
+      if(nr[0].year&&nr[0].month){state.salary=state.salary.filter(r=>!(r.year===nr[0].year&&r.month===nr[0].month&&r.type===nr[0].type));state.salary.push(...nr);}
+      buildDc4();refreshAll();showToast('✅ 薪酬数据已导入');}),
+    ()=>expCSV(['年份','月份','类型','名称','数值'],state.salary.map(r=>[r.year,r.month,r.type,r.name,r.val]),'HR_薪酬绩效'),
+    ()=>applyByPrefix('salary',['sa4y','sa4m','sa4t','sa4n','sa4v'],['year','month','type','name','val'],[null,normMonth,null,null,Number],r=>r.name,()=>buildDc4())
+  );
+  document.getElementById('dc4-tbl').innerHTML=
+    thRow(['年份','月份','类型','名称','数值'])+
+    `<tbody>${filtered.length?filtered.map(r=>{const i=state.salary.indexOf(r);return`<tr>
+      <td><input type="checkbox" class="ck4" data-i="${i}"></td>
+      <td>${ci(r.year,'sa4y'+i,'52px')}</td><td>${ci(r.month,'sa4m'+i,'38px')}</td>
+      <td>${ci(r.type,'sa4t'+i,'70px')}</td><td>${ci(r.name,'sa4n'+i)}</td><td>${ci(r.val,'sa4v'+i,'70px')}</td>
+      <td><button class="del-btn" onclick="state.salary.splice(${i},1);buildDc4();refreshAll();">🗑</button></td>
+    </tr>`}).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--tm);padding:16px;">无数据</td></tr>'}</tbody>`;
+}
+
+// DC5 培训
+function buildDc5(){
+  fillFS(5);
+  const fy=document.getElementById('f5-year')?.value||'';
+  const fm=document.getElementById('f5-month')?.value||'';
+  const filtered=state.training.filter(r=>(!fy||r.year===fy)&&(!fm||r.month===fm));
+  document.getElementById('dc5-tbar').innerHTML=toolbar(
+    el=>onFI(el,rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>({year:r[0],month:normMonth(r[1]),type:r[2]||'trend',name:r[3]||'',val:+r[4]||0}));
+      if(nr[0].year&&nr[0].month){state.training=state.training.filter(r=>!(r.year===nr[0].year&&r.month===nr[0].month&&r.type===nr[0].type));state.training.push(...nr);}
+      buildDc5();refreshAll();showToast('✅ 培训数据已导入');}),
+    ()=>showPaste('粘贴培训发展数据','表头：年份|月份|类型(trend趋势/type培训类型/dept_rate部门参与率)|名称|数值',rows=>{const d=rowsToArr(rows);if(!d.length)return;const nr=d.map(r=>({year:r[0],month:normMonth(r[1]),type:r[2]||'trend',name:r[3]||'',val:+r[4]||0}));
+      if(nr[0].year&&nr[0].month){state.training=state.training.filter(r=>!(r.year===nr[0].year&&r.month===nr[0].month&&r.type===nr[0].type));state.training.push(...nr);}
+      buildDc5();refreshAll();showToast('✅ 培训数据已导入');}),
+    ()=>expCSV(['年份','月份','类型','名称','数值'],state.training.map(r=>[r.year,r.month,r.type,r.name,r.val]),'HR_培训发展'),
+    ()=>applyByPrefix('training',['tr5y','tr5m','tr5t','tr5n','tr5v'],['year','month','type','name','val'],[null,normMonth,null,null,Number],r=>r.name,()=>buildDc5())
+  );
+  document.getElementById('dc5-tbl').innerHTML=
+    thRow(['年份','月份','类型','名称','数值'])+
+    `<tbody>${filtered.length?filtered.map(r=>{const i=state.training.indexOf(r);return`<tr>
+      <td><input type="checkbox" class="ck5" data-i="${i}"></td>
+      <td>${ci(r.year,'tr5y'+i,'52px')}</td><td>${ci(r.month,'tr5m'+i,'38px')}</td>
+      <td>${ci(r.type,'tr5t'+i,'80px')}</td><td>${ci(r.name,'tr5n'+i)}</td><td>${ci(r.val,'tr5v'+i,'60px')}</td>
+      <td><button class="del-btn" onclick="state.training.splice(${i},1);buildDc5();refreshAll();">🗑</button></td>
+    </tr>`}).join(''):'<tr><td colspan="7" style="text-align:center;color:var(--tm);padding:16px;">无数据</td></tr>'}</tbody>`;
+}
+
+// ★ applyByPrefix：扫描DOM id提取真实索引，解决筛选后索引错位问题
+function applyByPrefix(arrKey,prefixes,fields,transforms,filter,rebuildFn){
+  const prefix0=prefixes[0];
+  document.querySelectorAll(`[id^="${prefix0}"]`).forEach(el=>{
+    const i=parseInt(el.id.replace(prefix0,''));
+    if(!state[arrKey][i])return;
+    prefixes.forEach((pf,fi)=>{
+      const v=document.getElementById(pf+i)?.value;if(v===undefined)return;
+      const tf=transforms[fi];
+      state[arrKey][i][fields[fi]]=tf?tf(v):v;
+    });
+  });
+  if(filter) state[arrKey]=state[arrKey].filter(filter);
+  refreshAll();rebuildFn();showToast('✅ 数据已更新');
+}
+
+// ★ refreshAll：先更新选择器，再刷新看板
+function refreshAll(){updatePickers();if(curPage>0){destroyPool(CI);renderPage(curPage);}}
+
+// ══ 批量删除（降序索引防错位）
+function batchDel(arrKey,ckClass,rebuildFn){
+  const idxs=[...document.querySelectorAll('.'+ckClass+':checked')].map(cb=>parseInt(cb.dataset.i)).filter(i=>!isNaN(i)).sort((a,b)=>b-a);
+  if(!idxs.length){showToast('⚠️ 请先勾选要删除的行');return;}
+  idxs.forEach(i=>state[arrKey].splice(i,1));
+  rebuildFn();showToast(`✅ 已删除 ${idxs.length} 行`);
+}
+function toggleAll(ckbox,ckClass){document.querySelectorAll('.'+ckClass).forEach(cb=>cb.checked=ckbox.checked);}
+
+// ══ collectTitles（排除动态字段）
+function collectTitles(){
+  if(!state.ui)state.ui={};if(!state.ui.titles)state.ui.titles={};
+  document.querySelectorAll('[contenteditable="true"][id]').forEach(el=>{
+    if(DYNAMIC_IDS.has(el.id))return;
+    state.ui.titles[el.id]=el.innerText.trim();
+  });
+}
+
+// ══ 💾 保存
+function saveLocal(){
+  collectTitles();
+  localStorage.setItem(LS_KEY,JSON.stringify(state));
+  const el=document.getElementById('save-st');
+  if(el) el.textContent='已保存 '+new Date().toLocaleTimeString();
+  showToast('✅ 已保存！下次打开自动恢复');
+}
+
+// ══ 📥 另存为
+function saveAs(){
+  collectTitles();
+  state.meta.savedAt=new Date().toISOString().slice(0,10);
+  const str=JSON.stringify(state,null,2);
+  const html=document.documentElement.outerHTML.replace(
+    /\/\/ ★ 数据胶囊[\s\S]*?(?=\/\/ 运行时可变副本)/,
+    `// ★ 数据胶囊\nconst APP_STATE = ${str};\n`
+  );
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+  a.download=`CreamData_HR_${state.meta.company}_${state.meta.savedAt}.html`;a.click();
+  showToast('✅ 另存为成功！');
+}
+
+// ══ 导出PNG
+async function exportPNG(){
+  const pages=document.querySelectorAll('.page-canvas');
+  showToast(`⏳ 共${pages.length}页导出中...`);const orig=curPage;
+  for(let i=1;i<=pages.length;i++){
+    switchPage(i);await new Promise(r=>setTimeout(r,700));
+    const el=document.getElementById('page-'+i);
+    const cv=await html2canvas(el,{scale:1920/el.offsetWidth,useCORS:true,allowTaint:true,backgroundColor:'#FFFFFF',logging:false});
+    const a=document.createElement('a');a.download=`HR_P${i}_${state.activeYear}${state.activeMonth}.png`;
+    a.href=cv.toDataURL('image/png',1.0);a.click();await new Promise(r=>setTimeout(r,500));
+  }
+  switchPage(orig);showToast(`✅ 全部${pages.length}页已导出`);
+}
+
+// ══ Toast
+function showToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;bottom:28px;right:28px;background:#0D1117;color:#fff;padding:11px 22px;border-radius:14px;font-weight:700;font-size:14px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,.35);pointer-events:none;font-family:var(--font-b)';
+  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+}
+
+// ══ Init
+initState();
+renderPage(1);
+try{const s=localStorage.getItem(LS_KEY);if(s){const d=JSON.parse(s);const el=document.getElementById('save-st');if(el&&d.meta?.savedAt)el.textContent='上次保存：'+d.meta.savedAt;}}catch(e){}
+</script>
+</body>
+</html>

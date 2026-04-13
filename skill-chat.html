@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 技能助手 - CreamViz</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FDF8F3;
+      --caramel: #C8954A;
+      --caramel-light: #D4A85C;
+      --caramel-dark: #A67B3D;
+      --text: #3D3D3D;
+      --text-muted: #888;
+      --border: #E8E0D5;
+      --card-bg: #FFF;
+      --shadow: 0 4px 20px rgba(0,0,0,0.06);
+      --radius: 16px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--cream);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      color: #fff;
+    }
+
+    .back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .header-info {
+      flex: 1;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .header-subtitle {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .header-icon {
+      font-size: 28px;
+    }
+
+    /* Chat Container */
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Messages */
+    .message {
+      display: flex;
+      gap: 12px;
+      max-width: 85%;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .message-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .message.ai .message-avatar {
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+    }
+
+    .message.user .message-avatar {
+      background: #E8E0D5;
+    }
+
+    .message-content {
+      background: var(--card-bg);
+      padding: 12px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: var(--shadow);
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+      color: #fff;
+    }
+
+    /* Input Area */
+    .input-area {
+      background: var(--card-bg);
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .input-box {
+      flex: 1;
+      background: #F8F8F8;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: none;
+      max-height: 120px;
+      outline: none;
+    }
+
+    .input-box:focus {
+      border-color: var(--caramel);
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--caramel), var(--caramel-light));
+      border: none;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .send-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Loading */
+    .loading {
+      display: flex;
+      gap: 4px;
+      padding: 12px 16px;
+    }
+
+    .loading-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--caramel);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out;
+    }
+
+    .loading-dot:nth-child(1) { animation-delay: 0s; }
+    .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+    .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      padding: 0 20px 12px;
+      overflow-x: auto;
+      flex-wrap: nowrap;
+    }
+
+    .quick-btn {
+      background: #FDF4E7;
+      border: 1px solid var(--border);
+      color: var(--caramel-dark);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+
+    .quick-btn:hover {
+      background: var(--caramel);
+      color: #fff;
+      border-color: var(--caramel);
+    }
+
+    /* Error message */
+    .error-toast {
+      position: fixed;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #FF5252;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      display: none;
+    }
+
+    .error-toast.show {
+      display: block;
+      animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <button class="back-btn" onclick="goBack()">←</button>
+    <div class="header-info">
+      <div class="header-title" id="skill-name">AI 技能助手</div>
+      <div class="header-subtitle">点击技能卡片开始对话</div>
+    </div>
+    <div class="header-icon" id="skill-icon">🤖</div>
+  </div>
+
+  <div class="quick-actions" id="quick-actions">
+    <button class="quick-btn" onclick="sendQuick('查询贵州茅台的业绩预告')">查询茅台业绩预告</button>
+    <button class="quick-btn" onclick="sendQuick('对比宁德时代和比亚迪的 ROE')">对比 ROE</button>
+    <button class="quick-btn" onclick="sendQuick('什么是金字塔加码策略')">金字塔加码</button>
+    <button class="quick-btn" onclick="sendQuick('为特斯拉制作公司画像')">特斯拉画像</button>
+  </div>
+
+  <div class="chat-container" id="chat-container">
+    <div class="message ai">
+      <div class="message-avatar">🤖</div>
+      <div class="message-content">
+        你好！我是你的 AI 技能助手。我可以帮你：<br><br>
+        📅 查询股票事件数据（业绩预告、解禁等）<br>
+        📊 查询财务指标和基本资料<br>
+        📈 解答交易哲学问题<br>
+        🏢 生成公司画像<br><br>
+        请直接描述你的需求，或点击下方快捷按钮开始。
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <textarea class="input-box" id="user-input" placeholder="输入你的问题..." rows="1"></textarea>
+    <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
+  </div>
+
+  <div class="error-toast" id="error-toast"></div>
+
+  <script>
+    // 技能配置
+    const skills = {
+      event: {
+        name: '事件数据查询',
+        icon: '📅',
+        systemPrompt: `你是专业的A股事件数据查询助手。用户可以查询：业绩预告（预增/预减/扭亏等）、增发配股（定增/公开增发）、股权质押、限售解禁、机构调研、监管函/问询函等。
+
+回复格式：
+1. 直接给出查询结果
+2. 如数据不明确，说明可查询的范围
+3. 提供相关数据的解读建议
+
+注意：你目前无法实时连接数据库，请告诉用户"这是演示模式，实际使用时需要连接同花顺数据接口"，然后给出模拟的合理数据作为示例。`
+      },
+      basic: {
+        name: '基本资料查询',
+        icon: '📊',
+        systemPrompt: `你是专业的金融基础资料查询助手。支持查询股票、基金、期货、债券等全品类标的的基础信息。
+
+回复格式：
+1. 清晰列出查询标的的关键信息
+2. 使用表格或列表形式展示
+3. 对重要指标进行简要说明
+
+注意：你目前无法实时连接数据库，请告诉用户"这是演示模式"，然后给出该标的的公开基础信息作为示例。`
+      },
+      finance: {
+        name: '财务数据查询',
+        icon: '💰',
+        systemPrompt: `你是专业的财务数据分析助手。擅长分析营业收入、净利润、ROE、负债率、现金流、毛利率等核心财务指标。
+
+回复格式：
+1. 列出关键财务数据
+2. 进行同比环比分析
+3. 给出财务健康度评价
+4. 与行业平均水平对比
+
+注意：你目前无法实时连接数据库，请告诉用户"这是演示模式"，然后基于公开信息给出合理的财务分析示例。`
+      },
+      trading: {
+        name: '《股票大作手》交易哲学',
+        icon: '📈',
+        systemPrompt: `你是基于《股票大作手回忆录》的交易哲学导师。你深谙杰西·利弗莫尔的交易智慧：
+
+核心原则：
+1. 识别阻力最小方向（趋势）
+2. 20%试仓验证
+3. 金字塔加码策略
+4. 移动止损持有
+5. 避免频繁交易
+6. 绝不向下摊平
+
+回复风格：
+- 用利弗莫尔的口吻和风格回答
+- 结合具体案例说明
+- 强调纪律和耐心的重要性
+- 给出可操作的建议`
+      },
+      company: {
+        name: '公司画像页',
+        icon: '🏢',
+        systemPrompt: `你是专业的投行分析师，擅长制作公司画像（Company Profile）页面。
+
+你可以：
+1. 分析公司的核心业务和商业模式
+2. 梳理财务亮点和关键指标
+3. 评估市场地位和竞争优势
+4. 生成适合PPT展示的结构化内容
+
+回复格式：
+- 使用投行专业的表达方式
+- 分模块呈现（业务概览、财务表现、市场地位等）
+- 突出投资亮点和风险提示`
+      }
+    };
+
+    // 获取URL参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const skillId = urlParams.get('skill') || 'general';
+    const skill = skills[skillId] || { name: 'AI 技能助手', icon: '🤖', systemPrompt: '你是专业的金融数据分析助手，可以帮助用户查询股票数据、分析财务报表、解答交易问题。' };
+
+    // 更新页面标题
+    document.getElementById('skill-name').textContent = skill.name;
+    document.getElementById('skill-icon').textContent = skill.icon;
+    document.title = skill.name + ' - CreamViz';
+
+    // 对话历史
+    let messages = [
+      { role: 'system', content: skill.systemPrompt }
+    ];
+
+    const chatContainer = document.getElementById('chat-container');
+    const userInput = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+
+    // 自动调整输入框高度
+    userInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // 回车发送
+    userInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function goBack() {
+      window.location.href = 'skill-store.html';
+    }
+
+    function sendQuick(text) {
+      userInput.value = text;
+      sendMessage();
+    }
+
+    function addMessage(role, content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message ' + role;
+      messageDiv.innerHTML = `
+        <div class="message-avatar">${role === 'ai' ? skill.icon : '👤'}</div>
+        <div class="message-content">${content}</div>
+      `;
+      chatContainer.appendChild(messageDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function showLoading() {
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'message ai loading-message';
+      loadingDiv.innerHTML = `
+        <div class="message-avatar">${skill.icon}</div>
+        <div class="message-content loading">
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+          <div class="loading-dot"></div>
+        </div>
+      `;
+      chatContainer.appendChild(loadingDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      return loadingDiv;
+    }
+
+    function removeLoading() {
+      const loading = document.querySelector('.loading-message');
+      if (loading) loading.remove();
+    }
+
+    function showError(msg) {
+      const toast = document.getElementById('error-toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      // 添加用户消息
+      addMessage('user', text);
+      messages.push({ role: 'user', content: text });
+
+      // 清空输入框
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      // 显示加载状态
+      sendBtn.disabled = true;
+      const loading = showLoading();
+
+      try {
+        // 调用智谱 GLM-4 API
+        const response = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer 05b6a83aae7a418684d37ae79d17417f.AGFPtQsEYYG3WzDn'
+          },
+          body: JSON.stringify({
+            model: 'glm-4-flash',
+            messages: messages
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('API 调用失败: ' + response.status);
+        }
+
+        const data = await response.json();
+        const aiResponse = data.choices[0].message.content;
+
+        // 添加 AI 回复
+        removeLoading();
+        addMessage('ai', aiResponse);
+        messages.push({ role: 'assistant', content: aiResponse });
+
+      } catch (error) {
+        removeLoading();
+        // 模拟回复（演示模式）
+        const mockResponse = generateMockResponse(text, skillId);
+        addMessage('ai', mockResponse + '<br><br><small style="color:#888">[演示模式] AI 服务暂时不可用，已显示示例回复</small>');
+        messages.push({ role: 'assistant', content: mockResponse });
+      }
+
+      sendBtn.disabled = false;
+    }
+
+    // 模拟回复生成
+    function generateMockResponse(text, skillId) {
+      const responses = {
+        event: `根据查询，我找到了以下事件数据：<br><br>
+<strong>贵州茅台 (600519)</strong><br>
+• 2024年业绩预告：预计净利润同比增长约 15%-20%<br>
+• 最新机构调研：2024年3月15日，接待了易方达基金、汇添富基金等机构<br>
+• 限售解禁：近期无大额解禁<br><br>
+💡 <strong>解读建议：</strong><br>
+茅台业绩保持稳定增长，机构关注度持续较高，基本面稳健。`,
+
+        finance: `<strong>财务数据对比分析</strong><br><br>
+<table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:13px">
+<tr style="background:#FDF4E7"><td style="padding:8px;border:1px solid #E8E0D5"><b>指标</b></td><td style="padding:8px;border:1px solid #E8E0D5"><b>宁德时代</b></td><td style="padding:8px;border:1px solid #E8E0D5"><b>比亚迪</b></td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">ROE</td><td style="padding:8px;border:1px solid #E8E0D5">18.5%</td><td style="padding:8px;border:1px solid #E8E0D5">15.2%</td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">毛利率</td><td style="padding:8px;border:1px solid #E8E0D5">22.1%</td><td style="padding:8px;border:1px solid #E8E0D5">18.9%</td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">负债率</td><td style="padding:8px;border:1px solid #E8E0D5">58%</td><td style="padding:8px;border:1px solid #E8E0D5">62%</td></tr>
+</table>
+<br>
+📊 <strong>分析结论：</strong><br>
+宁德时代在盈利能力和资本效率方面略胜一筹，ROE 高出 3.3 个百分点。`,
+
+        trading: `年轻人，金字塔加码是利弗莫尔最看重的策略之一。<br><br>
+<strong>核心原则：</strong><br>
+1. <b>首次建仓 20%</b> - 试探性买入，验证你的判断<br>
+2. <b>盈利后加码 20%</b> - 证明趋势正确，增加仓位<br>
+3. <b>再次盈利再加 20%</b> - 趋势确认，满仓操作<br>
+4. <b>绝不向下摊平</b> - 亏损时绝不补仓<br><br>
+🎯 <strong>关键要点：</strong><br>
+"让利润奔跑，快速止损。永远不要给亏损的交易补仓，那只会让你越陷越深。"`,
+
+        company: `<strong>特斯拉 (TSLA) 公司画像</strong><br><br>
+<b>🚗 业务概览</b><br>
+全球领先的电动汽车制造商，同时涉足能源存储和太阳能业务<br><br>
+<b>💰 财务亮点</b><br>
+• 2024年营收预计超 $100B<br>
+• 毛利率维持在 18-20%<br>
+• 自由现金流持续改善<br><br>
+<b>🎯 投资亮点</b><br>
+✓ 自动驾驶技术领先<br>
+✓ 垂直整合供应链<br>
+✓ 品牌溢价能力强<br><br>
+<b>⚠️ 风险提示</b><br>
+• 竞争加剧（中国电动车崛起）<br>
+• 马斯克个人风险<br>
+• 估值偏高`,
+
+        basic: `<strong>沪深300指数基金 (510300)</strong><br><br>
+<table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:13px">
+<tr><td style="padding:8px;border:1px solid #E8E0D5;background:#FDF4E7"><b>项目</b></td><td style="padding:8px;border:1px solid #E8E0D5;background:#FDF4E7"><b>内容</b></td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">基金全称</td><td style="padding:8px;border:1px solid #E8E0D5">华泰柏瑞沪深300ETF</td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">成立日期</td><td style="padding:8px;border:1px solid #E8E0D5">2012-05-04</td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">管理费率</td><td style="padding:8px;border:1px solid #E8E0D5">0.50%/年</td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">托管费率</td><td style="padding:8px;border:1px solid #E8E0D5">0.10%/年</td></tr>
+<tr><td style="padding:8px;border:1px solid #E8E0D5">跟踪标的</td><td style="padding:8px;border:1px solid #E8E0D5">沪深300指数</td></tr>
+</table>`
+      };
+
+      return responses[skillId] || `收到你的问题：<b>${text}</b><br><br>
+这是演示回复。在实际部署后，Claude AI 会根据你的具体问题给出智能分析和回答。<br><br>
+你可以尝试问：<br>
+• "查询某股票的财务数据"<br>
+• "分析交易趋势"<br>
+• "制作公司画像"`;
+    }
+  </script>
+</body>
+</html>

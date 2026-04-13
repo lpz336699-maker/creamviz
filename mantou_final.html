@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>馒头店投资决策分析 · 最终版</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg-page:#EAECF0;--bg:#FFFFFF;
+  --sh-up:0 2px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
+  --sh-sm:0 1px 4px rgba(0,0,0,.10);--sh-in:inset 0 1px 4px rgba(0,0,0,.08);
+  --sh-deep:0 4px 24px rgba(0,0,0,.12),0 1px 6px rgba(0,0,0,.07);
+  --t1:#0D1117;--t2:#1F2937;--tm:#4B5563;--t3:#9CA3AF;
+  --accent:#5470c6;--accent-light:rgba(84,112,198,.12);
+  --accent-grad:linear-gradient(135deg,#5470c6 0%,#7bc6e6 100%);
+  --red:#ee6666;--red-light:rgba(238,102,102,.12);
+  --amber:#fac858;--amber-light:rgba(250,200,88,.20);
+  --purple:#9a60b4;--purple-light:rgba(154,96,180,.12);
+  --coral:#ff9f7f;--coral-light:rgba(255,159,127,.15);
+  --c1:#7bc6e6;--c2:#fac858;--c3:#9a60b4;--c4:#5470c6;
+  --c5:#ff9f7f;--c6:#ee6666;--c7:#ef65ce;
+  --r-sm:12px;--r-md:18px;--r-lg:24px;--r-xl:30px;
+  --font-d:'Nunito',sans-serif;--font-b:'Noto Sans SC',system-ui,sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--font-b);background:var(--bg-page);
+  display:flex;flex-direction:column;align-items:center;
+  min-height:100vh;padding:20px 32px 60px;gap:12px;
+  -webkit-font-smoothing:antialiased;}
+
+/* ── NAV ── */
+.global-nav{width:100%;height:58px;padding:0 20px;background:var(--bg);
+  border-radius:var(--r-lg);box-shadow:var(--sh-up);
+  display:flex;justify-content:space-between;align-items:center;}
+.logo-name{font-family:var(--font-d);font-size:18px;font-weight:900;color:var(--t1);}
+.logo-name em{color:var(--accent);font-style:normal;}
+.logo-sub{font-size:11px;color:var(--t3);margin-top:2px;}
+.nav-r{display:flex;gap:8px;align-items:center;}
+.nbtn{padding:7px 14px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:13px;
+  cursor:pointer;background:var(--bg-page);color:var(--tm);box-shadow:var(--sh-sm);
+  transition:.18s;font-family:var(--font-b);}
+.nbtn:hover{box-shadow:var(--sh-up);}
+.nbtn.active{color:var(--accent);box-shadow:var(--sh-in);}
+.nbtn-save{background:var(--accent);color:#fff!important;}
+.nbtn-saveas{background:var(--purple);color:#fff!important;}
+
+/* ── VIEW / PAGE ── */
+.view{display:none;width:100%;}
+.view.active{display:block;}
+.page-frame{width:100%;background:var(--bg-page);border-radius:var(--r-xl);
+  border:2px solid #C8CDD6;padding:18px 20px 24px;
+  display:flex;flex-direction:column;gap:12px;box-shadow:var(--sh-deep);}
+.ptab-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.ptab{padding:6px 18px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:13px;
+  cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);
+  transition:.18s;font-family:var(--font-b);}
+.ptab:hover{box-shadow:var(--sh-up);}
+.ptab.active{color:var(--accent);box-shadow:var(--sh-in);font-weight:900;}
+.page-canvas{display:none;}
+.page-canvas.active{display:flex;flex-direction:column;gap:14px;}
+
+/* ── HBAND ── */
+.hband{background:var(--accent-grad);border-radius:var(--r-md);
+  padding:18px 26px;display:flex;justify-content:space-between;align-items:center;color:#fff;}
+.hband-left h2{font-family:var(--font-d);font-size:20px;font-weight:900;margin-bottom:3px;}
+.hband-left p{font-size:12px;opacity:.85;}
+.hband-kpis{display:flex;gap:36px;}
+.hbk-val{font-family:var(--font-d);font-size:28px;font-weight:900;line-height:1;}
+.hbk-label{font-size:11px;opacity:.8;margin-top:4px;}
+
+/* ── GRID ── */
+.row{display:grid;gap:14px;}
+.row-5{grid-template-columns:repeat(5,1fr);}
+.row-4{grid-template-columns:repeat(4,1fr);}
+.row-3{grid-template-columns:repeat(3,1fr);}
+.row-2{grid-template-columns:1fr 1fr;}
+.row-21{grid-template-columns:2fr 1fr;}
+.row-12{grid-template-columns:1fr 2fr;}
+
+/* ── KPI CARD ── */
+.kc{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);
+  padding:16px 18px;position:relative;overflow:hidden;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  border-radius:var(--r-md) var(--r-md) 0 0;}
+.kc-blue::before{background:linear-gradient(90deg,#5470c6,#7bc6e6);}
+.kc-amber::before{background:linear-gradient(90deg,#fac858,#fde09a);}
+.kc-red::before{background:linear-gradient(90deg,#ee6666,#f5a0a0);}
+.kc-purple::before{background:linear-gradient(90deg,#9a60b4,#c49ad4);}
+.kc-coral::before{background:linear-gradient(90deg,#ff9f7f,#ffc8b0);}
+.kc-icon{position:absolute;top:14px;right:14px;font-size:22px;opacity:.55;}
+.kc-label{font-size:12px;font-weight:700;color:var(--tm);margin-top:4px;}
+.kc-val{font-family:var(--font-d);font-size:24px;font-weight:900;color:var(--t1);
+  line-height:1.15;margin:5px 0 3px;}
+.kc-sub{font-size:11px;color:var(--t3);}
+
+/* ── CHART CARD ── */
+.card{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);
+  padding:16px 18px;display:flex;flex-direction:column;}
+.card-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.card-title{font-size:14px;font-weight:900;color:var(--t1);
+  display:flex;align-items:center;gap:6px;}
+.card-title::before{content:'';width:3px;height:14px;border-radius:2px;flex-shrink:0;
+  background:var(--accent-grad);display:inline-block;}
+.card-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+
+/* ── INSIGHT ── */
+.insight-card{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);padding:18px;}
+.insight-card h4{font-size:14px;font-weight:900;color:var(--t1);margin-bottom:12px;
+  display:flex;align-items:center;gap:6px;}
+.ins-list{display:flex;flex-direction:column;gap:10px;}
+.ins-item{display:flex;gap:10px;align-items:flex-start;}
+.ins-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;}
+.ins-dot.r{background:var(--red);}
+.ins-dot.a{background:var(--amber);}
+.ins-dot.p{background:var(--purple);}
+.ins-text{font-size:13px;color:var(--t2);line-height:1.65;}
+.ins-text strong{color:var(--t1);font-weight:700;}
+
+/* ── ADVICE ── */
+.advice{background:var(--amber-light);border-left:4px solid var(--amber);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;padding:12px 16px;margin-top:12px;}
+.advice p{font-size:13px;color:#7a5a00;line-height:1.7;}
+.advice strong{font-weight:700;color:#5a3e00;}
+
+/* ── MINI TABLE ── */
+.mini-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.mini-tbl th{font-size:11px;color:var(--t3);font-weight:700;padding:7px 10px;
+  border-bottom:2px solid #EAECF0;text-align:left;white-space:nowrap;}
+.mini-tbl td{padding:8px 10px;border-bottom:1px solid #F3F4F6;color:var(--t2);}
+.mini-tbl tr:last-child td{border-bottom:none;}
+.mini-tbl .num{font-family:var(--font-d);font-weight:700;}
+.tag{display:inline-block;padding:2px 9px;border-radius:12px;font-size:11px;font-weight:700;}
+.tag-b{background:var(--accent-light);color:var(--accent);}
+.tag-a{background:var(--amber-light);color:#9a6e00;}
+.tag-r{background:var(--red-light);color:var(--red);}
+.tag-p{background:var(--purple-light);color:var(--purple);}
+
+/* ── PRICE GRID ── */
+.price-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:8px;}
+.pc{background:var(--bg-page);border-radius:var(--r-sm);padding:14px;text-align:center;}
+.pc.best{background:var(--accent-light);border:2px solid var(--accent);}
+.pc-name{font-size:12px;font-weight:700;color:var(--tm);margin-bottom:6px;}
+.pc-price{font-family:var(--font-d);font-size:22px;font-weight:900;color:var(--t1);}
+.pc-cost{font-size:11px;color:var(--t3);margin-top:2px;}
+.pc-gp{font-size:13px;font-weight:900;margin-top:5px;}
+.pc-gp.hi{color:var(--accent);}
+.pc-gp.mi{color:#9a6e00;}
+.pc-role{font-size:10px;margin-top:5px;}
+
+/* ── DATA CENTER ── */
+.dc-tab-row{display:flex;gap:8px;flex-wrap:wrap;}
+.dc-tab{padding:6px 18px;border:none;border-radius:var(--r-sm);font-weight:700;font-size:13px;
+  cursor:pointer;background:var(--bg);color:var(--tm);box-shadow:var(--sh-sm);
+  transition:.18s;font-family:var(--font-b);}
+.dc-tab.active{color:var(--accent);box-shadow:var(--sh-in);}
+.dc-pg{display:none;}
+.dc-pg.active{display:flex;flex-direction:column;gap:14px;}
+.dc-sec{background:var(--bg);border-radius:var(--r-md);box-shadow:var(--sh-up);padding:18px;}
+.dc-sec h3{font-size:14px;font-weight:900;color:var(--t1);margin-bottom:4px;}
+.dc-hint{font-size:12px;color:var(--t3);margin-bottom:12px;}
+.dc-tbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+.dc-btn{padding:6px 14px;border:none;border-radius:var(--r-sm);background:var(--accent);
+  color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font-b);}
+.dc-out{padding:6px 14px;border:none;border-radius:var(--r-sm);background:var(--bg-page);
+  color:var(--tm);font-size:12px;font-weight:700;cursor:pointer;box-shadow:var(--sh-sm);font-family:var(--font-b);}
+.dc-out:hover,.dc-btn:hover{opacity:.85;}
+.dc-wrap{overflow-x:auto;}
+.dc-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+.dc-tbl th{background:var(--accent);color:#fff;padding:9px 12px;text-align:left;
+  font-size:12px;font-weight:700;white-space:nowrap;}
+.dc-tbl td{padding:8px 12px;border-bottom:1px solid #EAECF0;color:var(--t2);white-space:nowrap;}
+.dc-tbl tr:hover td{background:var(--accent-light);}
+.dc-tbl td[contenteditable="true"]:focus{background:#fff8e1;outline:2px solid var(--amber);border-radius:4px;}
+.del-btn{background:var(--red-light);color:var(--red);border:none;padding:3px 10px;
+  border-radius:6px;font-size:11px;cursor:pointer;font-weight:700;}
+
+/* ── MODAL ── */
+.modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:9000;align-items:center;justify-content:center;}
+.modal-ov.show{display:flex;}
+.modal-box{background:#fff;border-radius:var(--r-lg);padding:26px;width:520px;max-width:95vw;
+  box-shadow:var(--sh-deep);display:flex;flex-direction:column;gap:12px;}
+.modal-box h3{font-size:16px;font-weight:700;color:var(--t1);}
+.modal-box textarea{width:100%;height:180px;border:2px solid #EAECF0;border-radius:var(--r-sm);
+  padding:10px;font-size:12px;font-family:monospace;resize:vertical;outline:none;}
+.modal-box textarea:focus{border-color:var(--accent);}
+.modal-hint{font-size:11px;color:var(--t3);}
+.modal-btns{display:flex;gap:8px;justify-content:flex-end;}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+  background:#0D1117;color:#fff;padding:10px 24px;border-radius:30px;
+  font-size:13px;font-weight:700;opacity:0;transition:.3s;z-index:9999;pointer-events:none;}
+#toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="global-nav">
+  <div>
+    <div class="logo-name">🥯 馒头店<em>投资决策</em>分析</div>
+    <div class="logo-sub">创业前必看 · 数据驱动 · 规避风险</div>
+  </div>
+  <div class="nav-r">
+    <button class="nbtn active" id="btn-db" onclick="switchView('db')">📊 分析看板</button>
+    <button class="nbtn" id="btn-dc" onclick="switchView('dc')">📋 数据中心</button>
+    <button class="nbtn nbtn-save" onclick="saveAll()">💾 保存数据</button>
+    <button class="nbtn nbtn-saveas" onclick="saveAsHTML()">⬇️ 另存为HTML</button>
+  </div>
+</nav>
+
+<!-- DASHBOARD -->
+<div class="view active" id="view-db">
+  <div class="page-frame">
+    <div class="ptab-row">
+      <button class="ptab active" onclick="go(1)">P1 · 投资总览</button>
+      <button class="ptab" onclick="go(2)">P2 · 产品定价</button>
+      <button class="ptab" onclick="go(3)">P3 · 成本结构</button>
+      <button class="ptab" onclick="go(4)">P4 · 盈亏平衡</button>
+      <button class="ptab" onclick="go(5)">P5 · 经营节奏</button>
+    </div>
+
+    <!-- P1 -->
+    <div class="page-canvas active" id="page1">
+      <div class="hband">
+        <div class="hband-left">
+          <h2>🥯 馒头店投资可行性分析</h2>
+          <p>社区中等规模 · 基准方案 · 数据可在「数据中心」修改后实时刷新</p>
+        </div>
+        <div class="hband-kpis">
+          <div><div class="hbk-val" id="hb-roi">--</div><div class="hbk-label">年化ROI</div></div>
+          <div><div class="hbk-val" id="hb-pb">--</div><div class="hbk-label">回本周期</div></div>
+          <div><div class="hbk-val" id="hb-np">--</div><div class="hbk-label">月净利润</div></div>
+        </div>
+      </div>
+      <div class="row row-5" id="kpi1"></div>
+      <div class="row row-21">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">36个月累计盈亏走势</div><div class="card-sub">柱=月净利，红线=累计盈亏，蓝虚线=回本节点</div></div></div>
+          <div id="c-trend" style="height:320px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div class="card-title">初始投资构成</div></div>
+          <div id="c-invest-pie" style="height:320px;"></div>
+        </div>
+      </div>
+      <div class="row row-3">
+        <div class="card">
+          <div class="card-hd"><div class="card-title">三方案月净利对比</div></div>
+          <div id="c-scenario-bar" style="height:260px;"></div>
+        </div>
+        <div class="card" style="grid-column:span 2;">
+          <div class="card-hd"><div><div class="card-title">投资方案详细对比</div><div class="card-sub">含安全边际评估</div></div></div>
+          <div style="overflow-x:auto;"><table class="mini-tbl" id="t-scen"></table></div>
+          <div class="advice"><p><strong>📌 建议：</strong>按「基准方案」规划，至少备足 <strong>10万元</strong>（含3个月流动备用金）。前3个月客流低属正常，<strong>第7个月</strong>前后进入稳定盈利期，不要因短期亏损放弃。</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="page-canvas" id="page2">
+      <div class="row row-4" id="kpi2"></div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">各产品毛利率对比</div><div class="card-sub">越高越赚钱 · 蓝色=利润品</div></div></div>
+          <div id="c-gp-bar" style="height:320px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">产品收入结构占比</div><div class="card-sub">各品类对总营收的贡献度</div></div></div>
+          <div id="c-prod-pie" style="height:320px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div><div class="card-title">产品定价策略参考表</div><div class="card-sub">蓝框=推荐主打品 · 引流品→利润品→特色品 组合经营</div></div></div>
+        <div id="price-grid"></div>
+        <div class="advice"><p><strong>💡 定价逻辑：</strong>原味馒头/花卷 ¥1~2 作<strong>引流品</strong>养成习惯；肉包/菜包 ¥4~6 是<strong>利润主力</strong>（毛利55~60%）；豆腐脑等<strong>特色品</strong>提升客单价。切忌全线低价——"薄利多销"在小店跑不通，靠产品组合实现盈利。</p></div>
+      </div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">客流 × 客单价 盈利热力图</div><div class="card-sub">颜色越蓝=利润越高，红色=亏损</div></div></div>
+          <div id="c-heatmap" style="height:300px;"></div>
+        </div>
+        <div class="insight-card">
+          <h4>📐 定价要点 & 选品建议</h4>
+          <div class="ins-list">
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>综合毛利率目标：55~65%。</strong>低于50%说明定价过低或成本失控。</div></div>
+            <div class="ins-item"><div class="ins-dot a"></div><div class="ins-text"><strong>客单价12~16元</strong>是社区馒头店最合理区间，太低不赚钱，太高流失客户。</div></div>
+            <div class="ins-item"><div class="ins-dot r"></div><div class="ins-text"><strong>危险信号：</strong>日客流低于80人次，按基准方案将持续亏损。</div></div>
+            <div class="ins-item"><div class="ins-dot p"></div><div class="ins-text"><strong>增收捷径：</strong>与周边写字楼/工厂谈早餐团购，一次增加50~100份固定订单。</div></div>
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>面粉价格波动10%</strong>影响净利约8%，批量采购可降低15~20%原料成本。</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="page-canvas" id="page3">
+      <div class="row row-4" id="kpi3"></div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">月度成本四分法堆叠</div><div class="card-sub">原材料 / 人工 / 其他变动 / 固定成本</div></div></div>
+          <div id="c-cost-stack" style="height:340px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">成熟期成本构成占比</div><div class="card-sub">第12月稳定后各项成本比例</div></div></div>
+          <div id="c-cost-pie" style="height:340px;"></div>
+        </div>
+      </div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">成本率走势</div><div class="card-sub">总成本/营收，蓝虚线=68%目标线</div></div></div>
+          <div id="c-cost-rate" style="height:260px;"></div>
+        </div>
+        <div class="insight-card">
+          <h4>🧱 成本控制要点</h4>
+          <div class="ins-list">
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>人工最大负担。</strong>前6个月建议夫妻档，月人工控制在6000元内，客流稳定后再加人。</div></div>
+            <div class="ins-item"><div class="ins-dot a"></div><div class="ins-text"><strong>面粉批量采购。</strong>25kg袋装比散购便宜15~20%，每月省500~800元。</div></div>
+            <div class="ins-item"><div class="ins-dot r"></div><div class="ins-text"><strong>租金红线：月租超4500元，回本期延长至10+个月。</strong>优先选月租3000~4000的社区底商。</div></div>
+            <div class="ins-item"><div class="ins-dot p"></div><div class="ins-text"><strong>减少损耗。</strong>按当日预测量蒸，剩余当天打折处理，避免浪费。</div></div>
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>水电燃气约900~1200元/月。</strong>醒发箱定时+蒸箱集中蒸制可降约20%能耗。</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="page-canvas" id="page4">
+      <div class="row row-4" id="kpi4"></div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">盈亏平衡分析图</div><div class="card-sub">收入线与总成本线交叉点=BEP · 蓝虚=当前均收入</div></div></div>
+          <div id="c-bep" style="height:340px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">日客流 → 月净利润</div><div class="card-sub">按基准客单价计算 · 红柱=亏损区</div></div></div>
+          <div id="c-flow-profit" style="height:340px;"></div>
+        </div>
+      </div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">租金水平 vs 回本周期</div><div class="card-sub">选址核心参考 · 红虚线=当前租金</div></div></div>
+          <div id="c-rent-pb" style="height:260px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">三情景盈亏平衡对比</div><div class="card-sub">月营收 vs BEP · 差距越大越安全</div></div></div>
+          <div id="c-scen-bep" style="height:260px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- P5 -->
+    <div class="page-canvas" id="page5">
+      <div class="row row-3" id="kpi5"></div>
+      <div class="row row-2">
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">爬坡期客流增长计划</div><div class="card-sub">黄虚线=目标 · 蓝柱=达标 · 红柱=未达标</div></div></div>
+          <div id="c-rampup" style="height:300px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><div><div class="card-title">敏感性分析：6大变量对净利影响</div><div class="card-sub">各变量±20%时净利润变动幅度</div></div></div>
+          <div id="c-tornado" style="height:300px;"></div>
+        </div>
+      </div>
+      <div class="row row-3">
+        <div class="insight-card">
+          <h4>🗓️ 开业前准备清单</h4>
+          <div class="ins-list">
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>提前2个月：</strong>选址谈租约、申请营业执照、食品经营许可（约30天办理）</div></div>
+            <div class="ins-item"><div class="ins-dot a"></div><div class="ins-text"><strong>提前1个月：</strong>装修、采购设备、招募帮手、练习配方到稳定输出</div></div>
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>提前2周：</strong>周边500米派发试吃券、联系业主群、谈企业早餐合作</div></div>
+            <div class="ins-item"><div class="ins-dot r"></div><div class="ins-text"><strong>开业第1周：</strong>买一送一促销，积累第一批回头客，差评及时处理</div></div>
+          </div>
+        </div>
+        <div class="insight-card">
+          <h4>⚠️ 主要风险及应对</h4>
+          <div class="ins-list">
+            <div class="ins-item"><div class="ins-dot r"></div><div class="ins-text"><strong>客流不足（最大风险）：</strong>要主动引流，不能等客上门，外卖平台是补充。</div></div>
+            <div class="ins-item"><div class="ins-dot r"></div><div class="ins-text"><strong>选址失误：</strong>覆盖500米内常住人口少于3000人很难存活，开业前做人流调研。</div></div>
+            <div class="ins-item"><div class="ins-dot a"></div><div class="ins-text"><strong>租金上涨：</strong>签约争取3年固定租金或涨幅上限条款。</div></div>
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>竞争对手：</strong>500米内已有同类店，客流减约30%，需差异化（特色口味/有机食材）破局。</div></div>
+          </div>
+        </div>
+        <div class="insight-card">
+          <h4>📈 扩大营收的5种方式</h4>
+          <div class="ins-list">
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>外卖平台：</strong>上线美团/饿了么，可增加约25%营收</div></div>
+            <div class="ins-item"><div class="ins-dot a"></div><div class="ins-text"><strong>企业团购：</strong>每天30~50份固定订单，相当于保底营收</div></div>
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>节日礼盒：</strong>春节/中秋推出礼盒，单次增收5000~15000元</div></div>
+            <div class="ins-item"><div class="ins-dot p"></div><div class="ins-text"><strong>增品：</strong>稳定后增加豆浆/粥，提升客单价2~4元</div></div>
+            <div class="ins-item"><div class="ins-dot"></div><div class="ins-text"><strong>加盟：</strong>盈利满1年后可考虑对外输出配方和管理</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DATA CENTER -->
+<div class="view" id="view-dc">
+  <div class="page-frame">
+    <div class="dc-tab-row">
+      <button class="dc-tab active" onclick="dcTab('invest')">💰 投资参数</button>
+      <button class="dc-tab" onclick="dcTab('ops')">📅 月度运营</button>
+      <button class="dc-tab" onclick="dcTab('products')">🥯 产品定价</button>
+      <button class="dc-tab" onclick="dcTab('scenarios')">📊 投资方案</button>
+    </div>
+
+    <!-- invest -->
+    <div class="dc-pg active" id="dc-invest">
+      <div class="dc-sec">
+        <h3>💰 初始投资项目</h3>
+        <div class="dc-hint">双击单元格直接编辑 · 修改金额实时驱动看板图表</div>
+        <div class="dc-tbar">
+          <button class="dc-out" onclick="importXLS('invest')">📥 导入Excel</button>
+          <button class="dc-out" onclick="pasteModal('invest')">📋 粘贴导入</button>
+          <button class="dc-out" onclick="exportXLS()">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addRow('invest')">➕ 新增行</button>
+          <button class="dc-out" style="color:var(--red)" onclick="clearTbl('invest')">🗑️ 清空</button>
+        </div>
+        <div class="dc-wrap"><table class="dc-tbl"><thead><tr><th>项目</th><th>金额（元）</th><th>说明</th><th>操作</th></tr></thead><tbody id="tb-invest"></tbody></table></div>
+      </div>
+      <div class="dc-sec">
+        <h3>🏠 月固定成本</h3>
+        <div class="dc-hint">修改后看板自动重算盈亏平衡点和回本周期</div>
+        <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-top:4px;">
+          <label style="font-size:13px;font-weight:700;color:var(--tm);">月租金（元）：<input id="inp-rent" type="number" style="width:110px;padding:6px 10px;border:2px solid #EAECF0;border-radius:8px;font-size:14px;font-weight:700;font-family:var(--font-d)" oninput="S.rent=+this.value||0;refresh()"></label>
+          <label style="font-size:13px;font-weight:700;color:var(--tm);">水电燃气（元）：<input id="inp-util" type="number" style="width:110px;padding:6px 10px;border:2px solid #EAECF0;border-radius:8px;font-size:14px;font-weight:700;font-family:var(--font-d)" oninput="S.util=+this.value||0;refresh()"></label>
+          <label style="font-size:13px;font-weight:700;color:var(--tm);">设备折旧（元）：<input id="inp-dep" type="number" style="width:110px;padding:6px 10px;border:2px solid #EAECF0;border-radius:8px;font-size:14px;font-weight:700;font-family:var(--font-d)" oninput="S.dep=+this.value||0;refresh()"></label>
+          <div style="font-size:14px;font-weight:900;color:var(--accent);">合计：¥<span id="fixed-sum">--</span> / 月</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ops -->
+    <div class="dc-pg" id="dc-ops">
+      <div class="dc-sec">
+        <h3>📅 月度运营数据</h3>
+        <div class="dc-hint">双击单元格编辑 · 所有图表实时联动</div>
+        <div class="dc-tbar">
+          <button class="dc-out" onclick="importXLS('ops')">📥 导入Excel</button>
+          <button class="dc-out" onclick="pasteModal('ops')">📋 粘贴导入</button>
+          <button class="dc-out" onclick="exportXLS()">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addRow('ops')">➕ 新增月份</button>
+          <button class="dc-out" style="color:var(--red)" onclick="clearTbl('ops')">🗑️ 清空</button>
+        </div>
+        <div class="dc-wrap"><table class="dc-tbl"><thead><tr><th>月份</th><th>日客流(人)</th><th>客单价(元)</th><th>月营收(元)</th><th>原材料(元)</th><th>人工(元)</th><th>其他变动(元)</th><th>操作</th></tr></thead><tbody id="tb-ops"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- products -->
+    <div class="dc-pg" id="dc-products">
+      <div class="dc-sec">
+        <h3>🥯 产品结构 & 定价</h3>
+        <div class="dc-hint">修改售价/成本 → 毛利率自动计算 · 修改日销量 → 收入占比自动刷新</div>
+        <div class="dc-tbar">
+          <button class="dc-out" onclick="importXLS('products')">📥 导入Excel</button>
+          <button class="dc-out" onclick="pasteModal('products')">📋 粘贴导入</button>
+          <button class="dc-out" onclick="exportXLS()">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addRow('products')">➕ 新增产品</button>
+          <button class="dc-out" style="color:var(--red)" onclick="clearTbl('products')">🗑️ 清空</button>
+        </div>
+        <div class="dc-wrap"><table class="dc-tbl"><thead><tr><th>产品名称</th><th>定位</th><th>售价(元)</th><th>成本(元)</th><th>毛利率(%)</th><th>日均销量(个)</th><th>日营收(元)</th><th>操作</th></tr></thead><tbody id="tb-products"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- scenarios -->
+    <div class="dc-pg" id="dc-scenarios">
+      <div class="dc-sec">
+        <h3>📊 投资方案对比</h3>
+        <div class="dc-hint">修改投资额/营收/成本 → ROI和回本周期自动重算</div>
+        <div class="dc-tbar">
+          <button class="dc-out" onclick="importXLS('scenarios')">📥 导入Excel</button>
+          <button class="dc-out" onclick="pasteModal('scenarios')">📋 粘贴导入</button>
+          <button class="dc-out" onclick="exportXLS()">📤 导出Excel</button>
+          <button class="dc-btn" onclick="addRow('scenarios')">➕ 新增方案</button>
+          <button class="dc-out" style="color:var(--red)" onclick="clearTbl('scenarios')">🗑️ 清空</button>
+        </div>
+        <div class="dc-wrap"><table class="dc-tbl"><thead><tr><th>方案名称</th><th>初始投资(元)</th><th>月均营收(元)</th><th>月均成本(元)</th><th>月净利润(元)</th><th>年化ROI(%)</th><th>回本(月)</th><th>操作</th></tr></thead><tbody id="tb-scenarios"></tbody></table></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+<div class="modal-ov" id="paste-modal">
+  <div class="modal-box">
+    <h3>📋 粘贴导入数据</h3>
+    <div class="modal-hint" id="paste-hint"></div>
+    <textarea id="paste-area" placeholder="从Excel复制后粘贴到此处（Tab分隔）..."></textarea>
+    <div class="modal-btns">
+      <button class="dc-out" onclick="closePaste()">取消</button>
+      <button class="dc-btn" onclick="confirmPaste()">确认导入</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* STATE_SNAPSHOT_START */
+const SAVED_STATE = undefined;
+/* STATE_SNAPSHOT_END */
+
+// ═══════════════════ STATE ═══════════════════
+const S = {
+  rent:3000, util:1200, dep:800,
+  invest:[
+    {item:'店面装修',       amount:28000, note:'墙面地板门面招牌灯光'},
+    {item:'商用蒸箱×2台',   amount:18000, note:'每笼可蒸120个'},
+    {item:'和面机×1台',     amount:8000,  note:'20kg商用和面机'},
+    {item:'醒发箱×1台',     amount:4800,  note:'恒温恒湿保证松软'},
+    {item:'冷冻/展示设备',  amount:5500,  note:'冰柜+冷藏展示柜'},
+    {item:'桌椅陈设',       amount:3500,  note:'简易堂食桌椅4套'},
+    {item:'3个月房租押金',  amount:9000,  note:'月租3000×3'},
+    {item:'营业执照&食品许可',amount:2000,note:'工商注册+卫生许可'},
+    {item:'首批原材料备货', amount:5000,  note:'面粉酵母馅料包装'},
+    {item:'流动备用金',     amount:16200, note:'前3月亏损缓冲+应急'},
+  ],
+  ops:[
+    {month:'第1月', customers:75,  avgPrice:12, revenue:23400,  material:8200,  labor:6000, other:1800},
+    {month:'第2月', customers:90,  avgPrice:12, revenue:28080,  material:9500,  labor:6000, other:1800},
+    {month:'第3月', customers:108, avgPrice:13, revenue:36504,  material:12000, labor:6000, other:2000},
+    {month:'第4月', customers:118, avgPrice:13, revenue:39916,  material:13200, labor:6500, other:2000},
+    {month:'第5月', customers:128, avgPrice:13, revenue:43264,  material:14200, labor:6500, other:2200},
+    {month:'第6月', customers:135, avgPrice:14, revenue:49140,  material:15800, labor:6500, other:2200},
+    {month:'第7月', customers:142, avgPrice:14, revenue:51688,  material:16500, labor:7000, other:2400},
+    {month:'第8月', customers:145, avgPrice:14, revenue:52780,  material:16800, labor:7000, other:2400},
+    {month:'第9月', customers:148, avgPrice:15, revenue:57720,  material:17500, labor:7000, other:2500},
+    {month:'第10月',customers:150, avgPrice:15, revenue:58500,  material:17800, labor:7200, other:2500},
+    {month:'第11月',customers:153, avgPrice:15, revenue:59670,  material:18200, labor:7200, other:2600},
+    {month:'第12月',customers:158, avgPrice:16, revenue:65728,  material:19500, labor:7500, other:2700},
+  ],
+  products:[
+    {name:'原味馒头', role:'引流品',    price:1.5, cost:0.48, gp:68.0, dailySales:220},
+    {name:'花卷',     role:'引流品',    price:2.0, cost:0.65, gp:67.5, dailySales:160},
+    {name:'肉包子',   role:'利润品',    price:5.5, cost:2.30, gp:58.2, dailySales:85},
+    {name:'菜包子',   role:'利润品',    price:4.5, cost:1.90, gp:57.8, dailySales:75},
+    {name:'豆沙包',   role:'利润品',    price:3.5, cost:1.40, gp:60.0, dailySales:65},
+    {name:'南瓜饼',   role:'特色品',    price:3.0, cost:1.10, gp:63.3, dailySales:55},
+    {name:'糯米糍',   role:'特色品',    price:4.5, cost:1.70, gp:62.2, dailySales:40},
+    {name:'豆腐脑',   role:'客单提升品',price:5.0, cost:1.50, gp:70.0, dailySales:35},
+  ],
+  scenarios:[
+    {name:'🔴 保守方案',invest:100000,revenue:33000,cost:28500,profit:4500, roi:5.4, payback:22.2},
+    {name:'🟡 基准方案',invest:100000,revenue:49000,cost:36000,profit:13000,roi:15.6,payback:7.7},
+    {name:'🔵 乐观方案',invest:100000,revenue:68000,cost:45500,profit:22500,roi:27.0,payback:4.4},
+  ]
+};
+
+// ═══════════════════ COMPUTED ═══════════════════
+function calc(){
+  const totalInvest = S.invest.reduce((a,r)=>a+ +r.amount,0);
+  const n = S.ops.length||1;
+  const avgRev  = S.ops.reduce((a,r)=>a+ +r.revenue,0)/n;
+  const avgMat  = S.ops.reduce((a,r)=>a+ +r.material,0)/n;
+  const avgLab  = S.ops.reduce((a,r)=>a+ +r.labor,0)/n;
+  const avgOth  = S.ops.reduce((a,r)=>a+ +r.other,0)/n;
+  const avgVar  = avgMat+avgLab+avgOth;
+  const fixed   = S.rent+S.util+S.dep;
+  const avgProfit = avgRev-avgVar-fixed;
+  const roi = (avgProfit*12/totalInvest*100).toFixed(1);
+  const payback = (totalInvest/Math.max(avgProfit,1)).toFixed(1);
+  const varRate = avgVar/Math.max(avgRev,1);
+  const bepRev  = fixed/(1-varRate);
+  const bepCustomers = Math.round(bepRev/26/((S.ops[6]||S.ops[0]||{avgPrice:14}).avgPrice));
+  const safetyPct = ((avgRev-bepRev)/Math.max(avgRev,1)*100).toFixed(1);
+  const totDS = S.products.reduce((a,p)=>a+p.dailySales*p.price,0)||1;
+  const wGP = S.products.reduce((a,p)=>a+p.gp*(p.dailySales*p.price/totDS),0).toFixed(1);
+  return{totalInvest,avgRev,avgMat,avgLab,avgOth,avgVar,fixed,avgProfit,roi,payback,varRate,bepRev,bepCustomers,safetyPct,wGP};
+}
+
+// ═══════════════════ NAV ═══════════════════
+let curPage=1, curView='db', curDcTab='invest';
+
+function switchView(v){
+  curView=v;
+  ['db','dc'].forEach(x=>{
+    document.getElementById('view-'+x).classList.toggle('active',x===v);
+    document.getElementById('btn-'+x).classList.toggle('active',x===v);
+  });
+  if(v==='db') renderPage(curPage); else renderDcAll();
+}
+
+function go(n){
+  curPage=n;
+  document.querySelectorAll('.ptab').forEach((b,i)=>b.classList.toggle('active',i+1===n));
+  document.querySelectorAll('.page-canvas').forEach((p,i)=>p.classList.toggle('active',i+1===n));
+  setTimeout(()=>renderPage(n),30);
+}
+
+// ═══════════════════ SAVE (双轨) ═══════════════════
+const LS_KEY='mantou_final_v1';
+
+function saveAll(){
+  try{localStorage.setItem(LS_KEY,JSON.stringify({invest:S.invest,ops:S.ops,products:S.products,scenarios:S.scenarios,rent:S.rent,util:S.util,dep:S.dep}));
+    showToast('✅ 已保存到浏览器，下次打开自动恢复');}
+  catch(e){showToast('❌ 保存失败：'+e.message);}
+}
+
+function saveAsHTML(){
+  try{
+    const snap=JSON.stringify({invest:S.invest,ops:S.ops,products:S.products,scenarios:S.scenarios,rent:S.rent,util:S.util,dep:S.dep},null,2);
+    const html=document.documentElement.outerHTML.replace(
+      /\/\* STATE_SNAPSHOT_START \*\/[\s\S]*?\/\* STATE_SNAPSHOT_END \*\//,
+      `/* STATE_SNAPSHOT_START */\nconst SAVED_STATE = ${snap};\n/* STATE_SNAPSHOT_END */`
+    );
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));
+    a.download='馒头店投资分析_'+new Date().toISOString().slice(0,10)+'.html';
+    a.click();
+    showToast('✅ 另存为HTML成功，数据已嵌入文件！');
+  }catch(e){showToast('❌ 另存失败：'+e.message);}
+}
+
+function loadState(){
+  try{if(typeof SAVED_STATE!=='undefined'&&SAVED_STATE){Object.assign(S,SAVED_STATE);return;}}catch(e){}
+  try{const d=JSON.parse(localStorage.getItem(LS_KEY)||'null');if(d)Object.assign(S,d);}catch(e){}
+}
+
+function refresh(){
+  if(curView==='db') renderPage(curPage);
+  else renderDcAll();
+  saveAll();
+}
+
+// ═══════════════════ RENDER PAGES ═══════════════════
+function renderPage(n){
+  const m=calc();
+  document.getElementById('hb-roi').textContent=m.roi+'%';
+  document.getElementById('hb-pb').textContent=m.payback+'个月';
+  document.getElementById('hb-np').textContent='¥'+fmt(m.avgProfit);
+  if(n===1)renderP1(m);
+  if(n===2)renderP2(m);
+  if(n===3)renderP3(m);
+  if(n===4)renderP4(m);
+  if(n===5)renderP5(m);
+}
+
+// ── P1 ──
+function renderP1(m){
+  kpiRow('kpi1',[
+    {c:'kc-blue', ic:'🏪',label:'总投资额',  val:'¥'+fmt(m.totalInvest),sub:'含流动备用金'},
+    {c:'kc-amber',ic:'💰',label:'月均营收',  val:'¥'+fmt(m.avgRev),    sub:'12月平均'},
+    {c:'kc-red',  ic:'📉',label:'月均总成本',val:'¥'+fmt(m.avgVar+m.fixed),sub:'变动+固定'},
+    {c:'kc-purple',ic:'📈',label:'综合毛利率',val:m.wGP+'%',          sub:'加权产品毛利'},
+    {c:'kc-coral',ic:'⚡',label:'年净利润',  val:'¥'+fmt(m.avgProfit*12),sub:'预计全年'},
+  ]);
+
+  // 36-month trend
+  const months=[],profArr=[],cumArr=[];
+  let cum=-m.totalInvest;
+  for(let i=1;i<=36;i++){
+    months.push('M'+i);
+    const r=S.ops[Math.min(i-1,S.ops.length-1)];
+    const g=i>12?Math.pow(1.003,i-12):1;
+    const rev=Math.round(+r.revenue*g);
+    const cost=Math.round((+r.material+ +r.labor+ +r.other+m.fixed)*g);
+    profArr.push(rev-cost);
+    cum+=rev-cost; cumArr.push(Math.round(cum));
+  }
+  const pbIdx=cumArr.findIndex(v=>v>=0);
+  mkC('c-trend',{
+    tooltip:{trigger:'axis',formatter:ps=>ps[0].axisValue+'<br/>'+ps.map(p=>p.marker+p.seriesName+': ¥'+fmt(p.value)).join('<br/>')},
+    legend:{data:['月净利润','累计盈亏'],bottom:4,textStyle:{fontSize:12}},
+    xAxis:{type:'category',data:months,axisLabel:{fontSize:10,interval:5}},
+    yAxis:[
+      {type:'value',name:'元/月',axisLabel:{formatter:v=>(v/1000).toFixed(0)+'k',fontSize:10},nameTextStyle:{fontSize:10}},
+      {type:'value',name:'累计(元)',axisLabel:{formatter:v=>(v/1000).toFixed(0)+'k',fontSize:10},nameTextStyle:{fontSize:10},splitLine:{show:false}}
+    ],
+    series:[
+      {name:'月净利润',type:'bar',data:profArr,barMaxWidth:12,
+        itemStyle:{color:p=>p.value>=0?'rgba(84,112,198,.7)':'rgba(238,102,102,.7)',borderRadius:[3,3,0,0]}},
+      {name:'累计盈亏',type:'line',data:cumArr,yAxisIndex:1,
+        lineStyle:{color:'#ee6666',width:2.5},symbol:'none',
+        markLine:{silent:true,data:[pbIdx>=0?{xAxis:pbIdx,label:{formatter:'✅ 第'+(pbIdx+1)+'月回本',color:'#5470c6',fontSize:11},lineStyle:{color:'#5470c6',type:'dashed',width:2}}:{}]}}
+    ],
+    grid:{left:56,right:64,top:20,bottom:48}
+  });
+
+  // invest pie — radius 收缩，legend 右侧
+  mkC('c-invest-pie',{
+    tooltip:{formatter:'{b}\n¥{c}（{d}%）'},
+    legend:{orient:'vertical',right:6,top:'center',textStyle:{fontSize:11},itemGap:5},
+    series:[{type:'pie',radius:['36%','60%'],center:['36%','50%'],
+      itemStyle:{borderRadius:6,borderColor:'#fff',borderWidth:2},
+      label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:10,lineHeight:15},
+      labelLine:{length:8,length2:12,smooth:true},
+      data:S.invest.map((r,i)=>({value:+r.amount,name:r.item,
+        itemStyle:{color:['#7bc6e6','#fac858','#9a60b4','#5470c6','#ff9f7f','#ee6666','#ef65ce','#3ba272','#7bc6e6','#fac858'][i%10]}}))
+    }]
+  });
+
+  // scenario bar
+  mkC('c-scenario-bar',{
+    tooltip:{trigger:'axis'},
+    legend:{data:['月营收','月成本','月净利'],bottom:4,textStyle:{fontSize:11}},
+    xAxis:{type:'category',data:S.scenarios.map(s=>s.name.replace(/^.\s/,''))},
+    yAxis:{type:'value',axisLabel:{formatter:v=>fmt(v),fontSize:10}},
+    series:[
+      {name:'月营收',type:'bar',barMaxWidth:34,data:S.scenarios.map(s=>s.revenue),
+        itemStyle:{color:'#7bc6e6',borderRadius:[4,4,0,0]},
+        label:{show:true,position:'top',formatter:v=>'¥'+fmt(v.value),fontSize:10,fontWeight:700}},
+      {name:'月成本',type:'bar',barMaxWidth:34,data:S.scenarios.map(s=>s.cost),
+        itemStyle:{color:'#fac858',borderRadius:[4,4,0,0]}},
+      {name:'月净利',type:'bar',barMaxWidth:34,data:S.scenarios.map(s=>s.profit),
+        itemStyle:{color:'#9a60b4',borderRadius:[4,4,0,0]},
+        label:{show:true,position:'top',formatter:v=>'¥'+fmt(v.value),fontSize:10,fontWeight:700}},
+    ],
+    grid:{left:60,right:16,top:32,bottom:52}
+  });
+
+  // scenario table
+  document.getElementById('t-scen').innerHTML=
+    '<thead><tr><th>方案</th><th>月营收</th><th>月净利</th><th>年化ROI</th><th>回本</th><th>安全边际</th></tr></thead>'+
+    S.scenarios.map(s=>{
+      const vr=(s.cost-m.fixed)/s.revenue;
+      const sm=((s.revenue-m.fixed/(1-vr))/s.revenue*100).toFixed(1);
+      return`<tr>
+        <td style="font-weight:700">${s.name}</td>
+        <td class="num">¥${fmt(s.revenue)}</td>
+        <td class="num" style="color:${s.profit>0?'var(--accent)':'var(--red)'};font-weight:900">¥${fmt(s.profit)}</td>
+        <td><span class="tag ${s.roi>=20?'tag-b':s.roi>=12?'tag-a':'tag-r'}">${s.roi}%</span></td>
+        <td class="num">${s.payback}月</td>
+        <td><span class="tag ${+sm>25?'tag-b':+sm>10?'tag-a':'tag-r'}">${sm}%</span></td>
+      </tr>`;
+    }).join('');
+}
+
+// ── P2 ──
+function renderP2(m){
+  const totDS=S.products.reduce((a,p)=>a+p.dailySales*p.price,0)||1;
+  kpiRow('kpi2',[
+    {c:'kc-blue', ic:'🏷️',label:'综合加权毛利率',val:m.wGP+'%',     sub:'产品组合加权'},
+    {c:'kc-amber',ic:'💹',label:'最高毛利产品',  val:(S.products.sort((a,b)=>b.gp-a.gp)[0]||{name:'--'}).name, sub:'毛利率最高'},
+    {c:'kc-purple',ic:'🛒',label:'加权均件售价', val:'¥'+(S.products.reduce((a,p)=>a+p.price*(p.dailySales*p.price/totDS),0)).toFixed(1),sub:'按日销量加权'},
+    {c:'kc-coral',ic:'📦',label:'在售SKU数',    val:S.products.length+'个',sub:'当前品类数'},
+  ]);
+
+  // GP bar — 横向，足够 right 空间
+  mkC('c-gp-bar',{
+    tooltip:{formatter:'{b}<br/>毛利率：{c}%'},
+    xAxis:{type:'value',max:100,name:'毛利率(%)',nameLocation:'end',axisLabel:{formatter:v=>v+'%',fontSize:11},nameTextStyle:{fontSize:11}},
+    yAxis:{type:'category',data:S.products.map(p=>p.name),axisLabel:{fontSize:12}},
+    series:[{type:'bar',barMaxWidth:30,
+      data:S.products.map((p,i)=>({value:p.gp,
+        itemStyle:{color:['#7bc6e6','#5470c6','#9a60b4','#fac858','#ff9f7f','#ee6666','#ef65ce','#3ba272'][i%8],borderRadius:[0,5,5,0]}})),
+      label:{show:true,position:'right',formatter:v=>v.value.toFixed(1)+'%',fontSize:12,fontWeight:700}
+    }],
+    grid:{left:76,right:90,top:14,bottom:28}
+  });
+
+  // product pie — legend 右侧，pie 偏左
+  mkC('c-prod-pie',{
+    tooltip:{formatter:'{b}<br/>收入占比：{d}%'},
+    legend:{orient:'vertical',right:6,top:'center',textStyle:{fontSize:12},itemGap:6},
+    series:[{type:'pie',radius:['36%','62%'],center:['38%','50%'],
+      itemStyle:{borderRadius:6,borderColor:'#fff',borderWidth:2},
+      label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:11,lineHeight:16},
+      labelLine:{length:10,length2:16,smooth:true},
+      data:S.products.map((p,i)=>({value:Math.round(p.dailySales*p.price),name:p.name,
+        itemStyle:{color:['#7bc6e6','#5470c6','#9a60b4','#fac858','#ff9f7f','#ee6666','#ef65ce','#3ba272'][i%8]}}))
+    }]
+  });
+
+  // price grid
+  const roleColor={'引流品':'tag-a','利润品':'tag-b','特色品':'tag-p','客单提升品':'tag-r'};
+  document.getElementById('price-grid').innerHTML='<div class="price-grid">'+
+    S.products.map(p=>`<div class="pc ${p.role==='利润品'?'best':''}">
+      <div class="pc-name">${p.name}</div>
+      <div class="pc-price">¥${p.price}</div>
+      <div class="pc-cost">成本¥${p.cost}</div>
+      <div class="pc-gp ${p.gp>=60?'hi':'mi'}">${p.gp.toFixed(1)}%毛利</div>
+      <span class="tag ${roleColor[p.role]||'tag-b'} pc-role">${p.role}</span>
+    </div>`).join('')+'</div>';
+
+  // heatmap
+  const custs=[60,80,100,120,140,160,180,200];
+  const prices=[10,11,12,13,14,15,16,17];
+  const hd=[];
+  custs.forEach((c,ci)=>prices.forEach((p,pi)=>{
+    const rev=c*p*26;
+    hd.push([ci,pi,Math.round(rev*(1-m.varRate)-m.fixed)]);
+  }));
+  mkC('c-heatmap',{
+    tooltip:{position:'top',formatter:p=>`日客流${custs[p.value[0]]}人 × 客单价¥${prices[p.value[1]]}<br/>月净利：¥${fmt(p.value[2])}`},
+    xAxis:{type:'category',data:custs.map(v=>v+'人'),name:'日均客流',axisLabel:{fontSize:11},nameLocation:'end',nameTextStyle:{fontSize:11}},
+    yAxis:{type:'category',data:prices.map(v=>'¥'+v),name:'客单价',axisLabel:{fontSize:11},nameLocation:'end',nameTextStyle:{fontSize:11}},
+    visualMap:{min:-12000,max:30000,calculable:true,orient:'vertical',right:8,top:'middle',
+      inRange:{color:['#ee6666','#fac858','#5470c6']},textStyle:{fontSize:10}},
+    series:[{type:'heatmap',data:hd,
+      label:{show:true,fontSize:10,formatter:p=>p.value[2]>0?(p.value[2]/1000).toFixed(0)+'k':'亏'}}],
+    grid:{left:42,right:76,top:22,bottom:36}
+  });
+}
+
+// ── P3 ──
+function renderP3(m){
+  kpiRow('kpi3',[
+    {c:'kc-red',  ic:'🥣',label:'月均原材料',val:'¥'+fmt(m.avgMat),sub:'约占营收35%'},
+    {c:'kc-amber',ic:'👷',label:'月均人工',  val:'¥'+fmt(m.avgLab),sub:'2人配置参考'},
+    {c:'kc-blue', ic:'🏠',label:'月固定成本',val:'¥'+fmt(m.fixed), sub:'租金+水电+折旧'},
+    {c:'kc-purple',ic:'📐',label:'综合成本率',val:((m.avgVar+m.fixed)/Math.max(m.avgRev,1)*100).toFixed(1)+'%',sub:'越低越健康'},
+  ]);
+
+  mkC('c-cost-stack',{
+    tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+    legend:{data:['原材料','人工','其他变动','固定成本'],bottom:4,textStyle:{fontSize:12}},
+    xAxis:{type:'category',data:S.ops.map(r=>r.month),axisLabel:{fontSize:10,rotate:30}},
+    yAxis:{type:'value',name:'元',axisLabel:{formatter:v=>(v/1000).toFixed(0)+'k',fontSize:10},nameTextStyle:{fontSize:10}},
+    series:[
+      {name:'原材料',type:'bar',stack:'c',data:S.ops.map(r=>+r.material),
+        itemStyle:{color:'#ee6666'},label:{show:true,position:'inside',formatter:v=>(v.value/1000).toFixed(0)+'k',fontSize:9,color:'#fff'}},
+      {name:'人工',  type:'bar',stack:'c',data:S.ops.map(r=>+r.labor),
+        itemStyle:{color:'#fac858'},label:{show:true,position:'inside',formatter:v=>(v.value/1000).toFixed(0)+'k',fontSize:9}},
+      {name:'其他变动',type:'bar',stack:'c',data:S.ops.map(r=>+r.other),
+        itemStyle:{color:'#9a60b4'}},
+      {name:'固定成本',type:'bar',stack:'c',data:S.ops.map(()=>m.fixed),
+        itemStyle:{color:'#5470c6'},label:{show:true,position:'top',formatter:v=>'总¥'+(v.value/1000).toFixed(0)+'k',fontSize:10,fontWeight:700}},
+    ],
+    grid:{left:50,right:16,top:32,bottom:68}
+  });
+
+  mkC('c-cost-pie',{
+    tooltip:{formatter:'{b}：¥{c}（{d}%）'},
+    legend:{orient:'vertical',right:6,top:'center',textStyle:{fontSize:12}},
+    series:[{type:'pie',radius:['36%','62%'],center:['36%','50%'],
+      itemStyle:{borderRadius:6,borderColor:'#fff',borderWidth:2},
+      label:{show:true,position:'outside',formatter:'{b}\n{d}%',fontSize:11,lineHeight:16},
+      labelLine:{length:10,length2:16,smooth:true},
+      data:[
+        {value:Math.round(m.avgMat),name:'原材料',  itemStyle:{color:'#ee6666'}},
+        {value:Math.round(m.avgLab),name:'人工成本',itemStyle:{color:'#fac858'}},
+        {value:Math.round(m.avgOth),name:'其他变动',itemStyle:{color:'#9a60b4'}},
+        {value:S.rent,              name:'租金',    itemStyle:{color:'#5470c6'}},
+        {value:S.util,              name:'水电燃气',itemStyle:{color:'#7bc6e6'}},
+        {value:S.dep,               name:'设备折旧',itemStyle:{color:'#ff9f7f'}},
+      ]
+    }]
+  });
+
+  mkC('c-cost-rate',{
+    tooltip:{trigger:'axis',formatter:ps=>`${ps[0].axisValue}<br/>成本率：${ps[0].value}%`},
+    xAxis:{type:'category',data:S.ops.map(r=>r.month),axisLabel:{fontSize:10,rotate:30}},
+    yAxis:{type:'value',name:'成本率(%)',min:50,max:110,axisLabel:{formatter:v=>v+'%',fontSize:10},nameTextStyle:{fontSize:10}},
+    series:[{type:'line',smooth:true,
+      data:S.ops.map(r=>(((+r.material+ +r.labor+ +r.other+m.fixed)/Math.max(+r.revenue,1))*100).toFixed(1)),
+      lineStyle:{color:'#ee6666',width:2.5},areaStyle:{color:'rgba(238,102,102,.1)'},
+      symbol:'circle',symbolSize:7,itemStyle:{color:'#ee6666'},
+      label:{show:true,position:'top',formatter:v=>v.value+'%',fontSize:10,fontWeight:700},
+      markLine:{data:[{yAxis:68,label:{formatter:'目标≤68%',position:'insideEndTop',color:'#5470c6',fontSize:11},lineStyle:{color:'#5470c6',type:'dashed',width:2}}]}
+    }],
+    grid:{left:50,right:16,top:32,bottom:68}
+  });
+}
+
+// ── P4 ──
+function renderP4(m){
+  const bep=Math.round(m.bepRev);
+  kpiRow('kpi4',[
+    {c:'kc-red',   ic:'⚖️',label:'月盈亏平衡点',val:'¥'+fmt(bep),        sub:'月营收须超此值'},
+    {c:'kc-amber', ic:'👥',label:'日客流平衡点', val:m.bepCustomers+'人', sub:'每天须到店人数'},
+    {c:'kc-blue',  ic:'🛡️',label:'安全边际',    val:m.safetyPct+'%',     sub:'超出BEP的空间'},
+    {c:'kc-purple',ic:'🏠',label:'月固定成本',   val:'¥'+fmt(m.fixed),   sub:'影响BEP的关键'},
+  ]);
+
+  // BEP chart
+  const xRevs=[],fixedL=[],totalCostL=[],revL=[];
+  for(let rev=0;rev<=90000;rev+=5000){
+    xRevs.push((rev/1000).toFixed(0)+'k');
+    fixedL.push(m.fixed);
+    totalCostL.push(Math.round(m.fixed+rev*m.varRate));
+    revL.push(rev);
+  }
+  mkC('c-bep',{
+    tooltip:{trigger:'axis'},
+    legend:{data:['收入','总成本','固定成本'],bottom:4,textStyle:{fontSize:12}},
+    xAxis:{type:'category',data:xRevs,name:'月营收(元)',nameLocation:'end',axisLabel:{fontSize:10},nameTextStyle:{fontSize:10}},
+    yAxis:{type:'value',name:'金额(元)',axisLabel:{formatter:v=>(v/1000).toFixed(0)+'k',fontSize:10},nameTextStyle:{fontSize:10}},
+    series:[
+      {name:'收入',   type:'line',data:revL,    lineStyle:{color:'#5470c6',width:2.5},symbol:'none',
+        markLine:{data:[{xAxis:(m.avgRev/1000).toFixed(0)+'k',label:{formatter:'当前均收入',color:'#5470c6',fontSize:11},lineStyle:{color:'#5470c6',type:'dashed',width:2}}]}},
+      {name:'总成本', type:'line',data:totalCostL,lineStyle:{color:'#ee6666',width:2.5},symbol:'none',
+        markLine:{data:[{xAxis:(bep/1000).toFixed(0)+'k',label:{formatter:'BEP¥'+fmt(bep),color:'#ee6666',fontSize:11},lineStyle:{color:'#ee6666',width:2}}]}},
+      {name:'固定成本',type:'line',data:fixedL,  lineStyle:{color:'#fac858',width:2,type:'dashed'},symbol:'none'},
+    ],
+    grid:{left:56,right:16,top:32,bottom:52}
+  });
+
+  // customers vs profit
+  const flowArr=[50,70,90,110,130,150,170,200];
+  const avgPr=S.ops.reduce((a,r)=>a+ +r.avgPrice,0)/Math.max(S.ops.length,1);
+  mkC('c-flow-profit',{
+    tooltip:{trigger:'axis'},
+    xAxis:{type:'category',data:flowArr.map(v=>v+'人'),name:'日均客流',axisLabel:{fontSize:11},nameLocation:'end',nameTextStyle:{fontSize:11}},
+    yAxis:{type:'value',name:'月净利(元)',axisLabel:{formatter:v=>fmt(v),fontSize:10},nameTextStyle:{fontSize:10}},
+    series:[{type:'bar',barMaxWidth:40,
+      data:flowArr.map(c=>Math.round(c*avgPr*26*(1-m.varRate)-m.fixed)),
+      itemStyle:{borderRadius:[5,5,0,0],color:p=>p.value>=0?'#5470c6':'#ee6666'},
+      label:{show:true,position:p=>p.value>=0?'top':'bottom',formatter:v=>'¥'+fmt(v.value),fontSize:11,fontWeight:700}
+    }],
+    grid:{left:62,right:16,top:32,bottom:36}
+  });
+
+  // rent vs payback
+  const rents=[1500,2000,2500,3000,3500,4000,4500,5000,6000];
+  mkC('c-rent-pb',{
+    tooltip:{formatter:p=>`月租金：¥${rents[p.dataIndex]}<br/>回本周期：${p.value}个月`},
+    xAxis:{type:'category',data:rents.map(v=>'¥'+v),name:'月租金',axisLabel:{fontSize:10},nameLocation:'end',nameTextStyle:{fontSize:10}},
+    yAxis:{type:'value',name:'回本周期(月)',axisLabel:{fontSize:10},nameTextStyle:{fontSize:10}},
+    series:[{type:'line',smooth:true,
+      data:rents.map(r=>{
+        const fc=r+S.util+S.dep;
+        const p=m.avgRev*(1-m.varRate)-fc;
+        return p>0?(m.totalInvest/p).toFixed(1):null;
+      }),
+      lineStyle:{color:'#9a60b4',width:2.5},symbol:'circle',symbolSize:8,itemStyle:{color:'#9a60b4'},
+      label:{show:true,position:'top',formatter:v=>v.value?v.value+'月':'亏损',fontSize:10,fontWeight:700},
+      markLine:{data:[{name:'当前',xAxis:rents.indexOf(S.rent),label:{formatter:'当前¥'+S.rent,color:'#ee6666',fontSize:11},lineStyle:{color:'#ee6666',type:'dashed',width:2}}]}
+    }],
+    grid:{left:52,right:16,top:32,bottom:36}
+  });
+
+  // scenario BEP comparison
+  mkC('c-scen-bep',{
+    tooltip:{trigger:'axis'},
+    legend:{data:['月营收','盈亏平衡点'],bottom:4,textStyle:{fontSize:12}},
+    xAxis:{type:'category',data:S.scenarios.map(s=>s.name.replace(/^.\s/,''))},
+    yAxis:{type:'value',axisLabel:{formatter:v=>fmt(v),fontSize:10}},
+    series:[
+      {name:'月营收',type:'bar',barMaxWidth:44,data:S.scenarios.map(s=>s.revenue),
+        itemStyle:{color:'#5470c6',borderRadius:[5,5,0,0]},
+        label:{show:true,position:'top',formatter:v=>'¥'+fmt(v.value),fontSize:11,fontWeight:700}},
+      {name:'盈亏平衡点',type:'line',data:S.scenarios.map(s=>{
+          const vr=(s.cost-m.fixed)/s.revenue;
+          return Math.round(m.fixed/(1-vr));
+        }),
+        lineStyle:{color:'#ee6666',width:2.5,type:'dashed'},symbol:'diamond',symbolSize:10,
+        itemStyle:{color:'#ee6666'},
+        label:{show:true,position:'top',formatter:v=>'BEP\n¥'+fmt(v.value),fontSize:10,color:'#ee6666',fontWeight:700}
+      }
+    ],
+    grid:{left:60,right:16,top:36,bottom:52}
+  });
+}
+
+// ── P5 ──
+function renderP5(m){
+  kpiRow('kpi5',[
+    {c:'kc-blue', ic:'📍',label:'基准月净利',  val:'¥'+fmt(m.avgProfit),sub:'12月平均'},
+    {c:'kc-red',  ic:'⚠️',label:'最大风险变量',val:'日客流量',          sub:'敏感性第一'},
+    {c:'kc-amber',ic:'🗓️',label:'建议爬坡期', val:'6个月',              sub:'达到稳定盈利'},
+  ]);
+
+  const planFlow=[75,90,108,118,128,135,142,145,148,150,153,158];
+  const targetFlow=[100,100,120,120,140,140,150,150,150,160,160,160];
+  mkC('c-rampup',{
+    tooltip:{trigger:'axis'},
+    legend:{data:['实际预测客流','目标客流'],bottom:4,textStyle:{fontSize:12}},
+    xAxis:{type:'category',data:S.ops.map(r=>r.month),axisLabel:{fontSize:10,rotate:30}},
+    yAxis:{type:'value',name:'日均人次',axisLabel:{fontSize:11},nameTextStyle:{fontSize:11}},
+    series:[
+      {name:'实际预测客流',type:'bar',barMaxWidth:28,data:planFlow,
+        itemStyle:{color:p=>planFlow[p.dataIndex]>=targetFlow[p.dataIndex]?'#5470c6':'rgba(238,102,102,.7)',borderRadius:[4,4,0,0]},
+        label:{show:true,position:'top',fontSize:10,fontWeight:700}},
+      {name:'目标客流',type:'line',data:targetFlow,
+        lineStyle:{color:'#fac858',width:2,type:'dashed'},symbol:'none'},
+    ],
+    grid:{left:46,right:16,top:32,bottom:68}
+  });
+
+  const factors=['日客流量','客单价','面粉成本','人工成本','租金','其他变动'];
+  const pos=[9500,6800,-3800,-3200,-2800,-2100];
+  const neg=[-9500,-6800,3800,3200,2800,2100];
+  mkC('c-tornado',{
+    tooltip:{trigger:'axis',formatter:ps=>ps[0].axisValue+'<br/>'+ps.map(p=>p.marker+p.seriesName+': '+(p.value>=0?'+':'')+fmt(p.value)+'元').join('<br/>')},
+    legend:{data:['+20%影响','-20%影响'],bottom:4,textStyle:{fontSize:12}},
+    xAxis:{type:'value',name:'净利润变动(元)',axisLabel:{formatter:v=>(v>=0?'+':'')+fmt(v),fontSize:10},nameTextStyle:{fontSize:10}},
+    yAxis:{type:'category',data:factors,axisLabel:{fontSize:12}},
+    series:[
+      {name:'+20%影响',type:'bar',data:pos,barMaxWidth:26,
+        itemStyle:{color:p=>pos[p.dataIndex]>=0?'#5470c6':'#ee6666',borderRadius:[0,5,5,0]},
+        label:{show:true,position:'right',formatter:v=>(v.value>=0?'+':'')+fmt(v.value),fontSize:11,fontWeight:700}},
+      {name:'-20%影响',type:'bar',data:neg,barMaxWidth:26,
+        itemStyle:{color:p=>neg[p.dataIndex]>=0?'rgba(84,112,198,.6)':'rgba(238,102,102,.7)',borderRadius:[5,0,0,5]},
+        label:{show:true,position:'left',formatter:v=>(v.value>=0?'+':'')+fmt(v.value),fontSize:11,fontWeight:700}},
+    ],
+    grid:{left:84,right:110,top:16,bottom:52}
+  });
+}
+
+// ═══════════════════ DATA CENTER ═══════════════════
+function dcTab(t){
+  curDcTab=t;
+  const tabs=['invest','ops','products','scenarios'];
+  document.querySelectorAll('.dc-tab').forEach((b,i)=>b.classList.toggle('active',tabs[i]===t));
+  document.querySelectorAll('.dc-pg').forEach(p=>p.classList.remove('active'));
+  document.getElementById('dc-'+t).classList.add('active');
+  renderDcAll();
+}
+
+function renderDcAll(){
+  renderTbInvest(); renderTbOps(); renderTbProducts(); renderTbScenarios();
+  const inp=document.getElementById('inp-rent');
+  if(inp){inp.value=S.rent;document.getElementById('inp-util').value=S.util;document.getElementById('inp-dep').value=S.dep;}
+  const fs=document.getElementById('fixed-sum');
+  if(fs) fs.textContent=fmt(S.rent+S.util+S.dep);
+}
+
+function renderTbInvest(){
+  document.getElementById('tb-invest').innerHTML=S.invest.map((r,i)=>`<tr>
+    <td contenteditable="true" onblur="S.invest[${i}].item=this.textContent.trim()">${r.item}</td>
+    <td contenteditable="true" onblur="S.invest[${i}].amount=+this.textContent||0;refresh()">${r.amount}</td>
+    <td contenteditable="true" onblur="S.invest[${i}].note=this.textContent.trim()">${r.note}</td>
+    <td><button class="del-btn" onclick="S.invest.splice(${i},1);renderTbInvest();refresh()">删除</button></td>
+  </tr>`).join('');
+}
+
+function renderTbOps(){
+  document.getElementById('tb-ops').innerHTML=S.ops.map((r,i)=>`<tr>
+    <td contenteditable="true" onblur="S.ops[${i}].month=this.textContent.trim()">${r.month}</td>
+    <td contenteditable="true" onblur="S.ops[${i}].customers=+this.textContent||0;refresh()">${r.customers}</td>
+    <td contenteditable="true" onblur="S.ops[${i}].avgPrice=+this.textContent||0;refresh()">${r.avgPrice}</td>
+    <td contenteditable="true" onblur="S.ops[${i}].revenue=+this.textContent||0;refresh()">${r.revenue}</td>
+    <td contenteditable="true" onblur="S.ops[${i}].material=+this.textContent||0;refresh()">${r.material}</td>
+    <td contenteditable="true" onblur="S.ops[${i}].labor=+this.textContent||0;refresh()">${r.labor}</td>
+    <td contenteditable="true" onblur="S.ops[${i}].other=+this.textContent||0;refresh()">${r.other}</td>
+    <td><button class="del-btn" onclick="S.ops.splice(${i},1);renderTbOps();refresh()">删除</button></td>
+  </tr>`).join('');
+}
+
+function renderTbProducts(){
+  document.getElementById('tb-products').innerHTML=S.products.map((p,i)=>`<tr>
+    <td contenteditable="true" onblur="S.products[${i}].name=this.textContent.trim();refresh()">${p.name}</td>
+    <td contenteditable="true" onblur="S.products[${i}].role=this.textContent.trim()">${p.role}</td>
+    <td contenteditable="true" onblur="S.products[${i}].price=+this.textContent||0;S.products[${i}].gp=+((S.products[${i}].price-S.products[${i}].cost)/Math.max(S.products[${i}].price,0.01)*100).toFixed(1);refresh()">${p.price}</td>
+    <td contenteditable="true" onblur="S.products[${i}].cost=+this.textContent||0;S.products[${i}].gp=+((S.products[${i}].price-S.products[${i}].cost)/Math.max(S.products[${i}].price,0.01)*100).toFixed(1);refresh()">${p.cost}</td>
+    <td style="color:var(--accent);font-weight:700;">${p.gp.toFixed(1)}%</td>
+    <td contenteditable="true" onblur="S.products[${i}].dailySales=+this.textContent||0;refresh()">${p.dailySales}</td>
+    <td style="color:var(--tm);">¥${(p.dailySales*p.price).toFixed(0)}</td>
+    <td><button class="del-btn" onclick="S.products.splice(${i},1);renderTbProducts();refresh()">删除</button></td>
+  </tr>`).join('');
+}
+
+function renderTbScenarios(){
+  document.getElementById('tb-scenarios').innerHTML=S.scenarios.map((s,i)=>`<tr>
+    <td contenteditable="true" onblur="S.scenarios[${i}].name=this.textContent.trim()">${s.name}</td>
+    <td contenteditable="true" onblur="S.scenarios[${i}].invest=+this.textContent||0;calcScen(${i})">${s.invest}</td>
+    <td contenteditable="true" onblur="S.scenarios[${i}].revenue=+this.textContent||0;calcScen(${i})">${s.revenue}</td>
+    <td contenteditable="true" onblur="S.scenarios[${i}].cost=+this.textContent||0;calcScen(${i})">${s.cost}</td>
+    <td style="font-weight:900;color:${s.profit>0?'var(--accent)':'var(--red)'}">¥${fmt(s.profit)}</td>
+    <td><span class="tag ${s.roi>=20?'tag-b':s.roi>=12?'tag-a':'tag-r'}">${s.roi}%</span></td>
+    <td>${s.payback}月</td>
+    <td><button class="del-btn" onclick="S.scenarios.splice(${i},1);renderTbScenarios();refresh()">删除</button></td>
+  </tr>`).join('');
+}
+
+function calcScen(i){
+  const s=S.scenarios[i];
+  s.profit=s.revenue-s.cost;
+  s.roi=+((s.profit*12/Math.max(s.invest,1))*100).toFixed(1);
+  s.payback=+(s.invest/Math.max(s.profit,1)).toFixed(1);
+  renderTbScenarios(); refresh();
+}
+
+// ── add row templates ──
+const EMPTY_ROW={
+  invest:()=>({item:'新项目',amount:0,note:''}),
+  ops:()=>({month:'新月份',customers:120,avgPrice:14,revenue:43680,material:13000,labor:6500,other:2200}),
+  products:()=>({name:'新产品',role:'利润品',price:4.0,cost:1.6,gp:60.0,dailySales:30}),
+  scenarios:()=>({name:'新方案',invest:100000,revenue:50000,cost:38000,profit:12000,roi:14.4,payback:8.3}),
+};
+function addRow(t){
+  S[t].push(EMPTY_ROW[t]());
+  renderDcAll(); refresh();
+}
+
+function clearTbl(t){
+  if(!confirm('确定清空此表全部数据？此操作不可恢复。'))return;
+  S[t]=[];
+  renderDcAll(); refresh(); showToast('✅ 已清空');
+}
+
+// ── import / export / paste ──
+function importXLS(t){
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='.xlsx,.xls,.csv';
+  inp.onchange=e=>{
+    const file=e.target.files[0]; if(!file)return;
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      try{
+        const wb=XLSX.read(ev.target.result,{type:'array'});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        const map={
+          invest: r=>({item:r['项目']||r.item||'',amount:+(r['金额（元）']||r.amount)||0,note:r['说明']||r.note||''}),
+          ops:    r=>({month:r['月份']||r.month||'',customers:+(r['日客流(人)']||r.customers)||0,avgPrice:+(r['客单价(元)']||r.avgPrice)||0,revenue:+(r['月营收(元)']||r.revenue)||0,material:+(r['原材料(元)']||r.material)||0,labor:+(r['人工(元)']||r.labor)||0,other:+(r['其他变动(元)']||r.other)||0}),
+          products:r=>({name:r['产品名称']||r.name||'',role:r['定位']||r.role||'利润品',price:+(r['售价(元)']||r.price)||0,cost:+(r['成本(元)']||r.cost)||0,gp:+(r['毛利率(%)']||r.gp)||0,dailySales:+(r['日均销量(个)']||r.dailySales)||0}),
+          scenarios:r=>({name:r['方案名称']||r.name||'新方案',invest:+(r['初始投资(元)']||r.invest)||0,revenue:+(r['月均营收(元)']||r.revenue)||0,cost:+(r['月均成本(元)']||r.cost)||0,profit:0,roi:0,payback:0}),
+        };
+        S[t]=rows.map(map[t]);
+        if(t==='products') S[t].forEach(p=>{if(p.price>0)p.gp=+((p.price-p.cost)/p.price*100).toFixed(1);});
+        if(t==='scenarios') S[t].forEach((_,i)=>calcScen(i));
+        renderDcAll(); refresh(); showToast('✅ Excel导入成功！');
+      }catch(err){showToast('❌ 导入失败：'+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  };
+  inp.click();
+}
+
+function exportXLS(){
+  try{
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.invest),'投资参数');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.ops),'月度运营');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.products),'产品定价');
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.scenarios),'投资方案');
+    XLSX.writeFile(wb,'馒头店投资分析_'+new Date().toISOString().slice(0,10)+'.xlsx');
+    showToast('✅ Excel导出成功！');
+  }catch(e){showToast('❌ 导出失败：'+e.message);}
+}
+
+let pasteTarget='';
+const PASTE_HINTS={
+  invest:'格式：项目名\t金额\t说明（每行一条，Tab分隔）',
+  ops:'格式：月份\t日客流\t客单价\t营收\t原材料\t人工\t其他',
+  products:'格式：名称\t定位\t售价\t成本\t毛利率\t日销量',
+  scenarios:'格式：方案名\t初始投资\t月营收\t月成本',
+};
+const PASTE_MIN={invest:2,ops:7,products:6,scenarios:4};
+
+function pasteModal(t){
+  pasteTarget=t;
+  document.getElementById('paste-hint').textContent=PASTE_HINTS[t]||'从Excel复制粘贴（Tab分隔）';
+  document.getElementById('paste-area').value='';
+  document.getElementById('paste-modal').classList.add('show');
+}
+function closePaste(){document.getElementById('paste-modal').classList.remove('show');}
+function confirmPaste(){
+  const rows=document.getElementById('paste-area').value.trim().split('\n').map(r=>r.split('\t').map(c=>c.trim()));
+  try{
+    const mapArr={
+      invest: r=>({item:r[0],amount:+r[1]||0,note:r[2]||''}),
+      ops:    r=>({month:r[0],customers:+r[1]||0,avgPrice:+r[2]||0,revenue:+r[3]||0,material:+r[4]||0,labor:+r[5]||0,other:+r[6]||0}),
+      products:r=>({name:r[0],role:r[1]||'利润品',price:+r[2]||0,cost:+r[3]||0,gp:+r[4]||0,dailySales:+r[5]||0}),
+      scenarios:r=>({name:r[0],invest:+r[1]||0,revenue:+r[2]||0,cost:+r[3]||0,profit:0,roi:0,payback:0}),
+    };
+    S[pasteTarget]=rows.filter(r=>r.length>=PASTE_MIN[pasteTarget]).map(mapArr[pasteTarget]);
+    if(pasteTarget==='products') S.products.forEach(p=>{if(p.price>0)p.gp=+((p.price-p.cost)/p.price*100).toFixed(1);});
+    if(pasteTarget==='scenarios') S.scenarios.forEach((_,i)=>calcScen(i));
+    renderDcAll(); refresh(); closePaste(); showToast('✅ 粘贴导入成功！');
+  }catch(e){showToast('❌ 导入失败：'+e.message);}
+}
+
+// ═══════════════════ HELPERS ═══════════════════
+const PALETTE=['#7bc6e6','#fac858','#9a60b4','#5470c6','#ff9f7f','#ee6666','#ef65ce','#3ba272'];
+const CI={};
+
+function mkC(id,opt){
+  const el=document.getElementById(id); if(!el)return;
+  if(CI[id]){try{CI[id].dispose();}catch(e){}}
+  CI[id]=echarts.init(el,null,{renderer:'svg'});
+  CI[id].setOption(Object.assign({
+    color:PALETTE,
+    textStyle:{fontFamily:"'Noto Sans SC',sans-serif"},
+    tooltip:{backgroundColor:'#fff',borderColor:'#EAECF0',textStyle:{color:'#1F2937',fontSize:12},confine:true}
+  },opt));
+}
+window.addEventListener('resize',()=>Object.values(CI).forEach(c=>{if(c&&c.resize)c.resize();}));
+
+function kpiRow(id,items){
+  const el=document.getElementById(id);
+  el.className='row row-'+items.length;
+  el.innerHTML=items.map(k=>`<div class="kc ${k.c}">
+    <div class="kc-icon">${k.ic}</div>
+    <div class="kc-label">${k.label}</div>
+    <div class="kc-val">${k.val}</div>
+    <div class="kc-sub">${k.sub}</div>
+  </div>`).join('');
+}
+
+function fmt(n){return Math.round(Number(n)).toLocaleString('zh-CN');}
+
+let toastT;
+function showToast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+// ═══════════════════ INIT ═══════════════════
+loadState();
+renderPage(1);
+</script>
+</body>
+</html>
