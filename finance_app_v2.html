@@ -1,0 +1,1434 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>读懂你的钱 — 个人收支记账</title>
+<style>
+:root{--cream:#FAF8F3;--dark:#3A3530;--gold:#C9934A;--gold-l:#EDE6D8;--gray:#9A8E82;--gray-l:#A89E92;--green:#5A8C5E;--red:#B85C3A;--border:#E0D9CC;--card:#FFF;--font:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{font-family:var(--font);background:#EDE8DF;min-height:100vh;overflow-x:hidden}
+.app{max-width:480px;margin:0 auto;min-height:100vh;background:var(--cream);position:relative;box-shadow:0 0 60px rgba(0,0,0,.08)}
+
+/* Header */
+.app-header{background:var(--dark);color:var(--cream);padding:18px 20px 16px;position:sticky;top:0;z-index:100}
+.app-header-top{display:flex;justify-content:space-between;align-items:center}
+.app-logo{font-size:16px;font-weight:500;display:flex;align-items:center;gap:7px}
+.app-logo span{font-size:20px}
+.app-header-actions{display:flex;gap:10px}
+.icon-btn{width:32px;height:32px;border-radius:8px;background:rgba(250,248,243,.12);border:none;color:var(--cream);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.icon-btn:hover{background:rgba(250,248,243,.22)}
+
+/* Tabs */
+.tabs{display:flex;background:#F3EFE6;border-bottom:0.5px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:11px 16px;font-size:13px;color:var(--gray);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .15s;flex-shrink:0}
+.tab.active{color:var(--gold);border-bottom-color:var(--gold);font-weight:500}
+.tab:active{opacity:.7}
+
+/* Content */
+.content{padding:0}
+
+/* Onboarding */
+.onboard{padding:20px 24px}
+.ob-progress{display:flex;gap:5px;justify-content:center;margin-bottom:22px}
+.ob-dot{width:6px;height:6px;border-radius:3px;background:var(--border)}
+.ob-dot.active{background:var(--gold);width:20px}
+.ob-title{font-size:18px;font-weight:600;color:var(--dark);margin-bottom:6px}
+.ob-sub{font-size:13px;color:var(--gray-l);margin-bottom:24px;line-height:1.6}
+.ob-card{background:var(--card);border:0.5px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+.ob-card-label{font-size:12px;color:var(--gray-l);margin-bottom:10px}
+.ob-row{margin-bottom:16px}
+.ob-row:last-child{margin-bottom:0}
+.ob-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:6px 12px;border-radius:20px;border:0.5px solid #D8D0C4;font-size:12px;color:var(--gray);cursor:pointer;background:var(--card);transition:all .15s}
+.chip:active{transform:scale(.95)}
+.chip.selected{background:var(--gold-l);border-color:var(--gold);color:var(--dark);font-weight:500}
+.ob-input{width:100%;padding:10px 12px;border-radius:8px;border:0.5px solid #D8D0C4;background:#FFF;font-size:14px;color:var(--dark);font-family:var(--font);outline:none;transition:border .15s}
+.ob-input:focus{border-color:var(--gold)}
+.ob-input::placeholder{color:#C0B8B0}
+.ob-goals{display:flex;flex-direction:column;gap:8px}
+.goal-row{display:flex;align-items:center;gap:10px;background:var(--cream);border:0.5px solid #E8E2D6;border-radius:10px;padding:10px 14px}
+.goal-emoji{font-size:18px;width:28px;text-align:center;flex-shrink:0}
+.goal-info{flex:1}
+.goal-name{font-size:13px;color:var(--dark);font-weight:500}
+.goal-price{font-size:11px;color:var(--gray-l)}
+.goal-cb{width:18px;height:18px;border-radius:50%;border:0.5px solid #D8D0C4;background:var(--card);cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.goal-cb.on{background:var(--gold);border-color:var(--gold)}
+.goal-cb.on::after{content:'✓';color:#FFF;font-size:10px;font-weight:700}
+.ob-goal-inputs{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.ob-goal-add{display:flex;gap:8px;align-items:center}
+.ob-goal-add input{flex:1}
+.ob-btn{width:100%;padding:13px;background:var(--gold);color:var(--cream);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;margin-top:20px}
+.ob-btn:active{transform:scale(.98);background:#B8843F}
+.ob-btn:disabled{opacity:.5;cursor:not-allowed}
+.ob-skip{font-size:12px;color:var(--gray-l);text-align:center;margin-top:10px;cursor:pointer}
+.ob-note{font-size:11px;color:var(--gray-l);text-align:center;margin-top:8px}
+
+/* Dashboard */
+.dash{padding:16px 20px 100px}
+.dash-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.dash-month{font-size:15px;font-weight:600;color:var(--dark)}
+.dash-nav{display:flex;gap:4px}
+.dash-btn{width:28px;height:28px;border-radius:7px;border:0.5px solid #D8D0C4;background:var(--card);color:var(--gray);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.dash-btn:active{transform:scale(.93);background:var(--gold-l)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.kpi{background:var(--card);border:0.5px solid #E8E2D6;border-radius:11px;padding:12px}
+.kpi-l{font-size:10px;color:var(--gray-l);margin-bottom:4px;text-transform:uppercase;letter-spacing:.03em}
+.kpi-v{font-size:19px;font-weight:600;line-height:1}
+.kpi-v.g{color:var(--green)}.kpi-v.r{color:var(--red)}.kpi-v.b{color:var(--dark)}
+.kpi-s{font-size:10px;color:var(--gray-l);margin-top:3px}
+.kpi-s em{font-style:normal;color:var(--green)}.kpi-s em.r{color:var(--red)}
+
+/* Health */
+.hcard{background:var(--card);border:0.5px solid #E8E2D6;border-radius:11px;padding:14px 16px;margin-bottom:12px}
+.hcard-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.hcard-left{font-size:12px;color:var(--gray)}
+.hcard-score{font-size:24px;font-weight:700;color:var(--gold);line-height:1}
+.hcard-grade{font-size:11px;color:var(--gold);text-align:right}
+.htrack{height:5px;background:#EDE6D8;border-radius:3px;overflow:hidden;margin-bottom:10px}
+.hfill{height:100%;border-radius:3px;transition:width .6s ease}
+.hfill.a{background:var(--green)}.hfill.b{background:var(--gold)}.hfill.c{background:var(--red)}
+.hinsight{font-size:12px;color:var(--gray);line-height:1.7;background:var(--cream);border-radius:8px;padding:10px 12px}
+.hinsight strong{color:var(--dark);font-weight:600}
+.hinsight .link{color:var(--gold);cursor:pointer;text-decoration:underline}
+
+/* Wish */
+.wcard{background:var(--card);border:0.5px solid #E8E2D6;border-radius:11px;padding:14px 16px;margin-bottom:12px}
+.wcard-head{font-size:13px;font-weight:600;color:var(--dark);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.wcard-add{font-size:12px;color:var(--gold);cursor:pointer;font-weight:400}
+.wish-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:10px;background:var(--cream);border-radius:9px;border:0.5px solid #E8E2D6}
+.wish-row:last-child{margin-bottom:0}
+.wish-icon{width:36px;height:36px;border-radius:9px;background:var(--gold-l);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.wish-body{flex:1;min-width:0}
+.wish-name{font-size:12px;color:var(--dark);font-weight:500;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wish-bar-row{display:flex;align-items:center;gap:8px}
+.wish-track{flex:1;height:4px;background:#E8E2D6;border-radius:2px;overflow:hidden;min-width:50px}
+.wish-fill{height:100%;border-radius:2px;transition:width .6s ease}
+.wish-fill.g{background:var(--green)}.wish-fill.gold{background:var(--gold)}
+.wish-eta{font-size:10px;color:var(--gray-l);white-space:nowrap}
+.wish-nudge{font-size:10px;color:var(--red);margin-top:4px}
+.wish-nudge.pos{color:var(--green)}
+
+/* Transactions */
+.txcard{background:var(--card);border:0.5px solid #E8E2D6;border-radius:11px;overflow:hidden}
+.txcard-head{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:0.5px solid #F0EAE0}
+.txcard-title{font-size:13px;font-weight:600;color:var(--dark)}
+.txcard-add{font-size:12px;color:var(--gold);cursor:pointer}
+.tx-date{font-size:10px;color:var(--gray-l);padding:7px 16px 3px;background:#F5F1E8;border-top:0.5px solid #F0EAE0;text-transform:uppercase;letter-spacing:.04em}
+.tx{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:0.5px solid #F0EAE0;cursor:pointer;transition:background .1s}
+.tx:active{background:#F5F1E8}
+.tx-ic{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.tx-ic.f{background:#FEF3E6}.tx-ic.t{background:#E6F0FE}.tx-ic.s{background:#F3E6FE}.tx-ic.m{background:#E6FEEE}.tx-ic.e{background:#FFF3E0}.tx-ic.i{background:#E8F5E9}
+.tx-inf{flex:1;min-width:0}
+.tx-n{font-size:13px;color:var(--dark);font-weight:500}
+.tx-c{font-size:11px;color:var(--gray-l);margin-top:1px;display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ai-badge{font-size:9px;background:#EDE6D8;color:var(--gray);border-radius:3px;padding:1px 5px;vertical-align:middle;flex-shrink:0}
+.warn-badge{font-size:9px;background:#FDE8E0;color:var(--red);border-radius:3px;padding:1px 5px;flex-shrink:0}
+.tx-am{font-size:14px;font-weight:600;flex-shrink:0}
+.tx-am.out{color:var(--dark)}.tx-am.in{color:var(--green)}
+
+/* Add transaction modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:flex;align-items:flex-end;justify-content:center;padding:20px}
+.modal{background:var(--cream);border-radius:18px 18px 0 0;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;animation:slideUp .25s ease}
+.modal-handle{width:36px;height:4px;background:#E0D9CC;border-radius:2px;margin:12px auto 0}
+.modal-title{font-size:16px;font-weight:600;color:var(--dark);padding:16px 20px 0;text-align:center}
+.modal-close{position:absolute;top:14px;right:16px;width:28px;height:28px;border-radius:50%;background:var(--gold-l);border:none;font-size:14px;cursor:pointer;color:var(--gray)}
+.modal-body{padding:16px 20px 30px}
+.modal-field{margin-bottom:14px}
+.modal-label{font-size:12px;color:var(--gray);margin-bottom:6px}
+.modal-input{width:100%;padding:11px 12px;border-radius:10px;border:0.5px solid #D8D0C4;background:var(--card);font-size:14px;color:var(--dark);font-family:var(--font);outline:none}
+.modal-input:focus{border-color:var(--gold)}
+.modal-input:focus{border-color:var(--gold)}
+.modal-amount{font-size:28px;font-weight:700;color:var(--dark);text-align:center;padding:16px 0}
+.modal-amount span{color:var(--green)}
+.modal-amount span.out{color:var(--red)}
+.modal-cat{display:flex;flex-wrap:wrap;gap:6px}
+.cat-chip{padding:7px 13px;border-radius:20px;border:0.5px solid #D8D0C4;font-size:12px;color:var(--gray);cursor:pointer;background:var(--card);transition:all .15s}
+.cat-chip:active{transform:scale(.95)}
+.cat-chip.selected{background:var(--gold-l);border-color:var(--gold);color:var(--dark);font-weight:500}
+.modal-submit{width:100%;padding:13px;background:var(--gold);color:var(--cream);border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:6px}
+.modal-submit:active{transform:scale(.98)}
+
+/* Paste modal */
+.paste-result{background:var(--card);border-radius:10px;padding:12px;margin:10px 0;font-size:12px;color:var(--gray);font-family:monospace;line-height:1.7;max-height:200px;overflow-y:auto;word-break:break-all}
+.ai-parse{background:var(--gold-l);border:0.5px solid var(--gold);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--dark);margin-top:8px}
+.ai-parse strong{color:var(--gold)}
+
+/* Share */
+.share-wrap{padding:16px 20px 100px}
+.share-desc{font-size:13px;color:var(--gray-l);margin-bottom:14px}
+.share-preview{background:var(--dark);border-radius:16px;padding:28px 24px;color:var(--cream);position:relative;overflow:hidden;margin-bottom:16px}
+.sp-deco{position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:rgba(201,147,74,.12)}
+.sp-deco2{position:absolute;right:30px;bottom:-30px;width:90px;height:90px;border-radius:50%;background:rgba(201,147,74,.07)}
+.sp-month{font-size:10px;color:rgba(250,248,243,.4);margin-bottom:18px;letter-spacing:.08em;text-transform:uppercase}
+.sp-persona{font-size:17px;font-weight:500;line-height:1.5;margin-bottom:22px}
+.sp-persona span{color:#D4A85A}
+.sp-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px}
+.sp-stat-l{font-size:9px;color:rgba(250,248,243,.35);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.sp-stat-v{font-size:16px;font-weight:600}
+.sp-stat-v.green{color:#7DC88A}
+.sp-bar-label{font-size:10px;color:rgba(250,248,243,.35);margin-bottom:6px}
+.sp-bar-bg{height:5px;background:rgba(250,248,243,.08);border-radius:3px;overflow:hidden;margin-bottom:18px}
+.sp-bar-fill{height:100%;background:var(--gold);border-radius:3px;transition:width 1s ease}
+.sp-wish{background:rgba(250,248,243,.05);border-radius:8px;padding:9px 11px;display:flex;align-items:center;gap:9px}
+.sp-wish-icon{font-size:20px;flex-shrink:0}
+.sp-wish-text{font-size:11px;color:rgba(250,248,243,.55);line-height:1.5}
+.sp-wish-text strong{color:#D4A85A;font-weight:600}
+.sp-tag{position:absolute;bottom:16px;right:18px;font-size:9px;color:rgba(250,248,243,.2)}
+.share-personas{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.persona-opt{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--card);border:0.5px solid #E8E2D6;border-radius:9px;cursor:pointer;transition:all .15s}
+.persona-opt:active{transform:scale(.98)}
+.persona-opt.selected{border-color:var(--gold);background:var(--gold-l)}
+.persona-opt-radio{width:16px;height:16px;border-radius:50%;border:0.5px solid #D8D0C4;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.persona-opt.selected .persona-opt-radio{background:var(--gold);border-color:var(--gold)}
+.persona-opt.selected .persona-opt-radio::after{content:'✓';color:#FFF;font-size:9px;font-weight:700}
+.persona-opt-text{font-size:12px;color:var(--dark)}
+.persona-opt-text span{color:var(--gold)}
+.share-actions{display:flex;gap:8px}
+.share-btn{flex:1;padding:12px;border-radius:10px;border:0.5px solid #D8D0C4;background:var(--card);font-size:13px;color:var(--dark);cursor:pointer;font-family:var(--font);font-weight:500;transition:all .15s;text-align:center}
+.share-btn:active{transform:scale(.97)}
+.share-btn.primary{background:var(--gold);border-color:var(--gold);color:var(--cream)}
+.share-note{font-size:11px;color:var(--gray-l);text-align:center;margin-top:10px}
+
+/* Pricing */
+.pricing-wrap{padding:16px 20px 100px}
+.pricing-desc{font-size:13px;color:var(--gray-l);margin-bottom:14px}
+.pricing{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.plan{background:var(--card);border:0.5px solid #E8E2D6;border-radius:12px;padding:16px;transition:all .2s}
+.plan.pro{border:2px solid var(--gold);position:relative}
+.plan-badge{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--cream);font-size:9px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}
+.plan-tag{font-size:10px;background:#EDE6D8;color:var(--gold);border-radius:4px;padding:2px 7px;margin-bottom:8px;display:inline-block;font-weight:500}
+.plan-tag.pro{background:var(--gold);color:var(--cream)}
+.plan-name{font-size:14px;font-weight:600;color:var(--dark);margin-bottom:3px}
+.plan-price{font-size:20px;font-weight:700;color:var(--dark);margin-bottom:10px}
+.plan-price span{font-size:12px;font-weight:400;color:var(--gray-l)}
+.plan-features{display:flex;flex-direction:column;gap:6px}
+.pf{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:var(--gray);line-height:1.4}
+.pf-dot{width:5px;height:5px;border-radius:50%;background:#D8D0C4;flex-shrink:0;margin-top:5px}
+.pf-dot.on{background:var(--gold)}
+.pf.locked{color:#C0B8B0}
+.cost-note{background:#F5F1E8;border-radius:10px;padding:12px 14px;font-size:12px;color:var(--gray);line-height:1.7}
+.cost-note strong{color:var(--dark);font-weight:600}
+.pro-cta{background:var(--gold);color:var(--cream);border:none;border-radius:12px;padding:14px;width:100%;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font);margin-top:14px;transition:all .15s}
+.pro-cta:active{transform:scale(.98)}
+
+/* Wish modal */
+.wish-modal-content{display:flex;flex-direction:column;gap:14px}
+.wish-preview{background:var(--card);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px;border:0.5px solid #E8E2D6}
+.wish-preview-icon{font-size:24px}
+.wish-preview-info{font-size:13px;color:var(--dark);font-weight:500}
+
+/* AI insight panel */
+.ai-panel{background:var(--card);border:0.5px solid #E8E2D6;border-radius:11px;padding:14px 16px;margin-bottom:12px}
+.ai-panel-head{display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.ai-panel-head span:first-child{font-size:14px}
+.ai-typing{font-size:12px;color:var(--gray);line-height:1.7;min-height:40px}
+.ai-typing .cursor{animation:blink .8s infinite;color:var(--gold)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.ai-typing strong{color:var(--dark);font-weight:600}
+.ai-typing .highlight{color:var(--gold);font-weight:600}
+
+/* Pro banner */
+.pro-banner{background:linear-gradient(135deg,#3A3530,#4A453F);border-radius:12px;padding:14px 16px;margin:12px 0;display:flex;align-items:center;gap:10px}
+.pro-banner-icon{font-size:22px;flex-shrink:0}
+.pro-banner-text{flex:1}
+.pro-banner-title{font-size:13px;font-weight:600;color:var(--cream);margin-bottom:2px}
+.pro-banner-desc{font-size:11px;color:rgba(250,248,243,.5)}
+.pro-banner-btn{background:var(--gold);color:var(--cream);border:none;border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);flex-shrink:0}
+
+/* Bottom nav */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--card);border-top:0.5px solid var(--border);display:flex;z-index:90;padding-bottom:env(safe-area-inset-bottom)}
+.nav-item{flex:1;padding:10px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;border:none;background:transparent;font-family:var(--font);transition:all .15s}
+.nav-item:active{transform:scale(.95)}
+.nav-item-icon{font-size:20px}
+.nav-item-label{font-size:10px;color:var(--gray-l)}
+.nav-item.active .nav-item-label{color:var(--gold)}
+.nav-item.active .nav-item-icon{}
+
+/* Toast */
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--dark);color:var(--cream);padding:10px 18px;border-radius:20px;font-size:13px;z-index:300;white-space:nowrap;animation:fadeInUp .3s ease}
+@keyframes fadeInUp{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+
+/* Empty state */
+.empty-state{text-align:center;padding:32px 20px;color:var(--gray-l)}
+.empty-state-icon{font-size:40px;margin-bottom:10px;opacity:.5}
+.empty-state-text{font-size:13px}
+
+/* Tab content */
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Quick stats on dash */
+.quick-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+.qs{background:var(--card);border:0.5px solid #E8E2D6;border-radius:9px;padding:8px 6px;text-align:center}
+.qs-l{font-size:9px;color:var(--gray-l);margin-bottom:3px;text-transform:uppercase}
+.qs-v{font-size:13px;font-weight:600;color:var(--dark)}
+.qs-v.s{font-size:10px;font-weight:400;color:var(--gray-l)}
+
+/* Card detail modal */
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+/* ==================== Responsive ==================== */
+@media (min-width: 768px) {
+  .app {
+    max-width: 520px;
+    margin: 24px auto;
+    min-height: calc(100vh - 48px);
+    border-radius: 16px;
+    box-shadow: 0 8px 40px rgba(0,0,0,.12);
+  }
+  .app-header {
+    padding: 24px 24px 20px;
+    border-radius: 16px 16px 0 0;
+  }
+  .app-logo { font-size: 18px; }
+  .dash { padding: 20px 24px 120px; }
+  .kpi-v { font-size: 22px; }
+  .hcard-score { font-size: 28px; }
+  .share-wrap { padding: 20px 24px 120px; }
+  .share-preview { padding: 36px 32px; }
+  .sp-persona { font-size: 19px; }
+  .pricing-wrap { padding: 20px 24px 120px; }
+  .tab { padding: 13px 20px; font-size: 14px; }
+  .modal-overlay { padding: 40px; align-items: center; }
+  .modal { border-radius: 18px; max-height: 85vh; }
+  .toast { bottom: 100px; }
+}
+@media (min-width: 1024px) {
+  body { background: #E5E0D8; }
+  .app { max-width: 560px; margin: 32px auto; min-height: calc(100vh - 64px); }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <div class="app-header">
+    <div class="app-header-top">
+      <div class="app-logo"><span>💰</span> 读懂你的钱</div>
+      <div class="app-header-actions">
+        <button class="icon-btn" onclick="showProBanner()" title="Pro版">⭐</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(0,this)">首页</div>
+    <div class="tab" onclick="switchTab(1,this)">愿望</div>
+    <div class="tab" onclick="switchTab(2,this)">分享</div>
+    <div class="tab" onclick="switchTab(3,this)">定价</div>
+  </div>
+
+  <!-- Tab 0: Dashboard -->
+  <div class="tab-content active" id="tab0">
+    <div class="dash" id="dashContent">
+      <!-- 动态渲染 -->
+    </div>
+  </div>
+
+  <!-- Tab 1: Wishes -->
+  <div class="tab-content" id="tab1">
+    <div class="dash" id="wishContent">
+      <!-- 动态渲染 -->
+    </div>
+  </div>
+
+  <!-- Tab 2: Share -->
+  <div class="tab-content" id="tab2">
+    <div class="share-wrap" id="shareContent"></div>
+  </div>
+
+  <!-- Tab 3: Pricing -->
+  <div class="tab-content" id="tab3">
+    <div class="pricing-wrap" id="pricingContent"></div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <button class="nav-item active" onclick="switchTab(0,this)">
+      <div class="nav-item-icon">🏠</div>
+      <div class="nav-item-label">首页</div>
+    </button>
+    <button class="nav-item" onclick="switchTab(1,this)">
+      <div class="nav-item-icon">🎯</div>
+      <div class="nav-item-label">愿望</div>
+    </button>
+    <button class="nav-item" onclick="showAddTx()">
+      <div class="nav-item-icon" style="background:var(--gold);border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-top:-16px;color:#FFF">+</div>
+      <div class="nav-item-label"></div>
+    </button>
+    <button class="nav-item" onclick="switchTab(2,this)">
+      <div class="nav-item-icon">📤</div>
+      <div class="nav-item-label">分享</div>
+    </button>
+    <button class="nav-item" onclick="switchTab(3,this)">
+      <div class="nav-item-icon">💎</div>
+      <div class="nav-item-label">Pro</div>
+    </button>
+  </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal-overlay" id="addTxModal" style="display:none">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="position:relative">
+      <div class="modal-title">记一笔</div>
+      <button class="modal-close" onclick="closeAddTx()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <div class="modal-label">金额（元）</div>
+        <div class="modal-amount">
+          <span class="out" id="txTypeLabel">支出</span> ¥<span id="txAmount">0.00</span>
+        </div>
+        <input type="number" class="modal-input" id="txAmountInput" placeholder="输入金额" step="0.01" oninput="updateTxAmount()">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">类型</div>
+        <div style="display:flex;gap:8px">
+          <button class="cat-chip selected" id="typeExpense" onclick="setTxType('expense',this)" style="flex:1;background:var(--gold-l);border-color:var(--gold);color:var(--dark)">支出</button>
+          <button class="cat-chip" id="typeIncome" onclick="setTxType('income',this)" style="flex:1">收入</button>
+        </div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">分类</div>
+        <div class="modal-cat" id="catChips"></div>
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">备注（可选）</div>
+        <input type="text" class="modal-input" id="txNoteInput" placeholder="例如：周三加班外卖">
+      </div>
+      <button class="modal-submit" onclick="submitTx()">保存记录</button>
+    </div>
+  </div>
+</div>
+
+<!-- Paste Modal -->
+<div class="modal-overlay" id="pasteModal" style="display:none">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="position:relative">
+      <div class="modal-title">📋 粘贴微信/支付宝账单</div>
+      <button class="modal-close" onclick="closePaste()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-label">粘贴账单文本</div>
+      <textarea class="modal-input" id="pasteInput" rows="6" placeholder="粘贴账单内容，系统自动识别金额、分类..." style="resize:none;font-family:monospace;font-size:12px"></textarea>
+      <div id="pasteResult"></div>
+      <button class="modal-submit" onclick="processPaste()">识别并导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- Wish Modal -->
+<div class="modal-overlay" id="wishModal" style="display:none">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="position:relative">
+      <div class="modal-title">🎯 添加愿望</div>
+      <button class="modal-close" onclick="closeWish()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-field">
+        <div class="modal-label">愿望名称</div>
+        <input type="text" class="modal-input" id="wishNameInput" placeholder="例如：日本旅行">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">目标金额（元）</div>
+        <input type="number" class="modal-input" id="wishAmountInput" placeholder="例如：8000">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">已有存款（元）</div>
+        <input type="number" class="modal-input" id="wishSavedInput" placeholder="已存了多少" value="0">
+      </div>
+      <div class="modal-field">
+        <div class="modal-label">图标</div>
+        <div class="modal-cat" id="wishIconChips"></div>
+      </div>
+      <button class="modal-submit" onclick="submitWish()">添加到愿望清单</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== State ====================
+let state = {
+  initialized: false,
+  profile: null,
+  transactions: [],
+  wishes: [],
+  currentMonth: new Date(),
+  selectedPersona: 0,
+  txType: 'expense',
+  selectedCat: null,
+  selectedWishIcon: '🎯'
+};
+
+const STORAGE_KEY = 'finance_app_state';
+
+// ==================== Categories ====================
+const EXPENSE_CATS = [
+  {id:'food',icon:'🍜',name:'餐饮'},
+  {id:'shop',icon:'🛒',name:'购物'},
+  {id:'trans',icon:'🚇',name:'交通'},
+  {id:'rent',icon:'🏠',name:'房租'},
+  {id:'ent',icon:'🎬',name:'娱乐'},
+  {id:'health',icon:'💊',name:'医疗'},
+  {id:'edu',icon:'📚',name:'教育'},
+  {id:'other',icon:'📦',name:'其他'}
+];
+
+const INCOME_CATS = [
+  {id:'salary',icon:'💰',name:'工资'},
+  {id:'bonus',icon:'🎁',name:'奖金'},
+  {id:'side',icon:'💼',name:'副业'},
+  {id:'invest',icon:'📈',name:'投资'},
+  {id:'gift',icon:'💝',name:'红包'},
+  {id:'other',icon:'💎',name:'其他'}
+];
+
+const WISH_ICONS = ['🎯','✈️','🎧','📱','💻','🎮','🏂','🏖️','🎓','💍','🚗','🏠','🎸','📷','🏋️'];
+
+// ==================== Person ====================
+const PERSONAS = [
+  {text:'这个月你是个<span>努力存钱的享乐主义者</span> 🍜',emoji:'🍜'},
+  {text:'这个月你是<span>精打细算的生活家</span> 🧮',emoji:'🧮'},
+  {text:'这个月你是<span>超前消费的追梦人</span> ✨',emoji:'✨'},
+  {text:'这个月你是<span>稳扎稳打的存钱达人</span> 🏆',emoji:'🏆'}
+];
+
+// ==================== Init ====================
+function init(){
+  loadState();
+  if(!state.initialized){
+    renderOnboarding();
+  } else {
+    renderAll();
+  }
+}
+
+function loadState(){
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+      const parsed = JSON.parse(saved);
+      state = {...state, ...parsed};
+      state.currentMonth = new Date(state.currentMonth);
+    }
+  } catch(e){}
+}
+
+function saveState(){
+  const toSave = {
+    initialized: state.initialized,
+    profile: state.profile,
+    transactions: state.transactions,
+    wishes: state.wishes,
+    currentMonth: state.currentMonth.toISOString(),
+    selectedPersona: state.selectedPersona
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+}
+
+// ==================== Onboarding ====================
+function renderOnboarding(){
+  document.getElementById('tab0').innerHTML = `
+  <div class="onboard">
+    <div class="ob-progress">
+      <div class="ob-dot active" id="obDot1"></div>
+      <div class="ob-dot" id="obDot2"></div>
+      <div class="ob-dot" id="obDot3"></div>
+    </div>
+    <div id="obStep"></div>
+  </div>`;
+  renderObStep(1);
+}
+
+let obStep = 1;
+let obData = {income: null, cats: [], goals: []};
+
+function renderObStep(n){
+  obStep = n;
+  document.querySelectorAll('.ob-dot').forEach((d,i)=>d.classList.toggle('active',i===n-1));
+  const s = document.getElementById('obStep');
+  if(n===1){
+    s.innerHTML = `
+      <div class="ob-title">先聊聊你的财务状态</div>
+      <div class="ob-sub">不用先记账。填一份快照，第一天就能看到有意义的洞察。</div>
+      <div class="ob-row">
+        <div class="ob-card-label">月收入大概是？</div>
+        <div class="ob-chips">
+          <div class="chip ${obData.income==='<5k'?'selected':''}" onclick="selectChip(this,'income','<5k')">5k 以下</div>
+          <div class="chip ${obData.income==='5k-15k'?'selected':''}" onclick="selectChip(this,'income','5k-15k')">5k – 1.5w</div>
+          <div class="chip ${obData.income==='15k-30k'?'selected':''}" onclick="selectChip(this,'income','15k-30k')">1.5w – 3w</div>
+          <div class="chip ${obData.income==='>30k'?'selected':''}" onclick="selectChip(this,'income','>30k')">3w+</div>
+        </div>
+      </div>
+      <div class="ob-row">
+        <div class="ob-card-label">主要花钱在哪几块？（可多选）</div>
+        <div class="ob-chips">
+          ${['餐饮外卖','购物','房租','交通出行','娱乐订阅','健身美容','数码电子'].map(c=>
+            `<div class="chip ${obData.cats.includes(c)?'selected':''}" onclick="selectChip(this,'cat','${c}')">${c}</div>`
+          ).join('')}
+        </div>
+      </div>
+      <button class="ob-btn" onclick="renderObStep(2)">下一步 →</button>
+      <div class="ob-note">不需要真实收入，估算即可。随时可以修改。</div>`;
+  } else if(n===2){
+    const goalOptions = ['✈️ 旅行基金','🎧 买个好东西','🏦 应急备用金','📱 换新手机','🎓 自我投资'];
+    s.innerHTML = `
+      <div class="ob-title">定一个小目标 🎯</div>
+      <div class="ob-sub">愿望清单是这个产品最重要的功能。选一个你最想存钱的理由。</div>
+      <div class="ob-goals">
+        ${goalOptions.map(g=>{
+          const emoji = g.split(' ')[0];
+          const name = g.split(' ').slice(1).join(' ');
+          return `<div class="goal-row" onclick="toggleGoal(this,'${g}')">
+            <div class="goal-emoji">${emoji}</div>
+            <div class="goal-info">
+              <div class="goal-name">${name}</div>
+              <div class="goal-price">设定目标金额</div>
+            </div>
+            <div class="goal-cb ${obData.goals.includes(g)?'on':''}"></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <button class="ob-btn" onclick="renderObStep(3)">下一步 →</button>
+      <div class="ob-skip" onclick="renderObStep(3)">先跳过，之后再定目标</div>`;
+  } else if(n===3){
+    const goal = obData.goals[0] || {emoji:'🎯',name:'我的愿望'};
+    const emoji = goal.split(' ')[0];
+    const name = goal.split(' ').slice(1).join(' ');
+    s.innerHTML = `
+      <div class="ob-title">设定你的第一个目标</div>
+      <div class="ob-sub">有了目标，存钱才有动力。</div>
+      <div class="ob-goals">
+        <div class="goal-row" style="cursor:default">
+          <div class="goal-emoji">${emoji}</div>
+          <div class="goal-info">
+            <div class="goal-name">${name}</div>
+            <div class="goal-price">目标金额</div>
+          </div>
+        </div>
+      </div>
+      <div class="ob-row" style="margin-top:14px">
+        <div class="ob-card-label">目标金额（元）</div>
+        <input type="number" class="ob-input" id="obGoalAmount" placeholder="例如：5000" value="5000">
+      </div>
+      <div class="ob-row">
+        <div class="ob-card-label">预计每月能存多少？</div>
+        <input type="number" class="ob-input" id="obSaveAmount" placeholder="例如：1500" value="1500">
+      </div>
+      <button class="ob-btn" onclick="finishOnboarding()">开启记账之旅 →</button>
+      <div class="ob-skip" onclick="finishOnboarding()">随便看看，之后再填</div>`;
+  }
+}
+
+function selectChip(el, type, val){
+  el.classList.toggle('selected');
+  if(type==='income'){
+    obData.income = obData.income===val ? null : val;
+  } else if(type==='cat'){
+    const idx = obData.cats.indexOf(val);
+    if(idx>=0) obData.cats.splice(idx,1); else obData.cats.push(val);
+  }
+}
+
+function toggleGoal(el, goal){
+  const cb = el.querySelector('.goal-cb');
+  cb.classList.toggle('on');
+  const idx = obData.goals.indexOf(goal);
+  if(idx>=0) obData.goals.splice(idx,1); else obData.goals.push(goal);
+}
+
+function finishOnboarding(){
+  const goalAmount = parseFloat(document.getElementById('obGoalAmount')?.value) || 5000;
+  const saveAmount = parseFloat(document.getElementById('obSaveAmount')?.value) || 1500;
+  const firstGoal = obData.goals[0] || '🎯 我的愿望';
+  const emoji = firstGoal.split(' ')[0];
+  const name = firstGoal.split(' ').slice(1).join(' ') || '我的愿望';
+
+  state.initialized = true;
+  state.profile = {
+    income: obData.income || '5k-15k',
+    cats: obData.cats,
+    incomeAmount: estimateIncome(obData.income)
+  };
+
+  if(obData.goals.length > 0){
+    state.wishes.push({
+      id: Date.now(),
+      emoji: emoji,
+      name: name,
+      target: goalAmount,
+      saved: Math.round(goalAmount * Math.random() * 0.3 * 100) / 100, // 初始存5%-30%
+      monthly: saveAmount,
+      createdAt: Date.now()
+    });
+  } else {
+    // 即使跳过也生成一个示例愿望，确保首页有内容
+    state.wishes.push({
+      id: Date.now(),
+      emoji: '✈️',
+      name: '旅行基金',
+      target: 8000,
+      saved: Math.round(Math.random() * 2400 * 100) / 100,
+      monthly: saveAmount,
+      createdAt: Date.now(),
+      _isDemo: true
+    });
+    state.wishes.push({
+      id: Date.now() + 1,
+      emoji: '🎧',
+      name: '奖励自己',
+      target: 2000,
+      saved: Math.round(Math.random() * 600 * 100) / 100,
+      monthly: Math.round(saveAmount * 0.5),
+      createdAt: Date.now(),
+      _isDemo: true
+    });
+  }
+
+  // 添加一些示例交易
+  state.transactions = generateSampleData(state.profile.incomeAmount);
+
+  saveState();
+  showToast('🎉 欢迎开始记账！');
+  renderAll();
+}
+
+function estimateIncome(income){
+  const map = {'<5k':3000,'5k-15k':10000,'15k-30k':20000,'>30k':40000};
+  return map[income] || 10000;
+}
+
+function generateSampleData(monthlyIncome){
+  const now = new Date();
+  const thisMonth = now.getMonth();
+  const thisYear = now.getFullYear();
+  const txns = [];
+
+  // 工资
+  txns.push({id:Date.now()+1, date:new Date(thisYear,thisMonth,5).toISOString(), type:'income', cat:'salary', amount:monthlyIncome, note:'工资到账', ai:false, impulse:false});
+
+  // 随机消费
+  const spends = [
+    {cat:'food',min:15,max:80,icon:'🍜',note:'外卖'},
+    {cat:'food',min:30,max:120,icon:'🍜',note:'餐饮'},
+    {cat:'trans',min:5,max:30,icon:'🚇',note:'交通'},
+    {cat:'shop',min:50,max:300,icon:'🛒',note:'网购'},
+    {cat:'ent',min:20,max:150,icon:'🎬',note:'娱乐'},
+    {cat:'rent',min:1500,max:2500,icon:'🏠',note:'房租'},
+    {cat:'edu',min:100,max:500,icon:'📚',note:'学习'},
+  ];
+
+  for(let i=0;i<20;i++){
+    const s = spends[Math.floor(Math.random()*spends.length)];
+    const day = Math.floor(Math.random()*28)+1;
+    const amount = Math.round((Math.random()*(s.max-s.min)+s.min)*100)/100;
+    const isImpulse = s.cat==='food' && Math.random()>.6;
+    txns.push({
+      id:Date.now()+i+10,
+      date:new Date(thisYear,thisMonth,day).toISOString(),
+      type:'expense',
+      cat:s.cat,
+      icon:s.icon,
+      amount:amount,
+      note:s.note+(isImpulse?' 🏃':' '),
+      ai:Math.random()>.5,
+      impulse:isImpulse
+    });
+  }
+
+  txns.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  return txns;
+}
+
+// ==================== Tab Switch ====================
+function switchTab(n, el){
+  if(!state.initialized) return;
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n));
+  document.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===n));
+  document.querySelectorAll('.nav-item').forEach((b,i)=>{
+    if(i<5) b.classList.toggle('active',i===n);
+  });
+  if(n===2) renderShare();
+  if(n===3) renderPricing();
+}
+
+// ==================== Dashboard Render ====================
+function renderAll(){
+  renderDash();
+  renderWishTab();
+  renderQuickStats();
+}
+
+function getMonthData(){
+  const y = state.currentMonth.getFullYear();
+  const m = state.currentMonth.getMonth();
+  const txns = state.transactions.filter(t=>{
+    const d = new Date(t.date);
+    return d.getFullYear()===y && d.getMonth()===m;
+  });
+  const income = txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0);
+  const expense = txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0);
+  const balance = income - expense;
+  const savingsRate = income > 0 ? Math.round((balance/income)*100) : 0;
+  const impulseCount = txns.filter(t=>t.type==='expense'&&t.impulse).length;
+  return {txns, income, expense, balance, savingsRate, impulseCount};
+}
+
+function renderDash(){
+  const {txns, income, expense, savingsRate, impulseCount} = getMonthData();
+  const lastMonth = getLastMonthData();
+  const expenseDelta = lastMonth.expense>0 ? Math.round(((expense-lastMonth.expense)/lastMonth.expense)*100) : 0;
+  const goalSavings = state.profile?.incomeAmount ? Math.round((state.profile.incomeAmount*.35)) : 0;
+  const healthScore = calcHealthScore(income, expense, impulseCount);
+  const healthGrade = healthScore>=80?'优秀':healthScore>=65?'良好':'一般';
+  const healthColor = healthScore>=80?'a':healthScore>=65?'b':'c';
+
+  const goalTarget = savingsRate >= 35 ? 35 : savingsRate;
+
+  // AI insights
+  const insights = generateInsights(txns, income, expense, impulseCount, lastMonth.expense);
+
+  const monthStr = `${state.currentMonth.getFullYear()}年 ${state.currentMonth.getMonth()+1}月`;
+  const topCat = getTopCategory(txns);
+
+  document.getElementById('tab0').innerHTML = `<div class="dash" id="dashContent">
+    <div class="dash-header">
+      <div class="dash-month">${monthStr}</div>
+      <div class="dash-nav">
+        <button class="dash-btn" onclick="changeMonth(-1)">‹</button>
+        <button class="dash-btn" onclick="changeMonth(1)">›</button>
+      </div>
+    </div>
+
+    <div class="kpis">
+      <div class="kpi"><div class="kpi-l">收入</div><div class="kpi-v g">¥${fmt(income)}</div><div class="kpi-s">${getTopIncomeSource(txns)}</div></div>
+      <div class="kpi"><div class="kpi-l">支出</div><div class="kpi-v r">¥${fmt(expense)}</div><div class="kpi-s"><em class="${expenseDelta>=0?'r':''}">${expenseDelta>=0?'↑':'↓'}${Math.abs(expenseDelta)}%</em> 较上月</div></div>
+      <div class="kpi"><div class="kpi-l">储蓄率</div><div class="kpi-v b">${savingsRate}%</div><div class="kpi-s">目标 <em>${goalSavings>0?'✓':'—'}</em></div></div>
+    </div>
+
+    <div class="quick-stats">
+      <div class="qs"><div class="qs-l">餐饮</div><div class="qs-v">¥${fmt(getCatTotal(txns,'food'))}</div></div>
+      <div class="qs"><div class="qs-l">购物</div><div class="qs-v">¥${fmt(getCatTotal(txns,'shop'))}</div></div>
+      <div class="qs"><div class="qs-l">交通</div><div class="qs-v">¥${fmt(getCatTotal(txns,'trans'))}</div></div>
+      <div class="qs"><div class="qs-l">娱乐</div><div class="qs-v">¥${fmt(getCatTotal(txns,'ent'))}</div></div>
+    </div>
+
+    <div class="hcard">
+      <div class="hcard-top">
+        <div class="hcard-left">收支健康分</div>
+        <div style="text-align:right"><div class="hcard-score">${healthScore}</div><div class="hcard-grade">${healthGrade}</div></div>
+      </div>
+      <div class="htrack"><div class="hfill ${healthColor}" style="width:${healthScore}%"></div></div>
+      <div class="hinsight">${insights}</div>
+    </div>
+
+    <div class="wcard">
+      <div class="wcard-head">愿望进度 <span class="wcard-add" onclick="showWishModal()">+ 添加</span></div>
+      ${renderWishRows()}
+    </div>
+
+    <div class="txcard">
+      <div class="txcard-head">
+        <div class="txcard-title">流水记录</div>
+        <div class="txcard-add" onclick="showPaste()">📋 粘贴账单</div>
+      </div>
+      ${renderTxList(txns.slice(0,8))}
+      ${txns.length>8?`<div style="padding:10px;text-align:center;font-size:12px;color:var(--gray-l);cursor:pointer" onclick="showAllTx()">查看全部 ${txns.length} 条</div>`:''}
+    </div>
+  </div>`;
+}
+
+function renderWishRows(){
+  if(state.wishes.length===0){
+    return `<div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">还没有愿望清单<br><span style="color:var(--gold);cursor:pointer" onclick="showWishModal()">添加一个目标 →</span></div></div>`;
+  }
+  return state.wishes.map(w=>{
+    const pct = Math.min(100, Math.round((w.saved/w.target)*100));
+    const fillColor = pct>=70?'g':'gold';
+    const daysLeft = w.monthly>0 ? Math.ceil((w.target-w.saved)/w.monthly*30) : 999;
+    const nudge = generateWishNudge(w, getMonthData());
+    return `<div class="wish-row">
+      <div class="wish-icon">${w.emoji}</div>
+      <div class="wish-body">
+        <div class="wish-name">${w.name} · ¥${fmt(w.target)}</div>
+        <div class="wish-bar-row">
+          <div class="wish-track"><div class="wish-fill ${fillColor}" style="width:${pct}%"></div></div>
+          <div class="wish-eta">${pct}% · 约${daysLeft}天</div>
+        </div>
+        ${nudge?`<div class="wish-nudge ${nudge.pos?'pos':''}">${nudge.text}</div>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTxList(txns){
+  if(txns.length===0){
+    return `<div class="empty-state"><div class="empty-state-icon">📝</div><div class="empty-state-text">还没有记录<br><span style="color:var(--gold);cursor:pointer" onclick="showAddTx()">记一笔 →</span></div></div>`;
+  }
+  // Group by date
+  const groups = {};
+  txns.forEach(t=>{
+    const d = new Date(t.date);
+    const key = `${d.getMonth()+1}月${d.getDate()}日`;
+    if(!groups[key]) groups[key]=[];
+    groups[key].push(t);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([date, items])=>{
+    html += `<div class="tx-date">${date}</div>`;
+    items.forEach(t=>{
+      const catInfo = getCatInfo(t.cat, t.type);
+      const aiBadge = t.ai?'<span class="ai-badge">AI识别</span>':'';
+      const warnBadge = t.impulse?'<span class="warn-badge">冲动⚠️</span>':'';
+      html += `<div class="tx" onclick="showTxDetail(${t.id})">
+        <div class="tx-ic ${catInfo.cls}">${catInfo.icon}</div>
+        <div class="tx-inf">
+          <div class="tx-n">${catInfo.name} ${aiBadge}</div>
+          <div class="tx-c">${catInfo.cat} · ${t.note||''} ${warnBadge}</div>
+        </div>
+        <div class="tx-am ${t.type==='income'?'in':'out'}">${t.type==='income'?'+':'−'}¥${fmt(t.amount)}</div>
+      </div>`;
+    });
+  });
+  return html;
+}
+
+function getCatInfo(catId, type){
+  const cats = type==='income' ? INCOME_CATS : EXPENSE_CATS;
+  const clsMap = {food:'f',shop:'s',trans:'t',ent:'e',rent:'e',health:'e',edu:'s',other:'s',salary:'i',bonus:'i',side:'i',invest:'i',gift:'i'};
+  const cat = cats.find(c=>c.id===catId) || {icon:'📦',name:catId};
+  return {icon:cat.icon, name:cat.name, cat:cat.name, cls:clsMap[catId]||'m'};
+}
+
+function renderQuickStats(){
+  // Quick stats are rendered in renderDash
+}
+
+function getTopCategory(txns){
+  const cats = {};
+  txns.filter(t=>t.type==='expense').forEach(t=>{
+    cats[t.cat]=(cats[t.cat]||0)+t.amount;
+  });
+  const sorted = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  if(sorted.length===0) return null;
+  const catInfo = getCatInfo(sorted[0][0],'expense');
+  return {cat:sorted[0][0], amount:sorted[0][1], ...catInfo};
+}
+
+function getTopIncomeSource(txns){
+  const incomes = txns.filter(t=>t.type==='income');
+  if(incomes.length===0) return '暂无';
+  const cat = incomes.reduce((max,t)=>t.amount>max.amount?t:max,incomes[0]);
+  return getCatInfo(cat.cat,'income').name;
+}
+
+function getCatTotal(txns, catId){
+  return txns.filter(t=>t.type==='expense'&&t.cat===catId).reduce((s,t)=>s+t.amount,0);
+}
+
+function getLastMonthData(){
+  const last = new Date(state.currentMonth);
+  last.setMonth(last.getMonth()-1);
+  const y = last.getFullYear();
+  const m = last.getMonth();
+  const txns = state.transactions.filter(t=>{
+    const d = new Date(t.date);
+    return d.getFullYear()===y && d.getMonth()===m;
+  });
+  return {
+    income: txns.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0),
+    expense: txns.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0)
+  };
+}
+
+function calcHealthScore(income, expense, impulseCount){
+  if(income===0) return 50;
+  const savingsRate = (income-expense)/income;
+  let score = 60;
+  // 储蓄率为正加20分
+  if(savingsRate > 0.4) score += 20;
+  else if(savingsRate > 0.2) score += 10;
+  else if(savingsRate > 0) score += 5;
+  else score -= 20;
+  // 冲动消费扣分
+  score -= impulseCount * 3;
+  return Math.max(0, Math.min(100, score));
+}
+
+function generateInsights(txns, income, expense, impulseCount, lastExpense){
+  if(txns.length===0) return '<strong>暂无数据</strong>，开始记账后我会为你生成洞察。';
+  const topCat = getTopCategory(txns);
+  const delta = lastExpense>0 ? Math.round(((expense-lastExpense)/lastExpense)*100) : 0;
+  const tips = [];
+
+  if(impulseCount>0){
+    tips.push(`冲动消费 <strong>${impulseCount}笔</strong>`);
+  }
+  if(topCat){
+    const catName = topCat.name;
+    tips.push(`<strong>${catName}</strong>花费最多`);
+  }
+  if(delta!==0){
+    const sign = delta>0?'↑':'↓';
+    tips.push(`支出较上月 <strong>${sign}${Math.abs(delta)}%</strong>`);
+  }
+
+  const wish = state.wishes[0];
+  if(wish){
+    tips.push(`<span class="link">${wish.name} 还差 ¥${fmt(wish.target-wish.saved)}</span>`);
+  }
+
+  return `<strong>本月归因：</strong>${tips.join('，') || '支出结构健康'}`;
+}
+
+function generateWishNudge(wish, monthData){
+  const monthExpense = monthData.expense;
+  if(wish.monthly > 0){
+    const dailyCost = monthExpense/30;
+    // 假设冲动消费让愿望延迟
+    if(monthData.impulseCount > 0){
+      const daysLost = Math.round(monthData.impulseCount * 2);
+      return {text:`本月冲动消费 ${monthData.impulseCount} 笔，${wish.name}晚到约 ${daysLost} 天`, pos:false};
+    }
+    return {text:`按当前节奏，约 ${Math.ceil((wish.target-wish.saved)/wish.monthly)} 个月达成`, pos:true};
+  }
+  return null;
+}
+
+// ==================== Wish Tab ====================
+function renderWishTab(){
+  const {income, expense} = getMonthData();
+  document.getElementById('tab1').innerHTML = `<div class="dash">
+    <div style="margin-bottom:14px">
+      <div style="font-size:15px;font-weight:600;color:var(--dark);margin-bottom:4px">🎯 愿望清单</div>
+      <div style="font-size:12px;color:var(--gray-l)">存钱的意义，就是实现这些愿望</div>
+    </div>
+    ${state.wishes.length===0?`
+      <div class="empty-state"><div class="empty-state-icon">🎯</div><div class="empty-state-text">还没有愿望<br><span style="color:var(--gold);cursor:pointer" onclick="showWishModal()">添加第一个愿望 →</span></div></div>
+    `:state.wishes.map(w=>{
+      const pct = Math.min(100, Math.round((w.saved/w.target)*100));
+      const daysLeft = w.monthly>0 ? Math.ceil((w.target-w.saved)/w.monthly*30) : 999;
+      const monthStr = daysLeft<999?`约${daysLeft}天可达`:'需手动调整';
+      return `<div class="wcard" style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div class="wish-icon" style="width:44px;height:44px;font-size:22px">${w.emoji}</div>
+          <div style="flex:1">
+            <div style="font-size:14px;font-weight:600;color:var(--dark)">${w.name}</div>
+            <div style="font-size:12px;color:var(--gray-l)">目标 ¥${fmt(w.target)} · ${monthStr}</div>
+          </div>
+          <div style="font-size:18px;font-weight:700;color:var(--gold)">${pct}%</div>
+        </div>
+        <div class="wish-track" style="height:6px;margin-bottom:10px"><div class="wish-fill gold" style="width:${pct}%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--gray-l)">
+          <span>已存 ¥${fmt(w.saved)}</span>
+          <span>还差 ¥${fmt(Math.max(0,w.target-w.saved))}</span>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:10px">
+          <button onclick="showAddToWish(${w.id})" style="flex:1;padding:8px;border-radius:8px;border:0.5px solid #E8E2D6;background:var(--cream);font-size:12px;color:var(--gold);cursor:pointer;font-family:var(--font)">+ 存入</button>
+          <button onclick="deleteWish(${w.id})" style="padding:8px 12px;border-radius:8px;border:0.5px solid #E8E2D6;background:var(--cream);font-size:12px;color:var(--gray-l);cursor:pointer;font-family:var(--font)">✕</button>
+        </div>
+      </div>`;
+    }).join('')}
+    <button onclick="showWishModal()" style="width:100%;padding:13px;border-radius:12px;border:0.5px dashed #D8D0C4;background:transparent;color:var(--gold);font-size:14px;cursor:pointer;font-family:var(--font);margin-top:8px">+ 添加新愿望</button>
+
+    ${state.wishes.length>0?`<div style="margin-top:20px">
+      <div style="font-size:13px;font-weight:600;color:var(--dark);margin-bottom:10px">💡 洞察</div>
+      <div class="ai-panel">
+        <div class="ai-panel-head"><span>🤖</span><span style="font-size:13px;font-weight:600;color:var(--dark)">AI 愿望分析</span></div>
+        <div class="ai-typing" id="wishAI">${generateWishAI()}<span class="cursor">|</span></div>
+      </div>
+    </div>`:''}
+  </div>`;
+}
+
+function generateWishAI(){
+  if(state.wishes.length===0) return '添加愿望后，我会为你生成存钱建议。';
+  const w = state.wishes[0];
+  const pct = Math.round((w.saved/w.target)*100);
+  const daysLeft = w.monthly>0 ? Math.ceil((w.target-w.saved)/w.monthly*30) : 0;
+  if(pct>=70) return `🎉 <strong>${w.name}</strong> 进度超过70%！再坚持 <strong>${daysLeft}天</strong> 就到手了。建议把冲动消费换成目标奖励，会更有成就感。`;
+  if(pct>=40) return `📊 <strong>${w.name}</strong> 已完成 <strong>${pct}%</strong>。按每月存 <strong>¥${fmt(w.monthly)}</strong>，约 <strong>${daysLeft}天</strong> 达成。如果想提前，可以把每周一次的外卖换成自带午饭。`;
+  return `💪 <strong>${w.name}</strong> 才刚开始，完成了 <strong>${pct}%</strong>。建议设定每周存钱提醒，把 ${w.name} 的进度放在首页，随时看到随时有动力。`;
+}
+
+// ==================== Share Render ====================
+function getDynamicPersonas(){
+  const {income, expense, savingsRate, impulseCount} = getMonthData();
+  const topCat = getTopCategory(getMonthData().txns);
+  const topSpend = topCat ? topCat.name : '餐饮';
+  const topWish = state.wishes[0];
+  const monthsLeft = topWish && topWish.monthly > 0 ? Math.ceil((topWish.target - topWish.saved) / topWish.monthly) : 0;
+
+  const personas = [];
+
+  // 消费人格：按储蓄率自动生成
+  if(savingsRate >= 30){
+    personas.push({type:'savings', emoji:'🏆', text:`这个月你存了 <span>${savingsRate}%</span>，是真正的存钱达人 ${topWish ? topWish.emoji : '🎯'}`});
+  } else if(savingsRate >= 10){
+    personas.push({type:'balanced', emoji:'⚖️', text:`这个月储蓄率 <span>${savingsRate}%</span>，收支基本平衡，继续加油`});
+  } else if(savingsRate >= 0){
+    personas.push({type:'struggle', emoji:'💪', text:`这个月储蓄率 <span>${savingsRate}%</span>，有点紧张但没透支，还不错`});
+  } else {
+    personas.push({type:'overspend', emoji:'😅', text:`这个月花了比赚的多 <span>¥${fmt(Math.abs(savingsRate * income / 100))}</span>，下个月咱们打个翻身仗`});
+  }
+
+  // 支出结构
+  if(topCat){
+    personas.push({type:'topcat', emoji:topCat.icon, text:`<span>${topCat.name}</span> 占了本月支出最大头（¥${fmt(topCat.amount)}），这是你今年最烧钱的项目`});
+  }
+
+  // 冲动消费洞察
+  if(impulseCount > 0){
+    const costPerImpulse = Math.round(Math.random() * 50 + 30);
+    personas.push({type:'impulse', emoji:'🏃', text:`本月冲动消费 <span>${impulseCount}笔</span>，加起来大概 ¥${impulseCount * costPerImpulse}，够买 ${Math.floor(impulseCount * costPerImpulse / 50)} 杯咖啡了`});
+  }
+
+  // 愿望进度
+  if(topWish){
+    const pct = Math.round((topWish.saved / topWish.target) * 100);
+    if(pct >= 50){
+      personas.push({type:'wish', emoji:topWish.emoji, text:`<span>${topWish.name}</span> 完成 <span>${pct}%</span>！再坚持 ${monthsLeft} 个月就到手了，冲！`});
+    } else {
+      personas.push({type:'wish', emoji:topWish.emoji, text:`<span>${topWish.name}</span> 刚刚开始（${pct}%），记账让存钱更有意义`});
+    }
+  }
+
+  return personas;
+}
+
+let currentShareIndex = 0;
+
+function renderShare(){
+  const dynamicPersonas = getDynamicPersonas();
+  if(dynamicPersonas.length === 0){
+    dynamicPersonas.push({type:'empty', emoji:'📊', text:'先记几笔记账，让我来生成你的月度消费人格'});
+  }
+
+  const {income, expense, savingsRate} = getMonthData();
+  const monthStr = `${state.currentMonth.getFullYear()}年 ${state.currentMonth.getMonth()+1}月`;
+  const topCat = getTopCategory(getMonthData().txns);
+  const topSpend = topCat ? topCat.name : '支出';
+  const topWish = state.wishes[0];
+  const current = dynamicPersonas[currentShareIndex] || dynamicPersonas[0];
+
+  document.getElementById('tab2').innerHTML = `<div class="share-wrap">
+    <div class="share-desc">每月自动生成 · 专为小红书和朋友圈设计</div>
+
+    <div class="share-preview" id="shareCard">
+      <div class="sp-deco"></div><div class="sp-deco2"></div>
+      <div class="sp-month">${monthStr.replace('年',' ').replace('月','')} · 月度总结</div>
+      <div class="sp-persona">${current.text}</div>
+      <div class="sp-stats">
+        <div><div class="sp-stat-l">收入</div><div class="sp-stat-v">${fmt(income)}</div></div>
+        <div><div class="sp-stat-l">支出</div><div class="sp-stat-v">${fmt(expense)}</div></div>
+        <div><div class="sp-stat-l">储蓄率</div><div class="sp-stat-v green">${savingsRate}%</div></div>
+      </div>
+      <div class="sp-bar-label">${topSpend} 占支出最多</div>
+      <div class="sp-bar-bg"><div class="sp-bar-fill" style="width:${Math.min(100,Math.max(5,savingsRate))}%"></div></div>
+      ${topWish?`<div class="sp-wish">
+        <div class="sp-wish-icon">${topWish.emoji}</div>
+        <div class="sp-wish-text">${topWish.name}进度 ${Math.round((topWish.saved/topWish.target)*100)}% · <strong>再坚持${Math.ceil((topWish.target-topWish.saved)/topWish.monthly)}个月</strong></div>
+      </div>`:''}
+      <div class="sp-tag">账簿 · 读懂你的钱</div>
+    </div>
+
+    <div class="share-personas">
+      ${dynamicPersonas.map((p,i)=>`<div class="persona-opt ${i===currentShareIndex?'selected':''}" onclick="selectSharePersona(${i},this)">
+        <div class="persona-opt-radio"></div>
+        <div class="persona-opt-text">${p.emoji} ${p.text.replace(/<\/?span>/g,'')}</div>
+      </div>`).join('')}
+    </div>
+
+    <div class="share-actions">
+      <button class="share-btn" onclick="randomPersona()">🔄 换文案</button>
+      <button class="share-btn primary" onclick="saveShareCard()">📥 保存图片</button>
+    </div>
+    <div class="share-note">长按卡片可保存图片分享到朋友圈/小红书</div>
+  </div>`;
+}
+
+function selectSharePersona(i, el){
+  currentShareIndex = i;
+  document.querySelectorAll('.persona-opt').forEach((p,j)=>p.classList.toggle('selected',j===i));
+  const dynamicPersonas = getDynamicPersonas();
+  const current = dynamicPersonas[i] || dynamicPersonas[0];
+  // 更新预览卡片中的文案
+  document.querySelector('.sp-persona').innerHTML = current.text;
+  document.querySelector('.sp-month').textContent = `${state.currentMonth.getFullYear()}年 ${state.currentMonth.getMonth()+1}月`.replace('年',' ').replace('月','');
+}
+
+function randomPersona(){
+  const dynamicPersonas = getDynamicPersonas();
+  currentShareIndex = (currentShareIndex + 1) % dynamicPersonas.length;
+  renderShare();
+  const current = dynamicPersonas[currentShareIndex];
+  showToast(current.emoji + ' ' + current.text.replace(/<\/?span>/g,''));
+}
+
+function saveShareCard(){
+  showToast('📥 长按卡片保存图片即可分享');
+}
+
+// ==================== Pricing Render ====================
+function renderPricing(){
+  document.getElementById('tab3').innerHTML = `<div class="pricing-wrap">
+    <div class="pricing-desc">一顿外卖的钱，换一整年的财务清晰</div>
+    <div class="pricing" style="grid-template-columns:1fr">
+      <div class="plan pro">
+        <div class="plan-tag pro">Pro</div>
+        <div class="plan-name">读懂你的钱 · 专业版</div>
+        <div class="plan-price">¥18 <span>/ 月 · 3天免费体验</span></div>
+        <div class="plan-features">
+          <div class="pf"><div class="pf-dot on"></div><strong>AI账单深度解析</strong> — 每月告诉你钱花哪去了</div>
+          <div class="pf"><div class="pf-dot on"></div><strong>愿望实时联动</strong> — 每笔消费影响愿望进度</div>
+          <div class="pf"><div class="pf-dot on"></div><strong>冲动消费预警</strong> — 每次冲动都被记录</div>
+          <div class="pf"><div class="pf-dot on"></div><strong>年度 Wrapped</strong> — 你的年度消费故事</div>
+          <div class="pf"><div class="pf-dot on"></div><strong>无限愿望清单</strong> — 存钱目标无上限</div>
+          <div class="pf"><div class="pf-dot on"></div>手动记账 · 收支统计 · 分享卡片（全部包含）</div>
+        </div>
+      </div>
+    </div>
+    <div class="cost-note">
+      <strong>3天免费体验期</strong>，不满意随时取消。<br>
+      <strong>¥18/月</strong> ≈ 一杯奶茶 = 一整月的财务洞察。<br>
+      记账本身是免费的，但AI让你看得更清楚。
+    </div>
+    <button class="pro-cta" onclick="showToast('Pro版即将上线，敬请期待 🎉')">立即免费体验 3 天</button>
+  </div>`;
+}
+
+// ==================== Add Transaction ====================
+function showAddTx(){
+  state.txType = 'expense';
+  state.selectedCat = null;
+  renderCatChips();
+  document.getElementById('addTxModal').style.display='flex';
+  document.getElementById('txAmountInput').value='';
+  document.getElementById('txAmount').textContent='0.00';
+}
+
+function closeAddTx(){
+  document.getElementById('addTxModal').style.display='none';
+}
+
+function setTxType(type, el){
+  state.txType = type;
+  document.getElementById('typeExpense').className = 'cat-chip' + (type==='expense'?' selected':'');
+  document.getElementById('typeExpense').style.cssText = type==='expense'?'flex:1;background:var(--gold-l);border-color:var(--gold);color:var(--dark)':'flex:1';
+  document.getElementById('typeIncome').className = 'cat-chip' + (type==='income'?' selected':'');
+  document.getElementById('typeIncome').style.cssText = type==='income'?'flex:1;background:var(--gold-l);border-color:var(--gold);color:var(--dark)':'flex:1';
+  document.getElementById('txTypeLabel').textContent = type==='income'?'收入':'支出';
+  document.getElementById('txTypeLabel').className = type==='income'?'in':'out';
+  state.selectedCat = null;
+  renderCatChips();
+}
+
+function renderCatChips(){
+  const cats = state.txType==='income' ? INCOME_CATS : EXPENSE_CATS;
+  document.getElementById('catChips').innerHTML = cats.map(c=>
+    `<div class="cat-chip ${state.selectedCat===c.id?'selected':''}" onclick="selectCat('${c.id}',this)" style="${state.selectedCat===c.id?'background:var(--gold-l);border-color:var(--gold);color:var(--dark)':''}">${c.icon} ${c.name}</div>`
+  ).join('');
+}
+
+function selectCat(id, el){
+  state.selectedCat = id;
+  document.querySelectorAll('#catChips .cat-chip').forEach(c=>{
+    const isSelected = c.getAttribute('onclick').includes("'"+id+"'");
+    c.className = 'cat-chip' + (isSelected?' selected':'');
+    c.style.cssText = isSelected?'background:var(--gold-l);border-color:var(--gold);color:var(--dark)':'';
+  });
+}
+
+function updateTxAmount(){
+  const v = parseFloat(document.getElementById('txAmountInput').value)||0;
+  document.getElementById('txAmount').textContent = v.toFixed(2);
+}
+
+function submitTx(){
+  const amount = parseFloat(document.getElementById('txAmountInput').value);
+  if(!amount || amount<=0){ showToast('请输入金额'); return; }
+  if(!state.selectedCat){ showToast('请选择分类'); return; }
+  const note = document.getElementById('txNoteInput').value;
+  const cats = state.txType==='income' ? INCOME_CATS : EXPENSE_CATS;
+  const catInfo = cats.find(c=>c.id===state.selectedCat) || {icon:'📦',name:state.selectedCat};
+
+  state.transactions.unshift({
+    id: Date.now(),
+    date: new Date().toISOString(),
+    type: state.txType,
+    cat: state.selectedCat,
+    icon: catInfo.icon,
+    amount: amount,
+    note: note,
+    ai: false,
+    impulse: state.txType==='expense' && Math.random()>.7
+  });
+
+  // 更新愿望存款
+  if(state.wishes.length>0 && state.txType==='income'){
+    state.wishes[0].saved += amount * 0.1; // 收入的10%自动存入第一个愿望
+  }
+
+  saveState();
+  closeAddTx();
+  showToast('✅ 记录已保存');
+  renderDash();
+}
+
+function showPaste(){
+  document.getElementById('pasteModal').style.display='flex';
+  document.getElementById('pasteInput').value='';
+  document.getElementById('pasteResult').innerHTML='';
+}
+
+function closePaste(){
+  document.getElementById('pasteModal').style.display='none';
+}
+
+function processPaste(){
+  const text = document.getElementById('pasteInput').value.trim();
+  if(!text){ showToast('请粘贴账单内容'); return; }
+  // 简单解析
+  const amounts = text.match(/[\d,]+\.?\d*/g) || [];
+  const realAmounts = amounts.map(a=>parseFloat(a.replace(/,/g,''))).filter(a=>a>0&&a<100000);
+  let result = `<div class="ai-parse"><strong>🤖 AI识别结果：</strong><br>`;
+  if(realAmounts.length>0){
+    const total = realAmounts.reduce((s,a)=>s+a,0);
+    result += `找到 ${realAmounts.length} 笔交易，总计约 ¥${fmt(total)}<br>`;
+    realAmounts.slice(0,3).forEach(a=>result += `· ¥${fmt(a)}<br>`);
+    if(realAmounts.length>3) result += `...等${realAmounts.length-3}笔`;
+    result += `</div>`;
+    document.getElementById('pasteResult').innerHTML = result;
+  } else {
+    document.getElementById('pasteResult').innerHTML = `<div class="ai-parse"><strong>🤖 未识别到金额</strong>，请确保账单中包含金额数字。</div>`;
+  }
+}
+
+// ==================== Wish Modal ====================
+function showWishModal(){
+  renderWishIconChips();
+  document.getElementById('wishModal').style.display='flex';
+  document.getElementById('wishNameInput').value='';
+  document.getElementById('wishAmountInput').value='';
+  document.getElementById('wishSavedInput').value='0';
+}
+
+function closeWish(){
+  document.getElementById('wishModal').style.display='none';
+}
+
+function renderWishIconChips(){
+  document.getElementById('wishIconChips').innerHTML = WISH_ICONS.map(icon=>
+    `<div class="cat-chip ${state.selectedWishIcon===icon?'selected':''}" onclick="selectWishIcon('${icon}',this)" style="${state.selectedWishIcon===icon?'background:var(--gold-l);border-color:var(--gold);color:var(--dark)':''}">${icon}</div>`
+  ).join('');
+}
+
+function selectWishIcon(icon, el){
+  state.selectedWishIcon = icon;
+  renderWishIconChips();
+}
+
+function submitWish(){
+  const name = document.getElementById('wishNameInput').value.trim();
+  const target = parseFloat(document.getElementById('wishAmountInput').value);
+  const saved = parseFloat(document.getElementById('wishSavedInput').value)||0;
+  if(!name){ showToast('请输入愿望名称'); return; }
+  if(!target || target<=0){ showToast('请输入目标金额'); return; }
+  if(state.wishes.length>=2){ showToast('免费版最多2个愿望，升级Pro解锁无限'); return; }
+
+  const monthly = Math.max(0, state.profile?.incomeAmount ? state.profile.incomeAmount * 0.3 : 1000);
+
+  state.wishes.push({
+    id: Date.now(),
+    emoji: state.selectedWishIcon,
+    name: name,
+    target: target,
+    saved: saved,
+    monthly: monthly,
+    createdAt: Date.now()
+  });
+
+  saveState();
+  closeWish();
+  showToast('🎯 愿望已添加');
+  renderWishTab();
+  renderDash();
+}
+
+function deleteWish(id){
+  if(!confirm('确定删除这个愿望？')) return;
+  state.wishes = state.wishes.filter(w=>w.id!==id);
+  saveState();
+  renderWishTab();
+  renderDash();
+  showToast('已删除');
+}
+
+function showAddToWish(id){
+  const w = state.wishes.find(w=>w.id===id);
+  if(!w) return;
+  const amount = prompt(`向「${w.name}」存入金额：`, '500');
+  if(amount){
+    const amt = parseFloat(amount);
+    if(amt>0){
+      w.saved = Math.min(w.target, w.saved+amt);
+      saveState();
+      renderWishTab();
+      renderDash();
+      showToast(`💰 已存入 ¥${fmt(amt)}`);
+    }
+  }
+}
+
+// ==================== Month Navigation ====================
+function changeMonth(delta){
+  state.currentMonth.setMonth(state.currentMonth.getMonth()+delta);
+  if(state.currentMonth > new Date()){ state.currentMonth = new Date(); }
+  saveState();
+  renderDash();
+}
+
+// ==================== Pro ====================
+function showProBanner(){
+  switchTab(3, document.querySelectorAll('.tab')[3]);
+}
+
+function showAllTx(){
+  const {txns} = getMonthData();
+  document.getElementById('tab0').innerHTML = `<div class="dash">
+    <div class="dash-header">
+      <div class="dash-month" onclick="renderDash()" style="cursor:pointer">← 返回</div>
+      <div class="dash-nav"><span style="font-size:12px;color:var(--gray-l)">${txns.length} 条记录</span></div>
+    </div>
+    <div class="txcard">${renderTxList(txns)}</div>
+  </div>`;
+}
+
+function showTxDetail(id){
+  const tx = state.transactions.find(t=>t.id===id);
+  if(!tx) return;
+  const catInfo = getCatInfo(tx.cat, tx.type);
+  const date = new Date(tx.date);
+  const dateStr = `${date.getFullYear()}年${date.getMonth()+1}月${date.getDate()}日 ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+  alert(`${catInfo.icon} ${catInfo.name}\n${dateStr}\n金额：${tx.type==='income'?'+':'−'}¥${fmt(tx.amount)}\n备注：${tx.note||'(无)'}\n${tx.impulse?'⚠️ 冲动消费':''}`);
+}
+
+// ==================== Utils ====================
+function fmt(n){ return (n||0).toLocaleString('zh-CN',{minimumFractionDigits:0,maximumFractionDigits:2}); }
+function showToast(msg){ var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500); }
+
+// ==================== Boot ====================
+init();
+</script>
+</body>
+</html>
