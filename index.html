@@ -1,1059 +1,770 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ProPlan · 专业计划</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300..700&display=swap" rel="stylesheet">
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: linear-gradient(145deg, #f0f4fa 0%, #e9eef5 100%);
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            color: #1e293b;
-        }
-        .dashboard { max-width: 1600px; width: 100%; padding: 24px; position: relative; }
-        :root {
-            --primary-light: #4A90E2;
-            --primary-soft: #6ba6e8;
-            --primary-glow: rgba(74, 144, 226, 0.2);
-            --accent-light: #F5A623;
-            --accent-soft: #f7b955;
-            --accent-glow: rgba(245, 166, 35, 0.25);
-            --bg-card: rgba(255, 255, 255, 0.7);
-            --text-dark: #1e293b;
-            --text-medium: #475569;
-            --text-light: #64748b;
-            --border-light: rgba(203, 213, 225, 0.5);
-            --shadow-sm: 0 8px 20px -6px rgba(0, 20, 40, 0.08), 0 2px 6px rgba(0,0,0,0.02);
-            --shadow-md: 0 20px 30px -12px rgba(0, 30, 60, 0.15), 0 4px 12px rgba(0,0,0,0.02);
-            --shadow-lg: 0 30px 60px -20px rgba(0,30,60,0.25);
-            --radius-card: 24px;
-            --radius-btn: 40px;
-            --blur-bg: blur(8px);
-        }
-        .glass-card {
-            background: var(--bg-card);
-            backdrop-filter: var(--blur-bg);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            border-radius: var(--radius-card);
-            box-shadow: var(--shadow-sm);
-            transition: 0.2s;
-        }
-        .glass-card:hover { box-shadow: var(--shadow-md); background: rgba(255,255,255,0.8); border-color: white; }
-        .btn {
-            background: var(--accent-light); color: white; border: none;
-            padding: 8px 18px; border-radius: var(--radius-btn); font-weight: 500;
-            font-size: 0.9rem; box-shadow: 0 8px 14px -6px var(--accent-glow);
-            cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
-        }
-        .btn-sm { padding: 4px 12px; font-size: 0.8rem; }
-        .btn-outline { background: transparent; border: 1.5px solid var(--accent-light); color: var(--accent-light); box-shadow: none; }
-        .btn-outline:hover { background: var(--accent-glow); }
-        .btn-danger { background: #ef4444; box-shadow: 0 8px 14px -6px rgba(239,68,68,0.3); }
-        .btn-danger:hover { background: #dc2626; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CreamViz 产品中台</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FDFBF7;--bg2:#F5F0E8;--bg3:#EDE8DF;
+  --gold:#C8A96E;--gold2:#E8C87A;--gold3:#F5EDD6;
+  --dark:#1A1A2E;--mid:#2D4A7A;--blue:#3A7FCA;
+  --text:#2C2C3E;--text2:#5A5A6E;--text3:#8A8A9E;
+  --border:#E8DFC8;--border2:#D5C9B0;
+  --red:#C0392B;--redbg:#FFF0EF;
+  --shadow:0 2px 12px rgba(26,26,46,.08);
+  --shadow2:0 4px 24px rgba(26,26,46,.12);
+}
+body{background:var(--bg);font-family:'Noto Sans SC',system-ui,sans-serif;color:var(--text);min-height:100vh}
 
-        /* 登录层 */
-        .login-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 20, 40, 0.85);
-            backdrop-filter: blur(16px);
-            display: flex; align-items: center; justify-content: center; z-index: 2000;
-        }
-        .login-box {
-            background: rgba(255,255,255,0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 48px; padding: 44px 40px;
-            width: 90%; max-width: 400px;
-            box-shadow: var(--shadow-lg); text-align: center;
-        }
-        .login-logo { font-size: 2.5rem; margin-bottom: 8px; }
-        .login-box h2 { margin-bottom: 6px; color: var(--text-dark); font-weight: 700; font-size: 1.5rem; }
-        .login-subtitle { color: var(--text-light); font-size: 0.9rem; margin-bottom: 28px; }
-        .login-box input {
-            width: 100%; padding: 14px 20px; margin-bottom: 14px;
-            border: 1.5px solid var(--border-light); border-radius: 40px;
-            font-size: 1rem; background: white; outline: none;
-            transition: border-color 0.2s;
-        }
-        .login-box input:focus { border-color: var(--primary-light); }
-        .login-box .login-btn {
-            width: 100%; padding: 14px; border-radius: 40px; border: none;
-            background: linear-gradient(135deg, var(--primary-light), #6ba6e8);
-            color: white; font-weight: 600; font-size: 1rem; cursor: pointer;
-            box-shadow: 0 8px 20px -6px var(--primary-glow); transition: opacity 0.2s;
-        }
-        .login-box .login-btn:hover { opacity: 0.9; }
-        .login-box .login-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-        .error-msg { color: #ef4444; margin-top: 12px; font-size: 0.88rem; min-height: 20px; }
-        .login-footer { margin-top: 20px; font-size: 0.8rem; color: var(--text-light); }
-        .hidden { display: none !important; }
+/* 顶部导航 */
+.nav{background:var(--dark);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.nav-logo{display:flex;align-items:center;gap:10px}
+.nav-logo-mark{width:28px;height:28px;background:linear-gradient(135deg,var(--gold),var(--gold2));border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:var(--dark)}
+.nav-logo-text{font-size:15px;font-weight:700;color:#fff}
+.nav-logo-text span{color:var(--gold2);font-size:12px;font-weight:400;margin-left:6px;opacity:.8}
+.nav-right{display:flex;align-items:center;gap:12px}
+.nav-btn{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;transition:all .2s}
+.nav-btn:hover{background:rgba(255,255,255,.18)}
+.nav-btn.primary{background:var(--gold);color:var(--dark);border-color:var(--gold);font-weight:700}
+.nav-btn.primary:hover{background:var(--gold2)}
+.nav-tag{font-size:11px;color:var(--text3);background:var(--bg2);border:1px solid var(--border);border-radius:4px;padding:2px 8px}
 
-        /* 加载状态 */
-        .loading-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(240,244,250,0.9); backdrop-filter: blur(8px);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            z-index: 3000; gap: 16px;
-        }
-        .spinner {
-            width: 40px; height: 40px; border: 3px solid #e2e8f0;
-            border-top-color: var(--primary-light); border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-text { color: var(--text-medium); font-size: 0.9rem; }
+.view{display:none}
+.view.active{display:block}
 
-        /* 主应用 */
-        #mainApp { display: block; }
-        .header {
-            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-            margin-bottom: 24px; background: rgba(255,255,255,0.5);
-            backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.7);
-            border-radius: 60px; padding: 8px 20px;
-        }
-        .header-left { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .avatar-large {
-            width: 80px; height: 80px; border-radius: 50%;
-            background: rgba(255,255,255,0.6); backdrop-filter: blur(8px);
-            border: 3px solid white; box-shadow: var(--shadow-md);
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem; color: var(--primary-light); overflow: hidden;
-            cursor: pointer; flex-shrink: 0;
-        }
-        .avatar-large img { width: 100%; height: 100%; object-fit: cover; }
-        .editable-main-title {
-            font-size: 2rem; font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent-light) 80%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            background-clip: text; cursor: text; padding: 2px 8px; border-radius: 16px;
-        }
-        .month-input {
-            background: white; border: 1px solid var(--border-light);
-            border-radius: 40px; padding: 8px 16px; font-size: 0.95rem;
-            font-weight: 500; outline: none; width: 160px;
-        }
-        .view-switch { display: flex; background: rgba(255,255,255,0.6); border-radius: 40px; padding: 4px; gap: 4px; }
-        .view-switch-btn {
-            padding: 6px 20px; border-radius: 40px; border: none;
-            background: transparent; font-weight: 600; font-size: 0.9rem;
-            color: var(--text-medium); cursor: pointer;
-        }
-        .view-switch-btn.active { background: white; color: var(--primary-light); box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .header-right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-        .theme-switch { display: flex; gap: 6px; }
-        .theme-dot {
-            width: 32px; height: 32px; border-radius: 50%; border: 2px solid white;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1); cursor: pointer;
-        }
-        .theme-dot.light-blue { background: linear-gradient(135deg, #4A90E2 50%, #F5A623 50%); }
-        .theme-dot.blue-orange { background: linear-gradient(135deg, #2C3E50 50%, #E67E22 50%); }
-        .total-count { background: white; border-radius: 40px; padding: 6px 16px; font-weight: 600; color: var(--primary-light); font-size: 0.9rem; }
-        .user-badge {
-            background: rgba(74,144,226,0.1); border-radius: 40px; padding: 6px 14px;
-            font-size: 0.82rem; color: var(--primary-light); font-weight: 500;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .sync-status { font-size: 0.75rem; color: var(--text-light); display: flex; align-items: center; gap: 4px; }
-        .sync-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
-        .sync-dot.syncing { background: var(--accent-light); animation: pulse 1s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+/* 管理后台布局 */
+.admin-layout{display:grid;grid-template-columns:260px 1fr;gap:0;min-height:calc(100vh - 56px)}
 
-        .view-container { display: block; }
-        .hidden-view { display: none !important; }
-        .quadrant-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
-        .quad-card { padding: 20px 16px; display: flex; flex-direction: column; align-items: center; }
-        .quad-header { display: flex; align-items: center; gap: 8px; font-size: 1.2rem; font-weight: 600; margin-bottom: 12px; }
-        .quad-stats { display: flex; justify-content: space-between; width: 100%; color: var(--text-medium); font-size: 0.95rem; margin: 8px 0 12px; }
-        .quad-canvas-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto; }
-        .quad-canvas-wrap canvas { width: 100% !important; height: 100% !important; }
-        .quad-canvas-wrap > div { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: 700; font-size: 1.2rem; }
-        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 24px; }
-        .stat-card { padding: 16px; display: flex; flex-direction: column; }
-        .stat-card h4 { font-size: 1rem; margin-bottom: 10px; color: var(--text-medium); }
-        .stat-card canvas { max-height: 100px; width: 100% !important; }
-        .stat-kpi { display: flex; justify-content: space-around; margin: 12px 0 4px; font-size: 0.9rem; font-weight: 600; }
-        .big-number { font-size: 2.4rem; font-weight: 700; color: var(--primary-light); line-height: 1.2; margin: 8px 0 4px; }
-        .executive-area { display: flex; gap: 20px; align-items: stretch; }
-        .left-panel { flex: 3; display: flex; flex-direction: column; gap: 16px; }
-        .left-panel .glass-card { display: flex; flex-direction: column; }
-        .left-panel .glass-card:first-child { flex: 3; }
-        .left-panel .glass-card:last-child { flex: 7; }
-        .card-content { flex: 1; padding: 4px 8px 8px; overflow: visible; }
-        .right-panel { flex: 7; display: flex; min-height: 0; }
-        .week-grid {
-            flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px;
-            background: rgba(255,255,255,0.35); backdrop-filter: blur(8px);
-            border-radius: var(--radius-card); padding: 20px;
-            border: 1px solid rgba(255,255,255,0.6);
-        }
-        .week-day-header { font-weight: 600; color: var(--text-medium); text-align: center; font-size: 0.9rem; padding: 6px 0; }
-        .week-cell {
-            background: rgba(255,255,255,0.6); backdrop-filter: blur(4px);
-            border-radius: 18px; padding: 12px 8px; height: 240px;
-            display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.8);
-        }
-        .week-cell.today-cell { border: 2px solid var(--primary-light); background: rgba(255,255,255,0.8); }
-        .month-grid {
-            flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
-            background: rgba(255,255,255,0.35); backdrop-filter: blur(8px);
-            border-radius: var(--radius-card); padding: 16px;
-            border: 1px solid rgba(255,255,255,0.6);
-        }
-        .month-day-header { font-weight: 600; color: var(--text-medium); text-align: center; font-size: 0.8rem; padding: 4px 0; }
-        .month-cell {
-            background: rgba(255,255,255,0.6); backdrop-filter: blur(4px);
-            border-radius: 14px; padding: 6px 4px; height: 140px;
-            display: flex; flex-direction: column; border: 1px solid rgba(255,255,255,0.8);
-        }
-        .month-cell.today-cell { border: 2px solid var(--primary-light); background: rgba(255,255,255,0.8); }
-        .cell-date { font-weight: 600; display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; font-size: 0.85rem; flex-shrink: 0; }
-        .add-task-btn { background: var(--accent-light); border: none; color: white; border-radius: 30px; width: 22px; height: 22px; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
-        .task-list { flex: 1; overflow-y: auto; scrollbar-width: thin; }
-        .month-cell .task-list { max-height: 90px; }
-        .week-cell .task-list { max-height: 180px; }
-        .task-list::-webkit-scrollbar { width: 4px; }
-        .task-list::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 10px; }
-        .task-chip { background: white; border-left: 4px solid; border-radius: 8px; padding: 4px 6px; margin-bottom: 4px; display: flex; align-items: flex-start; gap: 4px; font-size: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .week-cell .task-chip { font-size: 0.8rem; padding: 5px 7px; }
-        .task-check { width: 16px; height: 16px; accent-color: var(--primary-light); flex-shrink: 0; }
-        .task-title { flex: 1; font-weight: 500; word-break: break-word; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; cursor: pointer; min-width: 0; }
-        .delete-task-icon { color: #ef4444; opacity: 0.6; cursor: pointer; font-size: 0.9rem; transition: 0.1s; margin-left: 2px; flex-shrink: 0; }
-        .delete-task-icon:hover { opacity: 1; }
-        .mini-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-        .cal-day-header { font-weight: 600; color: var(--text-light); font-size: 0.8rem; padding: 6px 0; }
-        .cal-day { background: white; border-radius: 30px; padding: 6px 0; font-weight: 500; font-size: 0.85rem; cursor: pointer; border: 1px solid transparent; }
-        .cal-day.today { background: var(--primary-light); color: white; }
-        .cal-day.selected { border: 2px solid var(--accent-light); background: #fff6e5; }
-        .cal-day.week-range { background: #e0f0ff; }
-        .word-cloud { display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: center; padding: 16px 8px; min-height: 0; overflow-y: auto; }
-        .cloud-item { transition: 0.1s; cursor: default; font-weight: 500; font-size: 1rem; }
-        .cloud-item.emergency { color: var(--accent-light); font-weight: 700; }
-        .year-months-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 16px 0; }
-        .month-card { background: rgba(255,255,255,0.5); backdrop-filter: blur(8px); border-radius: 20px; padding: 16px; }
-        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,20,40,0.3); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 1000; visibility: hidden; opacity: 0; transition: 0.15s; }
-        .modal.show { visibility: visible; opacity: 1; }
-        .modal-content { background: rgba(255,255,255,0.95); backdrop-filter: blur(24px); border-radius: 36px; max-width: 900px; width: 90%; padding: 24px 28px; max-height: 85vh; overflow-y: auto; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; }
-        .full-width { grid-column: 1 / -1; }
-        label { font-weight: 600; color: var(--text-dark); display: block; margin-bottom: 4px; font-size: 0.85rem; }
-        input, select, textarea { width: 100%; padding: 10px 16px; border: 1px solid var(--border-light); border-radius: 30px; font-size: 0.9rem; background: white; }
-        .subtask-section, .attachment-section { background: rgba(255,255,255,0.5); border-radius: 18px; padding: 12px; margin-top: 6px; }
-        .subtask-list, .attachment-list { list-style: none; max-height: 130px; overflow-y: auto; margin-top: 8px; border: 1px solid var(--border-light); border-radius: 16px; padding: 4px 6px; background: white; }
-        .subtask-list li, .attachment-list li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px dashed #eee; font-size: 0.85rem; }
-        .subtask-check { width: 18px; height: 18px; accent-color: var(--primary-light); cursor: pointer; }
-        .attachment-link { flex:1; color: var(--primary-light); text-decoration: none; font-weight: 500; cursor: pointer; }
-        .remove-item { color: #b91c1c; cursor: pointer; font-weight: 600; opacity: 0.6; }
-        .add-subtask { display: flex; gap: 6px; margin-top: 8px; }
-        .modal-actions { display: flex; gap: 16px; justify-content: flex-end; margin-top: 20px; }
-        #importFile { display: none; }
-        @media (max-width: 1100px) {
-            .quadrant-grid, .stats-row { grid-template-columns: repeat(2,1fr); }
-            .executive-area { flex-direction: column; }
-        }
-    </style>
+/* 侧边栏 */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border);padding:24px 16px;display:flex;flex-direction:column;gap:6px}
+.sidebar-section{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:1px;text-transform:uppercase;padding:8px 12px 4px;margin-top:8px}
+.sidebar-section:first-child{margin-top:0}
+.sidebar-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .2s;border:1px solid transparent}
+.sidebar-item:hover{background:var(--bg3);color:var(--text)}
+.sidebar-item.active{background:var(--dark);color:#fff;font-weight:500}
+.sidebar-item .icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.sidebar-item .count{margin-left:auto;background:var(--gold3);color:var(--dark);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700}
+.sidebar-item.active .count{background:rgba(255,255,255,.2);color:#fff}
+
+/* 主内容区 */
+.main{padding:28px 32px;overflow-y:auto}
+.main-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px}
+.main-title{font-size:20px;font-weight:700;color:var(--dark)}
+.main-subtitle{font-size:13px;color:var(--text3);margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;font-family:inherit;font-weight:500;transition:all .2s;border:none}
+.btn-primary{background:var(--dark);color:#fff}
+.btn-primary:hover{background:var(--mid)}
+.btn-gold{background:var(--gold);color:var(--dark)}
+.btn-gold:hover{background:var(--gold2)}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--border)}
+.btn-ghost:hover{background:var(--bg2);color:var(--text)}
+.btn-danger{background:var(--redbg);color:var(--red);border:1px solid #f5c5c0}
+.btn-danger:hover{background:#ffe0de}
+.btn-sm{padding:5px 10px;font-size:12px}
+
+/* 产品网格 */
+.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.product-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:all .2s;cursor:pointer}
+.product-card:hover{box-shadow:var(--shadow2);border-color:var(--border2);transform:translateY(-1px)}
+.card-thumb{height:120px;display:flex;align-items:center;justify-content:center;font-size:36px;position:relative}
+.card-type-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px}
+.type-html{background:#EBF3FD;color:#185FA5}
+.type-multi{background:#F3EFFE;color:#6D28D9}
+.type-tool{background:#FFF3CD;color:#854F0B}
+.card-body{padding:14px}
+.card-name{font-size:14px;font-weight:700;color:var(--dark);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-desc{font-size:12px;color:var(--text2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:36px}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.card-footer-left{display:flex;align-items:center;gap:6px}
+.status-dot{width:6px;height:6px;border-radius:50%}
+.dot-active{background:#22c55e}
+.dot-draft{background:var(--text3)}
+.status-text{font-size:11px;color:var(--text3)}
+.card-actions{display:flex;gap:4px}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s;color:var(--text2)}
+.icon-btn:hover{background:var(--bg2);border-color:var(--border2)}
+.icon-btn.copy-btn:hover{background:#EBF3FD;border-color:#b5d4f4;color:#185FA5}
+.icon-btn.edit-btn:hover{background:var(--gold3);border-color:var(--gold);color:var(--dark)}
+.icon-btn.del-btn:hover{background:var(--redbg);border-color:#f5c5c0;color:var(--red)}
+.icon-btn.open-btn:hover{background:#ECFDF5;border-color:#86efac;color:#166534}
+
+/* 统计卡片 */
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat-card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px;border-left:3px solid var(--gold)}
+.stat-val{font-size:26px;font-weight:900;color:var(--dark)}
+.stat-label{font-size:12px;color:var(--text3);margin-top:3px}
+
+/* 搜索过滤栏 */
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.search-input{flex:1;min-width:200px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);outline:none;transition:border-color .2s}
+.search-input:focus{border-color:var(--gold);background:#fff}
+.filter-select{padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;background:var(--bg);color:var(--text);cursor:pointer;outline:none}
+.filter-select:focus{border-color:var(--gold)}
+
+/* 模态框 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,26,46,.45);z-index:200;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.show{display:flex}
+.modal{background:#fff;border-radius:16px;width:100%;max-width:560px;box-shadow:0 8px 48px rgba(26,26,46,.2);max-height:90vh;overflow-y:auto}
+.modal-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:700;color:var(--dark)}
+.modal-close{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:16px;color:var(--text3);display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--bg2)}
+.modal-body{padding:20px 24px}
+.modal-footer{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-group{margin-bottom:16px}
+.form-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:block}
+.form-label span{color:var(--red);margin-left:2px}
+.form-input{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg);outline:none;transition:border-color .2s}
+.form-input:focus{border-color:var(--gold);background:#fff}
+.form-textarea{resize:vertical;min-height:80px;line-height:1.6}
+.form-select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg);cursor:pointer;outline:none}
+.form-select:focus{border-color:var(--gold)}
+.form-hint{font-size:11px;color:var(--text3);margin-top:4px}
+.emoji-picker{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.emoji-opt{width:36px;height:36px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.emoji-opt:hover,.emoji-opt.selected{background:var(--gold3);border-color:var(--gold)}
+
+/* 链接面板 */
+.link-panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:16px;margin-top:12px}
+.link-panel-title{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px}
+.link-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.link-row:last-child{margin-bottom:0}
+.link-label{font-size:12px;color:var(--text3);width:60px;flex-shrink:0}
+.link-url{flex:1;background:#fff;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace}
+.link-copy-btn{padding:5px 10px;border-radius:6px;background:var(--dark);color:#fff;border:none;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;transition:background .2s}
+.link-copy-btn:hover{background:var(--mid)}
+.link-copy-btn.copied{background:#22c55e}
+
+/* 客户端预览页 */
+.preview-page{min-height:100vh;background:var(--bg)}
+.preview-nav{background:var(--dark);padding:0 24px;height:50px;display:flex;align-items:center;gap:12px}
+.preview-nav-logo{font-size:13px;color:rgba(255,255,255,.5)}
+.preview-nav-sep{color:rgba(255,255,255,.2)}
+.preview-nav-name{font-size:14px;font-weight:700;color:#fff}
+.preview-hero{padding:48px 32px 32px;max-width:800px;margin:0 auto}
+.preview-type-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gold3);color:var(--dark);border:1px solid var(--gold);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:700;margin-bottom:16px}
+.preview-title{font-size:32px;font-weight:900;color:var(--dark);line-height:1.2;margin-bottom:12px}
+.preview-desc{font-size:15px;color:var(--text2);line-height:1.8;max-width:600px;margin-bottom:28px}
+.preview-actions{display:flex;gap:12px;flex-wrap:wrap}
+.preview-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;border:none;text-decoration:none}
+.preview-btn-main{background:var(--dark);color:#fff}
+.preview-btn-main:hover{background:var(--mid)}
+.preview-btn-sub{background:var(--bg2);color:var(--text);border:1px solid var(--border)}
+.preview-btn-sub:hover{background:var(--bg3)}
+.preview-content{padding:0 32px 48px;max-width:800px;margin:0 auto}
+.preview-section-title{font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--gold3)}
+.preview-features{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:32px}
+.preview-feature-item{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px;display:flex;align-items:flex-start;gap:10px}
+.preview-feature-icon{font-size:20px;flex-shrink:0}
+.preview-feature-text{font-size:13px;color:var(--text2);line-height:1.5}
+.preview-iframe-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;height:500px;position:relative}
+.preview-iframe-wrap iframe{width:100%;height:100%;border:none}
+.preview-watermark{text-align:center;padding:24px;font-size:12px;color:var(--text3);border-top:1px solid var(--border);margin-top:32px}
+
+/* Toast */
+.toast{position:fixed;top:72px;right:24px;background:var(--dark);color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;z-index:999;transform:translateX(120%);transition:transform .3s;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow2)}
+.toast.show{transform:translateX(0)}
+.toast.success{background:#166534}
+.toast.error{background:var(--red)}
+.toast.info{background:#1d4ed8}
+
+/* 空状态 */
+#empty-state{text-align:center;padding:80px 0;color:var(--text3)}
+#empty-state .big{font-size:48px;margin-bottom:12px}
+#empty-state .title{font-size:16px;font-weight:500;margin-bottom:8px}
+#empty-state .sub{font-size:13px}
+
+/* 响应式 */
+@media(max-width:768px){
+  .admin-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .stat-row{grid-template-columns:repeat(2,1fr)}
+  .product-grid{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 
-    <!-- 加载中 -->
-    <div id="loadingOverlay" class="loading-overlay">
-        <div class="spinner"></div>
-        <div class="loading-text">正在连接...</div>
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════ 管理后台视图 ═══════════════ -->
+<div class="view active" id="view-admin">
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-mark">C</div>
+      <div class="nav-logo-text">CreamViz 产品中台 <span>by Alin</span></div>
     </div>
-
-    <!-- 登录层 -->
-    <div id="loginOverlay" class="login-overlay hidden">
-        <div class="login-box">
-            <div class="login-logo">📋</div>
-            <h2>ProPlan</h2>
-            <div class="login-subtitle">专业计划管理 · 多端同步</div>
-            <input type="text" id="loginEmail" placeholder="用户名" autocomplete="username">
-            <input type="password" id="loginPassword" placeholder="密码" autocomplete="current-password">
-            <button class="login-btn" id="loginBtn">登录</button>
-            <div id="loginError" class="error-msg"></div>
-            <div class="login-footer">© CreamViz by Alin</div>
-        </div>
+    <div class="nav-right">
+      <span class="nav-tag" id="nav-count">0 个产品</span>
+      <button class="nav-btn primary" onclick="openAddModal()">＋ 添加产品</button>
     </div>
+  </nav>
 
-    <!-- 主应用 -->
-    <div id="mainApp" class="dashboard hidden">
-        <header class="header">
-            <div class="header-left">
-                <div class="avatar-large" id="avatarBtn" title="上传头像">
-                    <i class="fas fa-user" id="avatarIcon"></i>
-                    <img id="avatarImg" src="" alt="" style="display: none;">
-                </div>
-                <h1 class="editable-main-title" id="mainTitle" contenteditable="true">我的计划</h1>
-                <input type="month" id="monthPicker" class="month-input">
-                <div class="view-switch">
-                    <button class="view-switch-btn" data-view="week">周</button>
-                    <button class="view-switch-btn active" data-view="month">月</button>
-                    <button class="view-switch-btn" data-view="year">年</button>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="theme-switch">
-                    <div class="theme-dot light-blue" data-theme="light"></div>
-                    <div class="theme-dot blue-orange" data-theme="dark"></div>
-                </div>
-                <div class="sync-status"><div class="sync-dot" id="syncDot"></div><span id="syncText">已同步</span></div>
-                <span class="total-count" id="totalPlanCount">0 计划</span>
-                <div class="user-badge"><i class="fas fa-user-circle"></i><span id="userEmailDisplay"></span></div>
-                <button class="btn" id="exportBtn"><i class="fas fa-download"></i> 导出CSV</button>
-                <button class="btn" id="importBtn"><i class="fas fa-upload"></i> 导入CSV</button>
-                <button class="btn btn-outline" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> 退出</button>
-                <input type="file" id="importFile" accept=".csv,.txt,text/csv">
-            </div>
-        </header>
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="sidebar-section">产品分类</div>
+      <div class="sidebar-item active" onclick="filterProducts('all',this)">
+        <span class="icon">📦</span> 全部产品
+        <span class="count" id="count-all">0</span>
+      </div>
+      <div class="sidebar-item" onclick="filterProducts('html',this)">
+        <span class="icon">📊</span> 看板/报告
+        <span class="count" id="count-html">0</span>
+      </div>
+      <div class="sidebar-item" onclick="filterProducts('tool',this)">
+        <span class="icon">🛠</span> 工具系统
+        <span class="count" id="count-tool">0</span>
+      </div>
+      <div class="sidebar-item" onclick="filterProducts('multi',this)">
+        <span class="icon">📁</span> 多文件包
+        <span class="count" id="count-multi">0</span>
+      </div>
+      <div class="sidebar-section">状态</div>
+      <div class="sidebar-item" onclick="filterProducts('active',this)">
+        <span class="icon">✅</span> 已发布
+        <span class="count" id="count-active">0</span>
+      </div>
+      <div class="sidebar-item" onclick="filterProducts('draft',this)">
+        <span class="icon">📝</span> 草稿
+        <span class="count" id="count-draft">0</span>
+      </div>
+      <div class="sidebar-section">操作</div>
+      <div class="sidebar-item" onclick="exportData()">
+        <span class="icon">💾</span> 导出数据
+      </div>
+      <div class="sidebar-item" onclick="importData()">
+        <span class="icon">📂</span> 导入数据
+      </div>
+    </aside>
 
-        <div id="monthlyView" class="view-container">
-            <div class="quadrant-grid" id="quadrantGrid"></div>
-            <div class="stats-row" id="statsRow"></div>
-            <div class="executive-area">
-                <div class="left-panel">
-                    <div class="glass-card">
-                        <h4 style="display:flex; gap:6px; font-size:1rem; padding:8px 12px 0;"><i class="fas fa-calendar-alt" style="color:var(--primary-light);"></i> 迷你日历</h4>
-                        <div class="card-content"><div id="miniCalendar" class="mini-calendar-grid"></div></div>
-                    </div>
-                    <div class="glass-card">
-                        <h4 style="display:flex; gap:6px; font-size:1rem; padding:8px 12px 0;"><i class="fas fa-cloud" style="color:var(--accent-light);"></i> 词云·待办任务</h4>
-                        <div class="card-content"><div id="wordCloud" class="word-cloud"></div></div>
-                    </div>
-                </div>
-                <div class="right-panel">
-                    <div id="weekView" class="week-grid hidden"></div>
-                    <div id="monthView" class="month-grid"></div>
-                </div>
-            </div>
+    <main class="main">
+      <div class="stat-row">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-label">产品总数</div>
         </div>
-
-        <div id="yearlyView" class="view-container hidden-view">
-            <div class="glass-card" style="padding:20px;">
-                <h3 style="font-size:1.3rem; display:flex; justify-content:space-between; align-items:center;">
-                    📅 年度统计卡片
-                    <button class="btn btn-danger btn-sm" id="deleteAllYearTasks">🗑️ 删除当年所有任务</button>
-                </h3>
-                <div id="yearlyMonthCards" class="year-months-grid"></div>
-            </div>
-            <div class="glass-card" style="margin:20px 0; padding:20px;">
-                <h3 style="font-size:1.3rem;">📈 年度完成趋势</h3>
-                <canvas id="yearTrendChart" width="400" height="180" style="max-height:180px; width:100%;"></canvas>
-            </div>
-            <div class="glass-card" style="padding:20px;">
-                <h3 style="font-size:1.3rem;">📋 全年任务列表</h3>
-                <input type="text" id="taskSearch" placeholder="搜索任务标题..." style="margin:12px 0 16px; width:100%; padding:10px;">
-                <div style="max-height:300px; overflow-y:auto;">
-                    <table id="yearTaskTable" style="width:100%; border-collapse:collapse;">
-                        <thead><tr><th>日期</th><th>标题</th><th>象限</th><th>状态</th><th>操作</th></tr></thead>
-                        <tbody></tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="stat-card" style="border-left-color:#3A7FCA">
+          <div class="stat-val" id="stat-active">0</div>
+          <div class="stat-label">已发布</div>
         </div>
-
-        <div id="taskModal" class="modal">
-            <div class="modal-content">
-                <h2><i class="fas fa-pen-alt" style="color:var(--primary-light);"></i> 任务详情</h2>
-                <input type="hidden" id="taskId">
-                <div class="form-grid">
-                    <div class="form-group"><label>标题</label><input id="taskTitle" placeholder="例如：季度汇报"></div>
-                    <div class="form-group"><label>计划日期</label><input type="date" id="taskDate"></div>
-                    <div class="form-group"><label>象限</label><select id="taskQuadrant"><option>重要紧急</option><option>重要不紧急</option><option>紧急不重要</option><option>不紧急不重要</option></select></div>
-                    <div class="form-group"><label>状态</label><select id="taskStatus"><option>未开始</option><option>进行中</option><option>已完成</option></select></div>
-                    <div class="full-width"><label>详细描述</label><textarea id="taskDetails" rows="2"></textarea></div>
-                    <div class="full-width">
-                        <label>子任务</label>
-                        <div class="subtask-section">
-                            <ul class="subtask-list" id="subtaskList"></ul>
-                            <div class="add-subtask">
-                                <input type="text" id="newSubtaskInput" placeholder="例如: 写周报">
-                                <button class="btn btn-sm" id="addSubtaskBtn"><i class="fas fa-plus"></i> 添加</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="full-width">
-                        <label>附件</label>
-                        <div class="attachment-section">
-                            <input type="file" id="attachmentFile" multiple accept=".jpg,.png,.pdf,.docx,.txt" style="margin-bottom:8px;">
-                            <ul class="attachment-list" id="attachmentList"></ul>
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn" id="saveTask"><i class="fas fa-check"></i> 保存</button>
-                    <button class="btn-outline btn" id="closeModal">取消</button>
-                    <button class="btn btn-danger" id="deleteTask"><i class="fas fa-trash"></i> 删除</button>
-                </div>
-            </div>
+        <div class="stat-card" style="border-left-color:#9a60b4">
+          <div class="stat-val" id="stat-sent">0</div>
+          <div class="stat-label">已发送链接</div>
         </div>
-        <input type="file" id="avatarInput" accept="image/*" style="display: none;">
+        <div class="stat-card" style="border-left-color:#E24B4A">
+          <div class="stat-val" id="stat-draft">0</div>
+          <div class="stat-label">草稿</div>
+        </div>
+      </div>
+
+      <div class="filter-bar">
+        <input class="search-input" id="search-input" placeholder="搜索产品名称或描述..." oninput="renderProducts()">
+        <select class="filter-select" id="filter-type" onchange="renderProducts()">
+          <option value="">全部类型</option>
+          <option value="html">看板/报告</option>
+          <option value="tool">工具系统</option>
+          <option value="multi">多文件包</option>
+        </select>
+        <select class="filter-select" id="filter-sort" onchange="renderProducts()">
+          <option value="newest">最新添加</option>
+          <option value="name">按名称</option>
+          <option value="type">按类型</option>
+        </select>
+      </div>
+
+      <div class="product-grid" id="product-grid"></div>
+      <div id="empty-state" style="display:none">
+        <div class="big">📦</div>
+        <div class="title">还没有产品</div>
+        <div class="sub">点击右上角「添加产品」开始管理你的产品库</div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ═══════════════ 客户端预览视图 ═══════════════ -->
+<div class="view" id="view-preview">
+  <div class="preview-page" id="preview-container"></div>
+</div>
+
+<!-- ═══════════════ 添加/编辑产品 Modal ═══════════════ -->
+<div class="modal-overlay" id="product-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">添加新产品</div>
+      <button class="modal-close" onclick="closeModal('product-modal')">✕</button>
     </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-id">
+      <div class="form-group">
+        <label class="form-label">产品封面图标 <span>*</span></label>
+        <div class="emoji-picker" id="emoji-picker">
+          <div class="emoji-opt selected" onclick="selectEmoji(this,'📊')">📊</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'📈')">📈</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'🛠')">🛠</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'📋')">📋</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'💡')">💡</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'🎯')">🎯</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'📁')">📁</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'⚙️')">⚙️</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'🏆')">🏆</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'📱')">📱</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'🔍')">🔍</div>
+          <div class="emoji-opt" onclick="selectEmoji(this,'💰')">💰</div>
+        </div>
+        <input type="hidden" id="form-icon" value="📊">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">产品名称 <span>*</span></label>
+          <input class="form-input" id="form-name" placeholder="如：月度经营分析报告">
+        </div>
+        <div class="form-group">
+          <label class="form-label">产品类型 <span>*</span></label>
+          <select class="form-select" id="form-type">
+            <option value="html">看板/报告（单HTML）</option>
+            <option value="tool">工具系统（可交互）</option>
+            <option value="multi">多文件包（ZIP下载）</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">产品描述</label>
+        <textarea class="form-input form-textarea" id="form-desc" placeholder="简单描述产品功能..."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">产品链接 <span>*</span></label>
+        <input class="form-input" id="form-url" placeholder="https://lpz336699-maker.github.io/creamviz/your-product.html">
+      </div>
+      <div class="form-group">
+        <label class="form-label">下载链接（可选）</label>
+        <input class="form-input" id="form-download" placeholder="ZIP 包下载地址">
+      </div>
+      <div class="form-group">
+        <label class="form-label">功能亮点（逗号分隔）</label>
+        <input class="form-input" id="form-features" placeholder="如：ECharts图表,数据可编辑,可导出">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="form-group">
+          <label class="form-label">背景风格</label>
+          <select class="form-select" id="form-color">
+            <option value="cream">奶油暖金</option>
+            <option value="dark">深海蓝</option>
+            <option value="white">纯白简约</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">发布状态</label>
+          <select class="form-select" id="form-status">
+            <option value="active">已发布</option>
+            <option value="draft">草稿</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('product-modal')">取消</button>
+      <button class="btn btn-primary" onclick="saveProduct()">保存产品</button>
+    </div>
+  </div>
+</div>
 
-    <script>
-    (function() {
-        // =============================================
-        // Supabase 配置
-        // =============================================
-        const SUPABASE_URL = 'https://pqdehctacwdpqnptwsav.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBxZGVoY3RhY3dkcHFucHR3c2F2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU1NTA5MjYsImV4cCI6MjA5MTEyNjkyNn0.794sLPLfu3msQFIwNM-MoK0YZeqhB1jZUuB2lECnJXk';
-        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+<!-- ═══════════════ 发送链接 Modal ═══════════════ -->
+<div class="modal-overlay" id="send-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">发送产品链接</div>
+      <button class="modal-close" onclick="closeModal('send-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="send-product-info" style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding:12px;background:var(--bg2);border-radius:8px">
+        <div style="font-size:28px" id="send-icon"></div>
+        <div><div style="font-size:14px;font-weight:700" id="send-name"></div><div style="font-size:12px;color:var(--text3)" id="send-type-label"></div></div>
+      </div>
+      <div class="link-panel">
+        <div class="link-panel-title">复制链接</div>
+        <div class="link-row">
+          <span class="link-label">预览链接</span>
+          <div class="link-url" id="send-preview-url"></div>
+          <button class="link-copy-btn" onclick="copyLink('preview')">复制</button>
+        </div>
+        <div class="link-row" id="send-download-row" style="display:none">
+          <span class="link-label">下载链接</span>
+          <div class="link-url" id="send-download-url"></div>
+          <button class="link-copy-btn" onclick="copyLink('download')">复制</button>
+        </div>
+      </div>
+      <div class="form-group" style="margin-top:16px;margin-bottom:0">
+        <label class="form-label">备注（发给谁）</label>
+        <input class="form-input" id="send-note" placeholder="如：发给张总 - 月报审阅">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('send-modal')">关闭</button>
+      <button class="btn btn-gold" onclick="recordSend()">记录已发送</button>
+    </div>
+  </div>
+</div>
 
-        // =============================================
-        // 状态变量
-        // =============================================
-        let tasks = [];
-        let currentUser = null;
-        let viewMode = 'month';
-        let currentYear = new Date().getFullYear();
-        let currentMonth = new Date().getMonth();
-        let selectedDate = new Date().toISOString().split('T')[0];
-        let charts = {};
-        let saveTimer = null;
+<input type="file" id="import-input" accept=".json" style="display:none" onchange="handleImport(event)">
 
-        // =============================================
-        // UI 元素
-        // =============================================
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const loginOverlay = document.getElementById('loginOverlay');
-        const mainApp = document.getElementById('mainApp');
-        const syncDot = document.getElementById('syncDot');
-        const syncText = document.getElementById('syncText');
+<script>
+// ─── 数据层 ───────────────────────────────────
+const BASE = 'https://lpz336699-maker.github.io/creamviz/';
+const QUANT_BASE = 'https://lpz336699-maker.github.io/quant-dashboard/';
+const STORE_KEY = 'creamviz_products_v2';
+let products = [];
+let currentFilter = 'all';
+let sendProduct = null;
 
-        // =============================================
-        // 初始化：检查登录状态
-        // =============================================
-        async function init() {
-            showLoading(true);
-            const { data: { session } } = await db.auth.getSession();
-            if (session) {
-                currentUser = session.user;
-                await startApp();
-            } else {
-                showLoading(false);
-                showLogin(true);
-            }
-        }
+const typeLabels = { html:'看板/报告', tool:'工具系统', multi:'多文件包' };
+const typeColors = { html:'type-html', tool:'type-tool', multi:'type-multi' };
+const typeIcons = { html:'📊', tool:'🛠', multi:'📁' };
 
-        function showLoading(show) {
-            loadingOverlay.classList.toggle('hidden', !show);
-        }
-        function showLogin(show) {
-            loginOverlay.classList.toggle('hidden', !show);
-        }
-        function showApp(show) {
-            mainApp.classList.toggle('hidden', !show);
-        }
+function getSampleData() {
+  return [
+    { id:'p01', icon:'📈', name:'量化选股系统', type:'tool', desc:'AI驱动的智能选股系统，含实时信号、持仓跟踪、市场全景、公告情绪分析。', url: QUANT_BASE + 'quant_dashboard.html', download:'', features:'20+量化因子,AI公告情绪分析,持仓盈亏跟踪,行业热力图,北向资金监控,微信推送', color:'dark', status:'active', sentCount:0, createdAt:1744500000000 },
+    { id:'p02', icon:'🍰', name:'CreamViz 可视化看板', type:'html', desc:'Macaron Cream 设计语言的 BI 看板，双模式架构（可视化 + 数据中心）。', url: BASE + 'index.html', download:'', features:'ECharts图表,双模式切换,数据可编辑,导出Excel,响应式布局', color:'cream', status:'active', sentCount:0, createdAt:1744400000000 },
+    { id:'p03', icon:'⚙️', name:'CreamViz 管理后台', type:'html', desc:'CreamViz 数据中心管理界面，数据配置、权限管理、运营分析。', url: BASE + 'admin.html', download:'', features:'数据中心管理,权限配置,运营分析仪表盘', color:'dark', status:'active', sentCount:0, createdAt:1744300000000 },
+    { id:'p04', icon:'🎯', name:'ProPlan 四象限（云端）', type:'tool', desc:'本地版四象限时间管理工具，支持多视图、任务管理、导入导出。', url: BASE + 'proplan-cloud.html', download:'', features:'四象限矩阵,多视图切换,任务管理,导入导出', color:'cream', status:'active', sentCount:0, createdAt:1744200000000 },
+    { id:'p05', icon:'🗄️', name:'ProPlan 数据库版', type:'tool', desc:'基于本地数据库的 ProPlan，支持数据持久化、多用户协作。', url: BASE + 'proplan-db.html', download:'', features:'IndexedDB持久化,离线可用,多用户协作', color:'cream', status:'active', sentCount:0, createdAt:1744100000000 },
+    { id:'p06', icon:'👥', name:'HR人力看板', type:'html', desc:'招聘漏斗、薪酬基准、离职风险预测、AI报告生成一体化 HR 智能看板。', url: BASE + 'hr_dashboard.html', download:'', features:'招聘漏斗分析,薪酬基准对比,离职风险预测,AI报告生成', color:'cream', status:'active', sentCount:0, createdAt:1744000000000 },
+    { id:'p07', icon:'📊', name:'月度经营汇报', type:'html', desc:'完整月度经营分析报告，包含营收、成本、毛利、渠道、客户、团队等八大维度。', url: BASE + '月度经营汇报_2025年3月_全文可编辑版%20(2).html', download:'', features:'12页完整报告,ECharts图表,数据可编辑,Excel导出', color:'cream', status:'active', sentCount:0, createdAt:1743900000000 },
+    { id:'p08', icon:'🧪', name:'CreamMBTI 甜品人格测试', type:'tool', desc:'基于MBTI理论的甜品主题人格测试，16种甜品人格，SVG角色动画，可生成分享海报。', url: BASE + 'CreamMBTI_v2.html', download:'', features:'甜品主题设计,16种人格,SVG动画角色,一键分享海报,自动跳题逻辑', color:'cream', status:'active', sentCount:0, createdAt:1743800000000 },
+    { id:'p09', icon:'📦', name:'智慧库存看板', type:'html', desc:'企业级库存管理看板，实时库存预警、周转分析、智能补货建议。', url: BASE + 'inventory-dashboard-01.html', download:'', features:'实时预警,周转分析,智能补货,多维度图表', color:'cream', status:'active', sentCount:0, createdAt:1743700000000 },
+    { id:'p10', icon:'🛒', name:'智慧库存看板V2', type:'html', desc:'升级版库存管理看板，增强数据分析与可视化能力。', url: BASE + 'inventory-dashboard%20(1).html', download:'', features:'增强数据分析,多维度可视化,数据导出', color:'cream', status:'active', sentCount:0, createdAt:1743600000000 },
+    { id:'p11', icon:'💰', name:'销售月度看板V2', type:'html', desc:'完整月度销售数据分析看板，支持多维度筛选与数据联动。', url: BASE + 'sales-monthly-dashboard-v2.html', download:'', features:'多维度筛选,数据联动,ECharts图表,Excel导出', color:'cream', status:'active', sentCount:0, createdAt:1743500000000 },
+    { id:'p12', icon:'🔬', name:'SBTI 甜品商业测试', type:'tool', desc:'甜品主题商业风格测试，测试你的创业潜质与商业风格。', url: BASE + 'CreamSBTI.html', download:'', features:'商业风格测试,创业潜质评估,可视化结果', color:'cream', status:'active', sentCount:0, createdAt:1743400000000 },
+    { id:'p13', icon:'🏭', name:'中泰化工经营报告', type:'html', desc:'化工行业专项经营分析报告，涵盖生产、销售、财务多维度分析。', url: BASE + 'zhongtai-chemical-report.html', download:'', features:'化工行业专项,生产销售分析,财务报表,风险评估', color:'cream', status:'active', sentCount:0, createdAt:1743300000000 },
+    { id:'p14', icon:'🛠', name:'技能助手', type:'tool', desc:'AI技能助手页面，浏览和管理各类技能模板。', url: BASE + 'skill-store.html', download:'', features:'技能模板浏览,分类管理,快速启动', color:'cream', status:'active', sentCount:0, createdAt:1743200000000 },
+    { id:'p15', icon:'💬', name:'技能对话', type:'tool', desc:'与AI技能助手对话，实时获取专业领域建议。', url: BASE + 'skill-chat.html', download:'', features:'实时对话,专业建议,多场景支持', color:'cream', status:'active', sentCount:0, createdAt:1743100000000 },
+    { id:'p16', icon:'🍞', name:'馒头品牌报告', type:'html', desc:'食品品牌专项经营分析报告，含市场份额、品牌分析、销售趋势。', url: BASE + 'mantou_final.html', download:'', features:'品牌分析,市场份额,销售趋势,竞品对比', color:'cream', status:'active', sentCount:0, createdAt:1743000000000 },
+    { id:'p17', icon:'📋', name:'月度经营汇报V4', type:'html', desc:'最新版月度经营汇报工具，支持全文编辑与数据联动。', url: BASE + 'hr_platform_V4_0.html', download:'', features:'全文可编辑,数据联动,图表丰富,一键导出', color:'cream', status:'active', sentCount:0, createdAt:1742900000000 },
+    { id:'p18', icon:'📋', name:'智慧HR人力看板', type:'html', desc:'智慧版HR看板，增强人事数据分析与员工关系管理。', url: BASE + 'CreamData_HR_智慧看板%20(4).html', download:'', features:'人事数据分析,员工关系,智能提醒,报表生成', color:'cream', status:'active', sentCount:0, createdAt:1742800000000 },
+    { id:'p19', icon:'💼', name:'HR人力看板_fixed', type:'html', desc:'修复优化版HR人力看板，数据更准确，交互更流畅。', url: BASE + 'CreamData_HR人力看板_fixed%20(2).html', download:'', features:'数据修复,交互优化,报表导出', color:'cream', status:'active', sentCount:0, createdAt:1742700000000 },
+    { id:'p20', icon:'🧊', name:'前后对比报告生成器', type:'tool', desc:'Before/After 效果对比报告生成工具，支持多维度对比展示。', url: BASE + 'before-after-report.html', download:'', features:'前后对比,多维度展示,一键生成', color:'cream', status:'active', sentCount:0, createdAt:1742600000000 },
+    { id:'p21', icon:'📦', name:'库存Dashboard', type:'html', desc:'库存数据综合分析看板，支持多仓库、多SKU管理。', url: BASE + '库存-dashboard.html', download:'', features:'多仓库管理,SKU分析,预警提醒', color:'cream', status:'active', sentCount:0, createdAt:1742500000000 },
+    { id:'p22', icon:'🧊', name:'成本分析V5', type:'html', desc:'企业成本结构深度分析，支持多维度成本拆解与趋势预测。', url: BASE + 'cost_v5.html', download:'', features:'成本结构分析,多维度拆解,趋势预测', color:'cream', status:'active', sentCount:0, createdAt:1742400000000 },
+  ];
+}
 
-        // =============================================
-        // 登录
-        // =============================================
-        document.getElementById('loginBtn').addEventListener('click', async () => {
-            const email = document.getElementById('loginEmail').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const errEl = document.getElementById('loginError');
-            const btn = document.getElementById('loginBtn');
-            errEl.innerText = '';
-            if (!email || !password) { errEl.innerText = '请输入邮箱和密码'; return; }
-            btn.disabled = true;
-            btn.innerText = '登录中...';
-            const { data, error } = await db.auth.signInWithPassword({ email: email + '@x.com', password });
-            btn.disabled = false;
-            btn.innerText = '登录';
-            if (error) {
-                errEl.innerText = '邮箱或密码错误，请联系管理员';
-                return;
-            }
-            currentUser = data.user;
-            showLogin(false);
-            await startApp();
-        });
+function loadData() {
+  try {
+    const d = localStorage.getItem(STORE_KEY);
+    if (d) {
+      products = JSON.parse(d);
+    } else {
+      products = getSampleData();
+      saveData();
+    }
+  } catch(e) {
+    products = getSampleData();
+  }
+}
+function saveData() { localStorage.setItem(STORE_KEY, JSON.stringify(products)); }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
 
-        // 支持回车登录
-        document.getElementById('loginPassword').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') document.getElementById('loginBtn').click();
-        });
+// ─── 渲染层 ───────────────────────────────────
+function renderAll() { renderStats(); renderCounts(); renderProducts(); }
 
-        // 退出登录
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            if (!confirm('确定退出登录吗？')) return;
-            await db.auth.signOut();
-            showApp(false);
-            showLogin(true);
-            tasks = [];
-            currentUser = null;
-        });
+function renderStats() {
+  const active = products.filter(p=>p.status==='active').length;
+  const draft = products.filter(p=>p.status==='draft').length;
+  const sent = products.reduce((a,p)=>a+(p.sentCount||0), 0);
+  document.getElementById('stat-total').textContent = products.length;
+  document.getElementById('stat-active').textContent = active;
+  document.getElementById('stat-sent').textContent = sent;
+  document.getElementById('stat-draft').textContent = draft;
+  document.getElementById('nav-count').textContent = products.length + ' 个产品';
+}
 
-        // =============================================
-        // 启动应用
-        // =============================================
-        async function startApp() {
-            showLoading(true);
-            document.getElementById('userEmailDisplay').innerText = currentUser.email;
-            await loadTasks();
-            await loadProfile();
-            showLoading(false);
-            showApp(true);
-            renderAll();
-        }
+function renderCounts() {
+  document.getElementById('count-all').textContent = products.length;
+  document.getElementById('count-html').textContent = products.filter(p=>p.type==='html').length;
+  document.getElementById('count-tool').textContent = products.filter(p=>p.type==='tool').length;
+  document.getElementById('count-multi').textContent = products.filter(p=>p.type==='multi').length;
+  document.getElementById('count-active').textContent = products.filter(p=>p.status==='active').length;
+  document.getElementById('count-draft').textContent = products.filter(p=>p.status==='draft').length;
+}
 
-        // =============================================
-        // 云端数据读写
-        // =============================================
-        function setSyncing(syncing) {
-            syncDot.classList.toggle('syncing', syncing);
-            syncText.innerText = syncing ? '同步中...' : '已同步';
-        }
+function getFilteredProducts() {
+  let list = [...products];
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const typeFilter = document.getElementById('filter-type').value;
+  const sort = document.getElementById('filter-sort').value;
+  if (search) list = list.filter(p => p.name.toLowerCase().includes(search) || (p.desc||'').toLowerCase().includes(search));
+  if (typeFilter) list = list.filter(p => p.type === typeFilter);
+  if (currentFilter === 'active') list = list.filter(p=>p.status==='active');
+  else if (currentFilter === 'draft') list = list.filter(p=>p.status==='draft');
+  else if (currentFilter === 'html') list = list.filter(p=>p.type==='html');
+  else if (currentFilter === 'tool') list = list.filter(p=>p.type==='tool');
+  else if (currentFilter === 'multi') list = list.filter(p=>p.type==='multi');
+  if (sort === 'name') list.sort((a,b)=>a.name.localeCompare(b.name));
+  else if (sort === 'type') list.sort((a,b)=>a.type.localeCompare(b.type));
+  else list.sort((a,b)=>b.createdAt-a.createdAt);
+  return list;
+}
 
-        // 从 Supabase 加载任务
-        async function loadTasks() {
-            const { data, error } = await db
-                .from('proplan_tasks')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('date', { ascending: true });
-            if (error) { console.error('加载任务失败:', error); tasks = []; return; }
-            tasks = (data || []).map(row => ({
-                id: row.id,
-                title: row.title || '',
-                details: row.details || '',
-                quadrant: row.quadrant || '重要紧急',
-                status: row.status || '未开始',
-                date: row.date || '',
-                subtasks: row.subtasks || [],
-                attachments: row.attachments || []
-            }));
-        }
+function renderProducts() {
+  const list = getFilteredProducts();
+  const grid = document.getElementById('product-grid');
+  const empty = document.getElementById('empty-state');
+  if (list.length === 0) { grid.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display='none';
+  grid.innerHTML = list.map(p => {
+    const bgMap = { cream:'#F5EDD6', dark:'#0F2D5C', white:'#F5F5F5' };
+    return `
+    <div class="product-card">
+      <div class="card-thumb" style="background:${bgMap[p.color]||bgMap.cream}" onclick="openPreview('${p.id}')">
+        <span style="font-size:40px">${p.icon}</span>
+        <span class="card-type-badge ${typeColors[p.type]||'type-html'}">${typeLabels[p.type]||p.type}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-name" title="${p.name}">${p.name}</div>
+        <div class="card-desc">${p.desc||'暂无描述'}</div>
+        <div class="card-footer">
+          <div class="card-footer-left">
+            <div class="status-dot ${p.status==='active'?'dot-active':'dot-draft'}"></div>
+            <span class="status-text">${p.status==='active'?'已发布':'草稿'}</span>
+            ${p.sentCount>0?`<span style="font-size:11px;color:var(--text3);margin-left:6px">已发 ${p.sentCount}次</span>`:''}
+          </div>
+          <div class="card-actions">
+            <button class="icon-btn open-btn" title="打开产品" onclick="event.stopPropagation();openPreview('${p.id}')">🔗</button>
+            <button class="icon-btn copy-btn" title="复制链接" onclick="event.stopPropagation();quickCopy('${p.id}')">📋</button>
+            <button class="icon-btn edit-btn" title="编辑" onclick="event.stopPropagation();openEditModal('${p.id}')">✏️</button>
+            <button class="icon-btn del-btn" title="删除" onclick="event.stopPropagation();deleteProduct('${p.id}')">🗑</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
 
-        // 保存所有任务（防抖300ms）
-        function saveTasks() {
-            updateTotalCount();
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(() => syncToCloud(), 300);
-        }
+function filterProducts(filter, el) {
+  currentFilter = filter;
+  document.querySelectorAll('.sidebar-item').forEach(i=>i.classList.remove('active'));
+  if(el) el.classList.add('active');
+  renderProducts();
+}
 
-        async function syncToCloud() {
-            setSyncing(true);
-            // 删除该用户所有旧数据
-            await db.from('proplan_tasks').delete().eq('user_id', currentUser.id);
-            // 重新插入
-            if (tasks.length > 0) {
-                const rows = tasks.map(t => ({
-                    id: t.id,
-                    user_id: currentUser.id,
-                    title: t.title,
-                    details: t.details,
-                    quadrant: t.quadrant,
-                    status: t.status,
-                    date: t.date,
-                    subtasks: t.subtasks,
-                    attachments: t.attachments
-                }));
-                const { error } = await db.from('proplan_tasks').insert(rows);
-                if (error) { console.error('同步失败:', error); syncText.innerText = '同步失败'; syncDot.style.background = '#ef4444'; return; }
-            }
-            setSyncing(false);
-        }
+// ─── 产品 CRUD ─────────────────────────────────
+let selectedEmoji = '📊';
+function selectEmoji(el, emoji) {
+  document.querySelectorAll('.emoji-opt').forEach(e=>e.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedEmoji = emoji;
+  document.getElementById('form-icon').value = emoji;
+}
 
-        // 加载用户Profile（头像、标题）
-        async function loadProfile() {
-            const { data } = await db
-                .from('proplan_profile')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .single();
-            if (data) {
-                if (data.title) document.getElementById('mainTitle').innerText = data.title;
-                if (data.avatar) {
-                    document.getElementById('avatarImg').src = data.avatar;
-                    document.getElementById('avatarImg').style.display = 'block';
-                    document.getElementById('avatarIcon').style.display = 'none';
-                }
-            }
-        }
+function openAddModal() {
+  document.getElementById('modal-title').textContent = '添加新产品';
+  document.getElementById('edit-id').value = '';
+  document.getElementById('form-name').value = '';
+  document.getElementById('form-desc').value = '';
+  document.getElementById('form-url').value = '';
+  document.getElementById('form-download').value = '';
+  document.getElementById('form-features').value = '';
+  document.getElementById('form-type').value = 'html';
+  document.getElementById('form-color').value = 'cream';
+  document.getElementById('form-status').value = 'active';
+  selectEmoji(document.querySelector('.emoji-opt'), '📊');
+  document.getElementById('product-modal').classList.add('show');
+}
 
-        async function saveProfile(updates) {
-            await db.from('proplan_profile').upsert({ user_id: currentUser.id, ...updates });
-        }
+function openEditModal(id) {
+  const p = products.find(p=>p.id===id);
+  if(!p) return;
+  document.getElementById('modal-title').textContent = '编辑产品';
+  document.getElementById('edit-id').value = p.id;
+  document.getElementById('form-name').value = p.name;
+  document.getElementById('form-desc').value = p.desc||'';
+  document.getElementById('form-url').value = p.url||'';
+  document.getElementById('form-download').value = p.download||'';
+  document.getElementById('form-features').value = (p.features||'');
+  document.getElementById('form-type').value = p.type||'html';
+  document.getElementById('form-color').value = p.color||'cream';
+  document.getElementById('form-status').value = p.status||'active';
+  const emojiEls = document.querySelectorAll('.emoji-opt');
+  emojiEls.forEach(e => e.classList.remove('selected'));
+  let found = false;
+  emojiEls.forEach(e => { if(e.textContent.trim()===p.icon){e.classList.add('selected');found=true;} });
+  if(!found) { emojiEls[0].classList.add('selected'); }
+  selectedEmoji = p.icon;
+  document.getElementById('form-icon').value = p.icon;
+  document.getElementById('product-modal').classList.add('show');
+}
 
-        // =============================================
-        // 工具函数
-        // =============================================
-        function updateTotalCount() {
-            const el = document.getElementById('totalPlanCount');
-            if (el) el.innerText = tasks.length + ' 计划';
-        }
-        function getCurrentMonthTasks() {
-            return tasks.filter(t => { const d = new Date(t.date); return d.getFullYear() === currentYear && d.getMonth() === currentMonth; });
-        }
-        function formatDate(year, month, day) {
-            return `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-        }
-        function getWeekDates(dateStr) {
-            let date = new Date(dateStr + 'T12:00:00');
-            let day = date.getDay();
-            let mondayOffset = day === 0 ? -6 : 1 - day;
-            let monday = new Date(date);
-            monday.setDate(date.getDate() + mondayOffset);
-            let week = [];
-            for (let i = 0; i < 7; i++) {
-                let d = new Date(monday);
-                d.setDate(monday.getDate() + i);
-                week.push(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`);
-            }
-            return week;
-        }
+function saveProduct() {
+  const name = document.getElementById('form-name').value.trim();
+  const url = document.getElementById('form-url').value.trim();
+  if(!name){ showToast('产品名称不能为空','error'); return; }
+  if(!url){ showToast('产品链接不能为空','error'); return; }
+  const editId = document.getElementById('edit-id').value;
+  const data = {
+    icon: document.getElementById('form-icon').value || selectedEmoji || '📊',
+    name, type: document.getElementById('form-type').value,
+    desc: document.getElementById('form-desc').value.trim(),
+    url, download: document.getElementById('form-download').value.trim(),
+    features: document.getElementById('form-features').value.trim(),
+    color: document.getElementById('form-color').value,
+    status: document.getElementById('form-status').value,
+  };
+  if(editId) {
+    const idx = products.findIndex(p=>p.id===editId);
+    if(idx>=0) products[idx] = {...products[idx],...data};
+    showToast('产品已更新');
+  } else {
+    products.unshift({id:uid(), sentCount:0, createdAt:Date.now(), ...data});
+    showToast('产品已添加');
+  }
+  saveData(); renderAll(); closeModal('product-modal');
+}
 
-        // =============================================
-        // 渲染
-        // =============================================
-        function syncMonthFromSelected() {
-            if (!selectedDate) return;
-            const d = new Date(selectedDate + 'T12:00:00');
-            currentYear = d.getFullYear(); currentMonth = d.getMonth();
-        }
+function deleteProduct(id) {
+  if(!confirm('确认删除这个产品吗？')) return;
+  products = products.filter(p=>p.id!==id);
+  saveData(); renderAll(); showToast('已删除');
+}
 
-        function renderAll() {
-            syncMonthFromSelected();
-            const mp = document.getElementById('monthPicker');
-            if (mp) mp.value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
-            if (viewMode === 'year') {
-                document.getElementById('monthlyView').classList.add('hidden-view');
-                document.getElementById('yearlyView').classList.remove('hidden-view');
-                renderYearlyView();
-            } else {
-                document.getElementById('monthlyView').classList.remove('hidden-view');
-                document.getElementById('yearlyView').classList.add('hidden-view');
-                renderMonthlyView();
-            }
-            document.querySelectorAll('.view-switch-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelector(`.view-switch-btn[data-view="${viewMode}"]`).classList.add('active');
-        }
+// ─── 预览 ────────────────────────────────────
+function openPreview(id) {
+  const p = products.find(p=>p.id===id);
+  if(!p) return;
+  window.open(p.url, '_blank');
+}
 
-        function destroyCharts() { Object.values(charts).forEach(c => c?.destroy?.()); charts = {}; }
+// ─── 发送链接 ─────────────────────────────────
+function openSendModal(id) {
+  sendProduct = products.find(p=>p.id===id);
+  if(!sendProduct) return;
+  document.getElementById('send-icon').textContent = sendProduct.icon;
+  document.getElementById('send-name').textContent = sendProduct.name;
+  document.getElementById('send-type-label').textContent = typeLabels[sendProduct.type]||sendProduct.type;
+  document.getElementById('send-preview-url').textContent = sendProduct.url||'';
+  if(sendProduct.download) {
+    document.getElementById('send-download-url').textContent = sendProduct.download;
+    document.getElementById('send-download-row').style.display='flex';
+  } else {
+    document.getElementById('send-download-row').style.display='none';
+  }
+  document.getElementById('send-note').value='';
+  document.getElementById('send-modal').classList.add('show');
+}
 
-        function renderMonthlyView() {
-            destroyCharts(); renderQuadrants(); renderStatsRow();
-            renderMiniCalendar(); renderWordCloud();
-            if (viewMode === 'week') {
-                document.getElementById('weekView').classList.remove('hidden');
-                document.getElementById('monthView').classList.add('hidden');
-                renderWeekView();
-            } else {
-                document.getElementById('weekView').classList.add('hidden');
-                document.getElementById('monthView').classList.remove('hidden');
-                renderMonthCalendar();
-            }
-        }
+function buildPreviewUrl(p) { return p.url||''; }
 
-        function renderQuadrants() {
-            const monthTasks = getCurrentMonthTasks();
-            const quadrants = ['重要紧急', '重要不紧急', '紧急不重要', '不紧急不重要'];
-            const icons = ['🔥', '🌟', '⚡', '☁️'];
-            const container = document.getElementById('quadrantGrid');
-            if (!container) return;
-            container.innerHTML = '';
-            quadrants.forEach((q, idx) => {
-                const qTasks = monthTasks.filter(t => t.quadrant === q);
-                const total = qTasks.length;
-                const completed = qTasks.filter(t => t.status === '已完成').length;
-                const percent = total ? Math.round(completed/total*100) : 0;
-                const card = document.createElement('div');
-                card.className = 'glass-card quad-card';
-                card.innerHTML = `<div class="quad-header"><span style="font-size:1.8rem;">${icons[idx]}</span><span>${q}</span></div><div class="quad-stats"><span>总数 ${total}</span><span>${percent}%</span></div><div class="quad-canvas-wrap"><canvas id="quadChart_${idx}" width="120" height="120"></canvas><div>${percent}%</div></div>`;
-                container.appendChild(card);
-                const ctx = document.getElementById(`quadChart_${idx}`).getContext('2d');
-                const gradient = ctx.createLinearGradient(0,0,120,120);
-                gradient.addColorStop(0,'#4A90E2'); gradient.addColorStop(1,'#6ba6e8');
-                charts[`quad_${idx}`] = new Chart(ctx, { type:'doughnut', data:{ datasets:[{ data:[completed, total-completed], backgroundColor:[gradient,'#e9ecef'], borderWidth:0, borderRadius:10 }] }, options:{ cutout:'70%', responsive:true, plugins:{ tooltip:{enabled:false} } } });
-            });
-        }
+function copyLink(type) {
+  const text = type==='preview'
+    ? document.getElementById('send-preview-url').textContent
+    : document.getElementById('send-download-url').textContent;
+  navigator.clipboard.writeText(text).then(()=>{
+    showToast('链接已复制到剪贴板');
+  });
+}
 
-        function renderStatsRow() {
-            const monthTasks = getCurrentMonthTasks();
-            const totalMonth = monthTasks.length;
-            const completedMonth = monthTasks.filter(t => t.status === '已完成').length;
-            const inProgress = monthTasks.filter(t => t.status === '进行中').length;
-            const notStarted = monthTasks.filter(t => t.status === '未开始').length;
-            const todayStr = new Date().toISOString().split('T')[0];
-            const todayTasks = tasks.filter(t => t.date === todayStr).length;
-            const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-            const labels = Array.from({length: daysInMonth}, (_,i)=> i+1);
-            const planData = labels.map(d => { const ds = formatDate(currentYear, currentMonth, d); return tasks.filter(t=> t.date === ds).length; });
-            const completeData = labels.map(d => { const ds = formatDate(currentYear, currentMonth, d); return tasks.filter(t=> t.date === ds && t.status === '已完成').length; });
-            const row = document.getElementById('statsRow');
-            if (!row) return;
-            row.innerHTML = `
-                <div class="glass-card stat-card"><h4>📊 任务完成</h4><canvas id="monthDonut" height="100"></canvas><div style="text-align:center; margin-top:8px; font-weight:600;">${completedMonth}/${totalMonth}</div></div>
-                <div class="glass-card stat-card"><h4>📌 状态进度</h4><div class="stat-kpi"><span>✅${completedMonth}</span><span>⏳${inProgress}</span><span>📝${notStarted}</span></div><canvas id="statusStack" height="70"></canvas></div>
-                <div class="glass-card stat-card"><h4>📅 每日计划/完成</h4><canvas id="dailyBarChart" height="100"></canvas></div>
-                <div class="glass-card stat-card"><h4>📆 今日/累计</h4><div class="big-number">${todayTasks}</div><div style="font-size:1rem;">累计: ${tasks.length}</div></div>
-            `;
-            charts.donut = new Chart(document.getElementById('monthDonut').getContext('2d'), { type:'doughnut', data:{ datasets:[{ data:[completedMonth, totalMonth-completedMonth], backgroundColor:['#4A90E2','#e2e8f0'], borderRadius:8 }] }, options:{ cutout:'65%', plugins:{ tooltip:{enabled:false} } } });
-            charts.stack = new Chart(document.getElementById('statusStack').getContext('2d'), { type:'bar', data:{ labels:['状态'], datasets:[ { label:'已完成', data:[completedMonth], backgroundColor:'#4A90E2', stack:'stack' }, { label:'进行中', data:[inProgress], backgroundColor:'#F5A623', stack:'stack' }, { label:'未开始', data:[notStarted], backgroundColor:'#cbd5e1', stack:'stack' } ]}, options:{ indexAxis:'y', responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{stacked:true, display:false}, y:{stacked:true, display:false} } } });
-            charts.dailyBar = new Chart(document.getElementById('dailyBarChart').getContext('2d'), { type:'bar', data:{ labels:labels.map(String), datasets:[ { label:'计划', data:planData, backgroundColor:'#4A90E2', borderRadius:5 }, { label:'完成', data:completeData, backgroundColor:'#F5A623', borderRadius:5 } ]}, options:{ responsive:true, plugins:{ legend:{display:false} }, scales:{ x:{ ticks:{font:{size:8}} } } } });
-        }
+function quickCopy(id) {
+  const p = products.find(p=>p.id===id);
+  if(!p) return;
+  navigator.clipboard.writeText(p.url||'').then(()=>showToast('产品链接已复制'));
+}
 
-        function renderMiniCalendar() {
-            const grid = document.getElementById('miniCalendar');
-            if (!grid) return;
-            const weekdays = ['一','二','三','四','五','六','日'];
-            grid.innerHTML = weekdays.map(d => `<div class="cal-day-header">${d}</div>`).join('');
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-            const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-            const todayStr = new Date().toISOString().split('T')[0];
-            let weekRange = selectedDate ? getWeekDates(selectedDate) : [];
-            for (let i=0; i<startOffset; i++) grid.innerHTML += `<div></div>`;
-            for (let d=1; d<=daysInMonth; d++) {
-                const dateStr = formatDate(currentYear, currentMonth, d);
-                const isToday = dateStr === todayStr;
-                const isSelected = selectedDate === dateStr;
-                const inWeek = weekRange.includes(dateStr) ? 'week-range' : '';
-                grid.innerHTML += `<div class="cal-day ${isToday?'today':''} ${isSelected?'selected':''} ${inWeek}" data-date="${dateStr}">${d}</div>`;
-            }
-            grid.querySelectorAll('.cal-day').forEach(el => {
-                el.addEventListener('click', (e) => {
-                    document.querySelectorAll('.cal-day').forEach(c => c.classList.remove('selected'));
-                    el.classList.add('selected');
-                    selectedDate = el.dataset.date;
-                    syncMonthFromSelected();
-                    if (viewMode === 'week') renderWeekView();
-                    else if (viewMode === 'month') renderMonthCalendar();
-                    renderMiniCalendar();
-                    document.getElementById('monthPicker').value = `${currentYear}-${String(currentMonth+1).padStart(2,'0')}`;
-                });
-            });
-        }
+function recordSend() {
+  if(!sendProduct) return;
+  const idx = products.findIndex(p=>p.id===sendProduct.id);
+  if(idx>=0) products[idx].sentCount = (products[idx].sentCount||0)+1;
+  saveData(); renderAll();
+  showToast('已记录发送', 'success');
+  closeModal('send-modal');
+}
 
-        function renderWordCloud() {
-            const monthTasks = getCurrentMonthTasks();
-            const incompleteTasks = monthTasks.filter(t => t.status !== '已完成');
-            const words = incompleteTasks.map(t => t.title.split(/\s+/)).flat().filter(w => w.length>1);
-            const freq = {};
-            words.forEach(w => freq[w] = (freq[w]||0)+1);
-            const cloud = document.getElementById('wordCloud');
-            if (!cloud) return;
-            cloud.innerHTML = Object.entries(freq).map(([word, count]) => {
-                const size = 16 + count * 4;
-                const emergency = incompleteTasks.some(t => t.title.includes(word) && t.quadrant === '重要紧急') ? 'emergency' : '';
-                return `<span class="cloud-item ${emergency}" style="font-size:${size}px;">${word}</span>`;
-            }).join('');
-        }
+// ─── 客户端预览页 ──────────────────────────────
+function renderPreviewPage(id) {
+  const p = products.find(p=>p.id===id);
+  const container = document.getElementById('preview-container');
+  if(!p) {
+    container.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:12px;color:var(--text3)"><div style="font-size:48px">🔍</div><div style="font-size:16px">找不到该产品</div><a href="${window.location.pathname}" style="color:var(--blue);font-size:13px">返回首页</a></div>`;
+    return;
+  }
+  const features = p.features ? p.features.split(',').filter(Boolean) : [];
+  const featureIcons = ['✨','📊','🛠','💡','🔗','📁','⚡','🎯','📈','🔄'];
+  container.innerHTML = `
+    <nav class="preview-nav">
+      <span class="preview-nav-logo">CreamViz by Alin</span>
+      <span class="preview-nav-sep">/</span>
+      <span class="preview-nav-name">${p.name}</span>
+    </nav>
+    <div class="preview-hero">
+      <div class="preview-type-chip">${typeIcons[p.type]||'📦'} ${typeLabels[p.type]||p.type}</div>
+      <div class="preview-title">${p.name}</div>
+      <div class="preview-desc">${p.desc||'专业产品，为您精心打造。'}</div>
+      <div class="preview-actions">
+        ${p.url&&p.url!=='#'?`<a class="preview-btn preview-btn-main" href="${p.url}" target="_blank">▶ 打开产品</a>`:''}
+        ${p.download?`<a class="preview-btn preview-btn-sub" href="${p.download}" download>⬇ 下载文件</a>`:''}
+        <button class="preview-btn preview-btn-sub" onclick="window.history.back()">← 返回</button>
+      </div>
+    </div>
+    <div class="preview-content">
+      ${features.length>0?`
+        <div class="preview-section-title">功能亮点</div>
+        <div class="preview-features">
+          ${features.map((f,i)=>`<div class="preview-feature-item"><span class="preview-feature-icon">${featureIcons[i%featureIcons.length]}</span><div class="preview-feature-text">${f.trim()}</div></div>`).join('')}
+        </div>`:''}
+      <div class="preview-watermark">© CreamViz by Alin · 专业数据可视化产品</div>
+    </div>`;
+  document.title = p.name + ' · CreamViz';
+}
 
-        function deleteTask(taskId) {
-            if (!taskId) return;
-            tasks = tasks.filter(t => t.id !== taskId);
-            saveTasks(); renderAll();
-        }
+// ─── 路由 ─────────────────────────────────────
+function router() {
+  const hash = location.hash;
+  if(hash.startsWith('#preview/')) {
+    const id = hash.slice(9);
+    document.getElementById('view-admin').classList.remove('active');
+    document.getElementById('view-preview').classList.add('active');
+    renderPreviewPage(id);
+  } else {
+    document.getElementById('view-preview').classList.remove('active');
+    document.getElementById('view-admin').classList.add('active');
+    document.title = 'CreamViz 产品中台';
+  }
+}
+window.addEventListener('hashchange', router);
 
-        function handleCalendarClick(e) {
-            const target = e.target;
-            if (target.classList.contains('delete-task-icon')) {
-                e.stopPropagation();
-                const id = target.dataset.taskId;
-                if (id && confirm('确定删除该任务吗？')) { deleteTask(id); }
-                return;
-            }
-            if (target.classList.contains('task-check')) {
-                const id = target.dataset.taskId;
-                const task = tasks.find(t => t.id === id);
-                if (task) { task.status = target.checked ? '已完成' : '未开始'; saveTasks(); renderAll(); }
-                return;
-            }
-            if (target.classList.contains('task-title')) {
-                const id = target.dataset.taskId;
-                if (id) openTaskModal(id);
-                return;
-            }
-            if (target.classList.contains('add-task-btn') || target.parentElement?.classList.contains('add-task-btn')) {
-                e.stopPropagation();
-                const btn = target.closest('.add-task-btn');
-                if (btn) openTaskModal(null, btn.dataset.date);
-            }
-        }
+// ─── 导入导出 ──────────────────────────────────
+function exportData() {
+  const blob = new Blob([JSON.stringify(products,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = 'creamviz_products_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+  showToast('数据已导出');
+}
+function importData() { document.getElementById('import-input').click(); }
+function handleImport(e) {
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader(); r.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if(Array.isArray(data)) { products=[...data,...products]; saveData(); renderAll(); showToast('导入成功，共'+data.length+'个产品'); }
+      else showToast('格式不正确','error');
+    } catch(err) { showToast('解析失败','error'); }
+  }; r.readAsText(file); e.target.value='';
+}
 
-        function bindCalendarEvents(container) {
-            if (!container) return;
-            container.removeEventListener('click', handleCalendarClick);
-            container.addEventListener('click', handleCalendarClick);
-        }
+// ─── 工具函数 ──────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+let toastTimer;
+function showToast(msg, type='') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
 
-        function renderWeekView() {
-            if (!selectedDate) selectedDate = formatDate(currentYear, currentMonth, new Date().getDate());
-            const weekDates = getWeekDates(selectedDate);
-            const weekdays = ['周一','周二','周三','周四','周五','周六','周日'];
-            const container = document.getElementById('weekView');
-            if (!container) return;
-            let html = weekdays.map(d => `<div class="week-day-header">${d}</div>`).join('');
-            const todayStr = new Date().toISOString().split('T')[0];
-            for (let i = 0; i < 7; i++) {
-                const dateStr = weekDates[i];
-                const dayTasks = tasks.filter(t => t.date === dateStr);
-                const isToday = dateStr === todayStr;
-                let cellContent = `<div class="cell-date"><span>${dateStr.split('-')[2]}</span><button class="add-task-btn" data-date="${dateStr}"><i class="fas fa-plus"></i></button></div><div class="task-list">`;
-                dayTasks.forEach(task => {
-                    const qc = task.quadrant === '重要紧急' ? '#F5A623' : task.quadrant === '重要不紧急' ? '#4A90E2' : task.quadrant === '紧急不重要' ? '#e67e22' : '#94a3b8';
-                    cellContent += `<div class="task-chip" style="border-left-color:${qc};"><input type="checkbox" ${task.status==='已完成'?'checked':''} data-task-id="${task.id}" class="task-check"><span class="task-title" data-task-id="${task.id}">${task.title||'无标题'}</span><i class="fas fa-trash-alt delete-task-icon" data-task-id="${task.id}"></i></div>`;
-                });
-                cellContent += `</div>`;
-                html += `<div class="week-cell ${isToday?'today-cell':''}" data-date="${dateStr}">${cellContent}</div>`;
-            }
-            container.innerHTML = html;
-            bindCalendarEvents(container);
-        }
-
-        function renderMonthCalendar() {
-            const container = document.getElementById('monthView');
-            if (!container) return;
-            const weekdays = ['一','二','三','四','五','六','日'];
-            let html = weekdays.map(d => `<div class="month-day-header">${d}</div>`).join('');
-            const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-            const startOffset = firstDay === 0 ? 6 : firstDay - 1;
-            const daysInMonth = new Date(currentYear, currentMonth+1, 0).getDate();
-            const todayStr = new Date().toISOString().split('T')[0];
-            for (let i=0; i<startOffset; i++) html += `<div class="month-cell empty" style="background:transparent;border:none;"></div>`;
-            for (let d=1; d<=daysInMonth; d++) {
-                const dateStr = formatDate(currentYear, currentMonth, d);
-                const dayTasks = tasks.filter(t => t.date === dateStr);
-                const isToday = dateStr === todayStr;
-                let cellContent = `<div class="cell-date"><span>${d}</span><button class="add-task-btn" data-date="${dateStr}"><i class="fas fa-plus"></i></button></div><div class="task-list">`;
-                dayTasks.forEach(task => {
-                    const qc = task.quadrant === '重要紧急' ? '#F5A623' : task.quadrant === '重要不紧急' ? '#4A90E2' : task.quadrant === '紧急不重要' ? '#e67e22' : '#94a3b8';
-                    cellContent += `<div class="task-chip" style="border-left-color:${qc};"><input type="checkbox" ${task.status==='已完成'?'checked':''} data-task-id="${task.id}" class="task-check"><span class="task-title" data-task-id="${task.id}">${task.title||'无标题'}</span><i class="fas fa-trash-alt delete-task-icon" data-task-id="${task.id}"></i></div>`;
-                });
-                cellContent += `</div>`;
-                html += `<div class="month-cell ${isToday?'today-cell':''}" data-date="${dateStr}">${cellContent}</div>`;
-            }
-            container.innerHTML = html;
-            bindCalendarEvents(container);
-        }
-
-        function renderYearlyView() {
-            const months = Array.from({length:12},(_,i)=>i);
-            let cardsHtml = '';
-            months.forEach(m => {
-                const mTasks = tasks.filter(t => new Date(t.date).getMonth() === m && new Date(t.date).getFullYear() === currentYear);
-                const total = mTasks.length; const done = mTasks.filter(t => t.status === '已完成').length;
-                cardsHtml += `<div class="month-card"><h4 style="margin-bottom:4px;">${m+1}月</h4><div>总数 ${total}</div><div>完成 ${done}</div><progress value="${done}" max="${total||1}" style="width:100%; height:6px;"></progress></div>`;
-            });
-            document.getElementById('yearlyMonthCards').innerHTML = cardsHtml;
-            const ctx = document.getElementById('yearTrendChart').getContext('2d');
-            if (charts.yearTrend) charts.yearTrend.destroy();
-            charts.yearTrend = new Chart(ctx, { type:'line', data:{ labels:['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'], datasets:[ { label:'总计划', data:months.map(m=> tasks.filter(t=> new Date(t.date).getMonth()===m && new Date(t.date).getFullYear()===currentYear).length), borderColor:'#4A90E2', tension:0.2 }, { label:'已完成', data:months.map(m=> tasks.filter(t=> new Date(t.date).getMonth()===m && new Date(t.date).getFullYear()===currentYear && t.status==='已完成').length), borderColor:'#F5A623', tension:0.2 } ]}, options:{ responsive:true } });
-            const tbody = document.querySelector('#yearTaskTable tbody');
-            const allTasks = tasks.filter(t=> new Date(t.date).getFullYear() === currentYear).sort((a,b)=>a.date.localeCompare(b.date));
-            tbody.innerHTML = allTasks.map(t => `<tr><td>${t.date}</td><td>${t.title||'无标题'}</td><td>${t.quadrant}</td><td>${t.status}</td><td><button class="btn btn-sm btn-danger" onclick="deleteTaskFromYear('${t.id}')">删除</button></td></tr>`).join('');
-            document.getElementById('taskSearch').oninput = (e) => {
-                const kw = e.target.value.toLowerCase();
-                const filtered = allTasks.filter(t => (t.title||'').toLowerCase().includes(kw));
-                tbody.innerHTML = filtered.map(t => `<tr><td>${t.date}</td><td>${t.title||'无标题'}</td><td>${t.quadrant}</td><td>${t.status}</td><td><button class="btn btn-sm btn-danger" onclick="deleteTaskFromYear('${t.id}')">删除</button></td></tr>`).join('');
-            };
-            document.getElementById('deleteAllYearTasks').onclick = () => {
-                const yearTasks = tasks.filter(t => new Date(t.date).getFullYear() === currentYear);
-                if (yearTasks.length === 0) { alert('当前年份没有任务'); return; }
-                if (confirm(`确定删除 ${currentYear} 年的所有任务（共 ${yearTasks.length} 个）吗？`)) {
-                    tasks = tasks.filter(t => new Date(t.date).getFullYear() !== currentYear);
-                    saveTasks(); renderYearlyView();
-                }
-            };
-        }
-
-        window.deleteTaskFromYear = function(id) {
-            if (confirm('确定删除该任务吗？')) { tasks = tasks.filter(t => t.id !== id); saveTasks(); renderYearlyView(); }
-        };
-
-        function openTaskModal(id, defaultDate = null) {
-            const modal = document.getElementById('taskModal');
-            document.getElementById('taskId').value = id || '';
-            const task = id ? tasks.find(t => t.id === id) : null;
-            document.getElementById('taskTitle').value = task?.title || '';
-            document.getElementById('taskDetails').value = task?.details || '';
-            document.getElementById('taskQuadrant').value = task?.quadrant || '重要紧急';
-            document.getElementById('taskStatus').value = task?.status || '未开始';
-            document.getElementById('taskDate').value = task?.date || defaultDate || formatDate(currentYear, currentMonth, new Date().getDate());
-            renderSubtaskList(task?.subtasks || []);
-            renderAttachmentList(task?.attachments || []);
-            modal.classList.add('show');
-        }
-
-        function renderSubtaskList(subtasks) {
-            const container = document.getElementById('subtaskList');
-            container.innerHTML = '';
-            subtasks.forEach((st, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<input type="checkbox" class="subtask-check" data-index="${index}" ${st.completed?'checked':''}><span class="subtask-text">${st.title}</span><span class="remove-item" data-index="${index}">🗑️</span>`;
-                container.appendChild(li);
-            });
-            container.querySelectorAll('.subtask-check').forEach(cb => cb.addEventListener('change', function(e) {
-                const idx = e.target.dataset.index;
-                const taskId = document.getElementById('taskId').value;
-                const task = tasks.find(t => t.id === taskId);
-                if (task && task.subtasks && task.subtasks[idx]) { task.subtasks[idx].completed = e.target.checked; saveTasks(); }
-            }));
-            container.querySelectorAll('.remove-item').forEach(btn => btn.addEventListener('click', function(e) {
-                const idx = e.target.dataset.index;
-                const taskId = document.getElementById('taskId').value;
-                const task = tasks.find(t => t.id === taskId);
-                if (task && task.subtasks) { task.subtasks.splice(idx,1); saveTasks(); renderSubtaskList(task.subtasks); }
-            }));
-        }
-
-        function renderAttachmentList(attachments) {
-            const container = document.getElementById('attachmentList');
-            container.innerHTML = '';
-            attachments.forEach((att, index) => {
-                const li = document.createElement('li');
-                li.innerHTML = `<i class="fas fa-paperclip"></i><a href="#" class="attachment-link" data-index="${index}">${att.name}</a><span class="remove-item" data-index="${index}">🗑️</span>`;
-                container.appendChild(li);
-            });
-            container.querySelectorAll('.attachment-link').forEach(link => link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const idx = e.target.dataset.index;
-                const taskId = document.getElementById('taskId').value;
-                const task = tasks.find(t => t.id === taskId);
-                if (task && task.attachments && task.attachments[idx]) {
-                    const att = task.attachments[idx];
-                    const a = document.createElement('a'); a.href = att.data; a.download = att.name; a.click();
-                }
-            }));
-            container.querySelectorAll('.remove-item').forEach(btn => btn.addEventListener('click', function(e) {
-                const idx = e.target.dataset.index;
-                const taskId = document.getElementById('taskId').value;
-                const task = tasks.find(t => t.id === taskId);
-                if (task && task.attachments) { task.attachments.splice(idx,1); saveTasks(); renderAttachmentList(task.attachments); }
-            }));
-        }
-
-        // =============================================
-        // 事件绑定
-        // =============================================
-        document.getElementById('addSubtaskBtn')?.addEventListener('click', function() {
-            const input = document.getElementById('newSubtaskInput');
-            const title = input.value.trim();
-            if (!title) return;
-            const taskId = document.getElementById('taskId').value;
-            const task = tasks.find(t => t.id === taskId);
-            if (task) { task.subtasks = task.subtasks || []; task.subtasks.push({ title, completed: false }); saveTasks(); renderSubtaskList(task.subtasks); input.value = ''; }
-        });
-
-        document.getElementById('attachmentFile')?.addEventListener('change', function(e) {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-            const taskId = document.getElementById('taskId').value;
-            const task = tasks.find(t => t.id === taskId);
-            if (!task) return;
-            Promise.all(files.map(file => new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = ev => resolve({ name: file.name, data: ev.target.result });
-                reader.readAsDataURL(file);
-            }))).then(newAtts => { task.attachments = task.attachments || []; task.attachments.push(...newAtts); saveTasks(); renderAttachmentList(task.attachments); document.getElementById('attachmentFile').value = ''; });
-        });
-
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            const headers = ['日期','标题','详细描述','象限','状态','子任务'];
-            const rows = tasks.map(t => { const ss = t.subtasks.map(st => `${st.title}(${st.completed?'已完成':'未完成'})`).join('; '); return [t.date, t.title, t.details||'', t.quadrant, t.status, ss]; });
-            const csv = [headers.join(','), ...rows.map(r => r.map(c => `"${c.replace(/"/g,'""')}"`).join(','))].join('\n');
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `tasks_${currentYear}_${currentMonth+1}.csv`; a.click();
-            URL.revokeObjectURL(url);
-        });
-
-        document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
-        document.getElementById('importFile').addEventListener('change', function(e) {
-            const file = e.target.files[0]; if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const lines = ev.target.result.split('\n').filter(l => l.trim());
-                if (lines.length < 2) { alert('CSV文件至少包含一行标题和一行数据'); return; }
-                const newTasks = [];
-                lines.slice(1).forEach(line => {
-                    const cells = line.match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g);
-                    if (cells && cells.length >= 6) {
-                        const [date,title,details,quadrant,status,subtaskStr] = cells.map(c => c.replace(/^"|"$/g,'').trim());
-                        const subtasks = subtaskStr ? subtaskStr.split(';').map(p => { const m = p.match(/(.+?)\((\w+)\)/); return m ? { title: m[1].trim(), completed: m[2]==='已完成' } : null; }).filter(Boolean) : [];
-                        if (date && title && quadrant && status) newTasks.push({ id: crypto.randomUUID?.() || Date.now()+''+Math.random(), title, details, quadrant, status, date, subtasks, attachments: [] });
-                    }
-                });
-                if (newTasks.length > 0) { tasks = [...tasks, ...newTasks]; saveTasks(); alert(`成功导入 ${newTasks.length} 个任务`); renderAll(); }
-                else alert('没有有效数据可导入');
-                document.getElementById('importFile').value = '';
-            };
-            reader.readAsText(file, 'UTF-8');
-        });
-
-        document.querySelectorAll('.theme-dot').forEach(dot => {
-            dot.addEventListener('click', (e) => {
-                const isLight = e.target.classList.contains('light-blue');
-                document.documentElement.style.setProperty('--primary-light', isLight ? '#4A90E2' : '#2C3E50');
-                document.documentElement.style.setProperty('--accent-light', isLight ? '#F5A623' : '#E67E22');
-            });
-        });
-
-        document.getElementById('avatarBtn').addEventListener('click', () => document.getElementById('avatarInput').click());
-        document.getElementById('avatarInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const dataUrl = ev.target.result;
-                    document.getElementById('avatarImg').src = dataUrl;
-                    document.getElementById('avatarImg').style.display = 'block';
-                    document.getElementById('avatarIcon').style.display = 'none';
-                    saveProfile({ avatar: dataUrl });
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-
-        document.getElementById('mainTitle').addEventListener('input', (e) => {
-            saveProfile({ title: e.target.innerText });
-        });
-
-        document.getElementById('monthPicker').addEventListener('change', (e) => {
-            const val = e.target.value;
-            if (val) { const [y, m] = val.split('-').map(Number); currentYear = y; currentMonth = m - 1; selectedDate = formatDate(currentYear, currentMonth, 1); renderAll(); }
-        });
-
-        document.querySelectorAll('.view-switch-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => { viewMode = e.target.dataset.view; renderAll(); });
-        });
-
-        document.getElementById('saveTask').addEventListener('click', () => {
-            const id = document.getElementById('taskId').value;
-            let title = document.getElementById('taskTitle').value.trim();
-            if (!title) title = '新任务';
-            const task = id ? tasks.find(t=>t.id===id) : { id: crypto.randomUUID?.() || Date.now()+''+Math.random(), subtasks:[], attachments:[] };
-            task.title = title;
-            task.details = document.getElementById('taskDetails').value;
-            task.quadrant = document.getElementById('taskQuadrant').value;
-            task.status = document.getElementById('taskStatus').value;
-            task.date = document.getElementById('taskDate').value;
-            if (!id) tasks.push(task);
-            saveTasks();
-            document.getElementById('taskModal').classList.remove('show');
-            renderAll();
-        });
-
-        document.getElementById('deleteTask').addEventListener('click', () => {
-            const id = document.getElementById('taskId').value;
-            if (id && confirm('确定删除该任务吗？')) { tasks = tasks.filter(t => t.id !== id); saveTasks(); document.getElementById('taskModal').classList.remove('show'); renderAll(); }
-        });
-
-        document.getElementById('closeModal').addEventListener('click', () => document.getElementById('taskModal').classList.remove('show'));
-        window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.classList.remove('show'); });
-
-        // 启动
-        init();
-    })();
-    </script>
+// ─── 初始化 ────────────────────────────────────
+loadData();
+renderAll();
+router();
+</script>
 </body>
 </html>
